@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Duo.Data
 {
-    public interface IDatabaseConnection
+    public interface IDataLink
     {
 
         public void OpenConnection();

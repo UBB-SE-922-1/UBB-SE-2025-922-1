@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Duo.Data
 {
-    public class MockDatabaseConnectionHashtagRepository : IDatabaseConnection
+    public class MockDatabaseConnectionHashtagRepository : IDataLink
     {
         private MockDataTables _mockDataTables = new MockDataTables();
         private bool _shouldThrowSqlException = false;

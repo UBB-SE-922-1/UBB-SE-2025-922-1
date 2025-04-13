@@ -1,81 +1,64 @@
-using System;
-using System.Windows.Input;
+using Duo.Interfaces;
 using Duo.Models;
-using Duo.Services;
-using Microsoft.UI.Xaml;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using Duo.Commands;
-using Duo.ViewModels.Base;
-using Duo.Helpers;
-using Duo.Services.Interfaces;
+using System;
 
 namespace Duo.ViewModels
 {
-    public class LoginViewModel : ViewModelBase
+    /// <summary>
+    /// ViewModel that handles the login logic.
+    /// </summary>
+    public class LoginViewModel
     {
-        private readonly IUserService _userService;
-        private string _username = string.Empty;
-        private string _errorMessage = string.Empty;
-        private bool _hasError = false;
+        private readonly ILoginService loginService;
 
-        public event EventHandler? LoginSuccessful;
+        /// <summary>
+        /// Gets or sets the username entered by the user.
+        /// </summary>
+        public string Username { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Gets or sets the password entered by the user.
+        /// </summary>
+        public string Password { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Gets a value indicating whether the login was successful.
+        /// </summary>
+        public bool LoginStatus { get; private set; }
+        
+        /// <summary>
+        /// Gets the logged-in user after a successful login.
+        /// </summary>
+        public User LoggedInUser { get; private set; }
 
-        public string Username
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LoginViewModel"/> class.
+        /// </summary>
+        /// <param name="loginService">The login service.</param>
+        public LoginViewModel(ILoginService loginService)
         {
-            get => _username;
-            set => SetProperty(ref _username, value);
+            this.loginService = loginService ?? throw new ArgumentNullException(nameof(loginService));
         }
 
-        public string ErrorMessage
+        /// <summary>
+        /// Attempts to log in with the provided credentials.
+        /// </summary>
+        /// <param name="username">The username.</param>
+        /// <param name="password">The password.</param>
+        public void AttemptLogin(string username, string password)
         {
-            get => _errorMessage;
-            set
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                if (SetProperty(ref _errorMessage, value))
-                {
-                    HasError = !string.IsNullOrEmpty(value);
-                }
+                LoginStatus = false;
+                return;
             }
-        }
 
-        public bool HasError
-        {
-            get => _hasError;
-            private set => SetProperty(ref _hasError, value);
-        }
+            Username = username;
+            Password = password;
 
-        public ICommand LoginCommand { get; }
-
-        public LoginViewModel(IUserService userService)
-        {
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-            LoginCommand = new RelayCommand(Login, CanLogin);
-        }
-
-        private bool CanLogin() => !string.IsNullOrWhiteSpace(Username);
-
-        private void Login()
-        {
-            try
-            {
-                ErrorMessage = string.Empty;
-
-                try
-                {
-                    ValidationHelper.ValidateUsername(Username);
-                    _userService.setUser(Username);
-                    LoginSuccessful?.Invoke(this, EventArgs.Empty);
-                }
-                catch (ArgumentException ex)
-                {
-                    ErrorMessage = ex.Message;
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ex.Message;
-            }
+            // Try to get the user
+            LoggedInUser = loginService.GetUserByCredentials(Username, Password);
+            LoginStatus = LoggedInUser != null;
         }
     }
 }

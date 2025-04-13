@@ -13,7 +13,7 @@ namespace Duo.Repositories
 {
     public class CommentRepository : ICommentRepository
     {
-        private readonly IDatabaseConnection _dataLink;
+        private readonly IDataLink _dataLink;
         private const int MINIMUM_ALLOWED_ID_NUMBER = 0;
         const int ID_INDEX = 0;
         const int CONTENT_INDEX = 1;
@@ -24,7 +24,7 @@ namespace Duo.Repositories
         const int LIKE_COUNT_INDEX = 6;
         const int LEVEL_INDEX = 7;
 
-        public CommentRepository(IDatabaseConnection dataLink)
+        public CommentRepository(IDataLink dataLink)
         {
             _dataLink = dataLink ?? throw new ArgumentNullException(nameof(dataLink));
         }

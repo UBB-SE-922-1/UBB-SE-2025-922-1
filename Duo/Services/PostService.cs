@@ -323,7 +323,7 @@ namespace Duo.Services
             try 
             {
                 var user = _userService.GetUserById(post.UserID);
-                post.Username = $"{user?.Username ?? "Unknown User"}";
+                post.Username = $"{user?.UserName ?? "Unknown User"}";
             }
             catch (Exception)
             {
@@ -551,7 +551,7 @@ namespace Duo.Services
                     if (string.IsNullOrEmpty(post.Username))
                     {
                         var postAuthor = _userService.GetUserById(post.UserID);
-                        post.Username = postAuthor?.Username ?? "Unknown User";
+                        post.Username = postAuthor?.UserName ?? "Unknown User";
                     }
 
                     DateTime localCreatedAt = Helpers.DateTimeHelper.ConvertUtcToLocal(post.CreatedAt);

@@ -1,4 +1,4 @@
-create table Users (			<-- Users table not User -->
+create table Users (			--- Users table not User -->
 	userID int primary key identity(1, 1),
 	username varchar(30) unique
 )
@@ -23,7 +23,7 @@ INSERT INTO Categories (Id, Name) VALUES
 CREATE TABLE Posts (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Title NVARCHAR(50) NOT NULL,
-    Description NVARCHAR(4000) NOT NULL,		<-- We need to modify in the diagram(can t put 5000) -->
+    Description NVARCHAR(4000) NOT NULL,		--- We need to modify in the diagram(can t put 5000) -->
     UserID INT NOT NULL,
     CategoryID INT NOT NULL,
     CreatedAt DATETIME DEFAULT GETDATE(),
@@ -34,7 +34,7 @@ CREATE TABLE Posts (
     CONSTRAINT fk_category FOREIGN KEY (CategoryID) REFERENCES Categories(Id) ON DELETE CASCADE
 );
 
-<-- Need to add a many to many table -->
+--- Need to add a many to many table -->
 CREATE TABLE PostHashtags (
     PostID INT NOT NULL,
     HashtagID INT NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE PostHashtags (
     CONSTRAINT fk_hashtag FOREIGN KEY (HashtagID) REFERENCES Hashtags(Id) ON DELETE CASCADE
 );
 
-<-- Look for delete and update -->
+--- Look for delete and update -->
 CREATE TABLE Comments (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Content NVARCHAR(1000) NOT NULL,
@@ -61,7 +61,7 @@ CREATE TABLE Comments (
     CONSTRAINT fk_parent_comment FOREIGN KEY (ParentCommentID) REFERENCES Comments(Id) on delete no action
 );
 
-<-- Insert section -->
+--- Insert section -->
 
 insert into Users values ('Andrei') , ('Ion'), ('Maria'), ('Alex'), ('Elena'), ('Gabriel'), ('Sofia'), ('Matei'), ('Ana'), ('David'), ('Ioana'), ('Luca'), ('Bianca');
 

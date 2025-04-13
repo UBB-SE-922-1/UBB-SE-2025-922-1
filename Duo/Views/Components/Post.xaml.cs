@@ -132,7 +132,7 @@ namespace Duo.Views.Components
             var currentUser = userService.GetCurrentUser();
             if (currentUser != null)
             {
-                MoreOptions.Visibility = (this.Username == currentUser.Username) 
+                MoreOptions.Visibility = (this.Username == currentUser.UserName) 
                     ? Visibility.Visible 
                     : Visibility.Collapsed;
             }
@@ -256,7 +256,7 @@ namespace Duo.Views.Components
         private async void MoreOptions_EditClicked(object sender, RoutedEventArgs e)
         {
             // Verify that the current user is the owner of the post            
-            if(this.Username != $"{userService.GetCurrentUser().Username}")
+            if(this.Username != $"{userService.GetCurrentUser().UserName}")
             {
                 // Display an error dialog if the user is not the owner
                 ContentDialog errorDialog = new ContentDialog
@@ -396,7 +396,7 @@ namespace Duo.Views.Components
 
         private async void MoreOptions_DeleteClicked(object sender, RoutedEventArgs e)
         {
-            if(this.Username != $"{userService.GetCurrentUser().Username}")
+            if(this.Username != $"{userService.GetCurrentUser().UserName}")
             {
                 // Display an error dialog if the user is not the owner
                 ContentDialog errorDialog = new ContentDialog

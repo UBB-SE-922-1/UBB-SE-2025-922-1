@@ -16,9 +16,9 @@ namespace Duo.Repositories
         const int TOP = 0;
         const int INVALID = 0;
         const int QUERRY_ERROR = 0;
-        private readonly IDatabaseConnection _dataLink;
+        private readonly IDataLink _dataLink;
 
-        public HashtagRepository(IDatabaseConnection dataLink)
+        public HashtagRepository(IDataLink dataLink)
         {
             _dataLink = dataLink;
         }

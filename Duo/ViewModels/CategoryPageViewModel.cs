@@ -64,7 +64,7 @@ namespace Duo.ViewModels
             try
             {
                 User currentUser = _userService.GetCurrentUser();
-                Username = currentUser.Username;
+                Username = currentUser.UserName;
             }
             catch (Exception ex)
             {

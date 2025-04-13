@@ -12,7 +12,7 @@ namespace Duo.Repositories
 {
     public class PostRepository : IPostRepository
     {
-        private readonly IDatabaseConnection _databaseConnection;
+        private readonly IDataLink _databaseConnection;
         
         // Constants for validation
         private const int INVALID_ID = 0;
@@ -20,7 +20,7 @@ namespace Duo.Repositories
         private const int MIN_PAGE_SIZE = 1;
         private const int DEFAULT_COUNT = 0;
 
-        public PostRepository(IDatabaseConnection databaseConnection)
+        public PostRepository(IDataLink databaseConnection)
         {
             this._databaseConnection = databaseConnection ?? throw new ArgumentNullException(nameof(databaseConnection));
         }

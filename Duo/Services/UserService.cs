@@ -34,7 +34,7 @@ namespace Duo.Services
                     return;
                 }
 
-                var newUser = new User(username);
+                var newUser = new User();
                 int userId = _userRepository.CreateUser(newUser);
                 _currentUser = new User(userId, username);
             }

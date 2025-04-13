@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Duo.Data
 {
-    public class DataLink : IDatabaseConnection
+    public class DataLink : IDataLink
     {  
         private SqlConnection sqlConnection;
         private readonly string connectionString;

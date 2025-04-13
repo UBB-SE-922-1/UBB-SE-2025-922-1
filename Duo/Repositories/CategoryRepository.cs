@@ -17,7 +17,7 @@
     /// </remarks>
     /// <param name="dataLink">The database connection.</param>
     /// <exception cref="ArgumentNullException">Thrown when dataLink is null.</exception>
-    public class CategoryRepository(IDatabaseConnection dataLink) : ICategoryRepository
+    public class CategoryRepository(IDataLink dataLink) : ICategoryRepository
     {
         // Constants for stored procedure names
         private const string GetCategoriesProcedure = "GetCategories";
@@ -35,7 +35,7 @@
         private const string ErrorFetchingCategory = "Error fetching category '{0}': {1}";
         private const string CategoryNotFound = "Category '{0}' not found.";
 
-        private readonly IDatabaseConnection dataLink = dataLink ?? throw new ArgumentNullException(nameof(dataLink));
+        private readonly IDataLink dataLink = dataLink ?? throw new ArgumentNullException(nameof(dataLink));
 
         /// <inheritdoc/>
         /// <summary>

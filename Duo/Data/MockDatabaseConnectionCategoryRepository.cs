@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Duo.Data
 {
-    public class MockDatabaseConnectionCategoryRepository : IDatabaseConnection
+    public class MockDatabaseConnectionCategoryRepository : IDataLink
     {
         private DataTable _categoryTable;
 

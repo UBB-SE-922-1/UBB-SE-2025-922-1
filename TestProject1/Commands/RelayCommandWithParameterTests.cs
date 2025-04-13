@@ -1,8 +1,4 @@
-﻿// <copyright file="RelayCommandWithParameterTests.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
-// </copyright>
-
-namespace TestProject1.Commands
+﻿namespace TestProject1.Commands
 {
     using System;
     using System.Windows.Input;

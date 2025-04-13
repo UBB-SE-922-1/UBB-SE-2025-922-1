@@ -23,12 +23,20 @@ using Duo.Services;
 using Duo.Data;
 using Duo.Repositories;
 using Duo.Repositories.Interfaces;
+using Duo.Models;
+using Duo.Interfaces;
+using Duo.UI.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
+using Duo.Services.Interfaces;
 
 namespace Duo
 {
 
     public partial class App : Application
     {
+        public static IServiceProvider ServiceProvider;
+        public static User? CurrentUser { get; set; }
+        public static Window? MainAppWindow { get; private set; }
         public static UserService userService;
         private static IConfiguration _configuration;
         public static DataLink _dataLink;
@@ -58,6 +66,41 @@ namespace Duo
             _searchService = new SearchService();
             _postService = new PostService(_postRepository, _hashtagRepository, userService, _searchService);
             _categoryService = new CategoryService(categoryRepository);
+
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+            ServiceProvider = services.BuildServiceProvider();
+        }
+
+        private void ConfigureServices(ServiceCollection services)
+        {
+            // Register configuration
+            services.AddSingleton(_configuration!);
+
+            // Register data access
+            services.AddSingleton<IDataLink, DataLink>();
+            services.AddSingleton<DataLink>();  // Add direct taLink registration
+
+            // Register repositories
+            services.AddSingleton<IUserRepository, UserRepository>();
+            services.AddSingleton<UserRepository>();  // Add direct UserRepository registration
+            services.AddSingleton<IFriendsRepository, FriendsRepository>();
+            services.AddSingleton<ListFriendsRepository>();  // Add ListFriendsRepository
+
+            // Register services
+            services.AddTransient<ILoginService, LoginService>();
+            services.AddTransient<FriendsService>();
+            services.AddTransient<SignUpService>();
+            services.AddTransient<ProfileService>();
+            services.AddTransient<LeaderboardService>();
+
+            // Register view models
+            services.AddTransient<LoginViewModel>();
+            services.AddTransient<SignUpViewModel>();
+            services.AddTransient<ResetPassViewModel>();
+            services.AddTransient<ListFriendsViewModel>();
+            services.AddTransient<ProfileViewModel>();
+            services.AddTransient<LeaderboardViewModel>();
         }
 
         private IConfiguration InitializeConfiguration()
@@ -69,30 +112,16 @@ namespace Duo
             return builder.Build();
         }
 
+        /// <summary>
+        /// Handles the application launch.
+        /// </summary>
+        /// <param name="args">Launch arguments.</param>
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-
-            var loginViewModel = new LoginViewModel(userService);
-
-            var loginWindow = new LoginWindow(loginViewModel);
-            loginWindow.Activate();
-
-            m_loginWindow = loginWindow;
-
-            loginViewModel.LoginSuccessful += LoginViewModel_LoginSuccessful;
+            MainAppWindow = new MainWindow();
+            MainAppWindow.Activate();
         }
 
-        private void LoginViewModel_LoginSuccessful(object? sender, EventArgs e)
-        {
-
-            m_window = new MainWindow();
-            m_window.Activate();
-
-            m_loginWindow?.Close();
-            m_loginWindow = null;
-        }
-
-        private Window? m_window;
-        private LoginWindow? m_loginWindow;
+        private Window? window;
     }
 }

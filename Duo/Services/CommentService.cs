@@ -41,7 +41,7 @@ namespace Duo.Services
                         try
                         {
                             User user = _userService.GetUserById(comment.UserId);
-                            comment.Username = user.Username;
+                            comment.Username = user.UserName;
 
                         }
                         catch (Exception ex)

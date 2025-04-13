@@ -7,7 +7,7 @@ using Duo.Models;
 
 namespace Duo.Data
 {
-    public class MockDatabaseConnectionPostRepository : IDatabaseConnection
+    public class MockDatabaseConnectionPostRepository : IDataLink
     {
         private MockDataTablesPost _mockDataTables = new MockDataTablesPost();
         public bool ThrowExceptionOnExecuteReader { get; set; } = false;

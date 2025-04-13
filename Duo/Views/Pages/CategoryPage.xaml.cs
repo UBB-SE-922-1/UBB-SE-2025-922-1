@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using Duo.ViewModels;
 using Duo.Views.Components;
 using static Duo.App;
+using DuolingoNou.Views.Pages;
 
 namespace Duo.Views.Pages
 {
@@ -77,9 +78,47 @@ namespace Duo.Views.Pages
             }
         }
 
-        private void NavigationView_SelectionChanged(object sender, NavigationViewSelectionChangedEventArgs args)
+        private void NavigationView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {
-            _viewModel.HandleNavigationSelectionChanged(args);
+            if (args.SelectedItem is NavigationViewItem selectedItem)
+            {
+                switch (selectedItem.Tag)
+                {
+                    case "Settings":
+                        contentFrame.Navigate(typeof(ProfileSettingsPage));
+                        break;
+                    case "HomePage":
+                        contentFrame.Navigate(typeof(MainPage));
+                        break;
+                    case "Leaderboards":
+                        contentFrame.Navigate(typeof(LeaderboardPage));
+                        break;
+                    case "Stats":
+                        contentFrame.Navigate(typeof(AchievementsPage));
+                        break;
+                    case "Course":
+                        contentFrame.Navigate(typeof(CoursePage));
+                        break;
+                    case "Quiz":
+                        contentFrame.Navigate(typeof(QuizPage));
+                        break;
+                    case "Announcements":
+                        contentFrame.Navigate(typeof(PostListPage), "Announcements");
+                        break;
+                    case "Discover":
+                        contentFrame.Navigate(typeof(PostListPage), "Discover");
+                        break;
+                    case "GeneralDiscussion":
+                        contentFrame.Navigate(typeof(PostListPage), "General-Discussion");
+                        break;
+                    case "LessonHelp":
+                        contentFrame.Navigate(typeof(PostListPage), "Lesson-Help");
+                        break;
+                    case "OffTopic":
+                        contentFrame.Navigate(typeof(PostListPage), "Off-topic");
+                        break;
+                }
+            }
         }
 
         private void OnNavigationRequested(object sender, Type pageType)

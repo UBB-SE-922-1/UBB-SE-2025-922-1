@@ -35,7 +35,10 @@ namespace Duo.Models
             UserId = userId;
             UserName = username;
         }
-
+        public User(string username)
+        {
+            this.UserName = username;
+        }
         public User()
         {
             // Default constructor

@@ -1,32 +1,412 @@
--- =============================================
--- INSERT Users (IF NOT EXISTS)
--- =============================================
-INSERT INTO Users (username)
-SELECT username
-FROM (VALUES 
-	('Andrei'),
-	('Ion'),
-	('Maria'),
-	('Alex'),
-	('Elena'),
-	('Gabriel'),
-	('Sofia'),
-	('Matei'),
-	('Ana'),
-	('David'),
-	('Ioana'),
-	('Luca'),
-	('Bianca'),
-	('Victor'),
-	('Cristi')
-) AS source (username)
-WHERE NOT EXISTS (
-	SELECT 1 
-	FROM Users 
-	WHERE Users.username = source.username
+ï»¿USE Duo
+go
+
+DROP TABLE IF EXISTS FriendRequests;
+DROP TABLE IF EXISTS UserAchievements;
+DROP TABLE IF EXISTS Achievements;
+DROP TABLE IF EXISTS Friends;
+DROP TABLE IF EXISTS HashTags;
+DROP TABLE IF EXISTS PostHashtags;
+drop table if exists Comments;
+DROP TABLE IF EXISTS Posts;
+DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS Categories;
+GO
+
+CREATE TABLE Users (
+    UserId INT IDENTITY(1,1) PRIMARY KEY,
+    UserName NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(100) NOT NULL,
+    Password NVARCHAR(255) NOT NULL, -- Added Password Column
+    PrivacyStatus BIT NOT NULL,
+    OnlineStatus BIT NOT NULL,
+    DateJoined DATETIME NOT NULL DEFAULT GETDATE(),
+    ProfileImage NVARCHAR(MAX),
+    TotalPoints INT NOT NULL DEFAULT 0,
+    CoursesCompleted INT NOT NULL DEFAULT 0,
+    QuizzesCompleted INT NOT NULL DEFAULT 0,
+    Streak INT NOT NULL DEFAULT 0,
+	LastActivityDate DATETIME NULL,
+	Accuracy DECIMAL(5,2) NOT NULL DEFAULT 0.00
+);
+GO
+
+SELECT * FROM Users;
+GO
+
+CREATE TABLE Hashtags (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Tag NVARCHAR(20) NOT NULL UNIQUE
 );
 
-	
+CREATE TABLE Categories (
+    Id INT PRIMARY KEY,
+    Name NVARCHAR(50) NOT NULL UNIQUE
+);
+go
+
+
+CREATE TABLE Posts (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Title NVARCHAR(50) NOT NULL,
+    Description NVARCHAR(4000) NOT NULL,		--- We need to modify in the diagram(can t put 5000) -->
+    UserID INT NOT NULL,
+    CategoryID INT NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    LikeCount INT DEFAULT 0,
+
+    CONSTRAINT fk_user FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE CASCADE,
+    CONSTRAINT fk_category FOREIGN KEY (CategoryID) REFERENCES Categories(Id) ON DELETE CASCADE
+);
+go
+
+--- Need to add a many to many table -->
+CREATE TABLE PostHashtags (
+    PostID INT NOT NULL,
+    HashtagID INT NOT NULL,
+
+    PRIMARY KEY (PostID, HashtagID),
+
+    CONSTRAINT fk_post FOREIGN KEY (PostID) REFERENCES Posts(Id) ON DELETE CASCADE,
+    CONSTRAINT fk_hashtag FOREIGN KEY (HashtagID) REFERENCES Hashtags(Id) ON DELETE CASCADE
+);
+go
+
+--- Look for delete and update -->
+CREATE TABLE Comments (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Content NVARCHAR(1000) NOT NULL,
+    UserID INT NOT NULL,
+    PostID INT NOT NULL,
+    ParentCommentID INT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    LikeCount INT DEFAULT 0,
+    Level INT CHECK (Level BETWEEN 1 AND 3),
+
+    CONSTRAINT fk_userid FOREIGN KEY (UserID) REFERENCES Users(userID) on delete no action,
+    CONSTRAINT fk_posts FOREIGN KEY (PostID) REFERENCES Posts(Id) on delete no action,
+    CONSTRAINT fk_parent_comment FOREIGN KEY (ParentCommentID) REFERENCES Comments(Id) on delete no action
+);
+GO
+CREATE TABLE Achievements (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Name NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(255) NOT NULL,
+    Rarity NVARCHAR(50) NOT NULL
+);
+GO
+
+CREATE TABLE FriendRequests (
+    RequestId INT IDENTITY(1,1) PRIMARY KEY,
+    SenderId INT NOT NULL,
+    ReceiverId INT NOT NULL,
+    RequestDate DATETIME NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY (SenderId) REFERENCES Users(UserId) ON DELETE NO ACTION,
+    FOREIGN KEY (ReceiverId) REFERENCES Users(UserId) ON DELETE NO ACTION,
+    CHECK (SenderId <> ReceiverId) -- Prevent self-requests
+);
+GO
+
+CREATE TABLE Friends (
+    FriendshipId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId1 INT NOT NULL,
+    UserId2 INT NOT NULL,
+    FOREIGN KEY (UserId1) REFERENCES Users(UserId) ON DELETE NO ACTION,
+    FOREIGN KEY (UserId2) REFERENCES Users(UserId) ON DELETE NO ACTION,
+    CHECK (UserId1 <> UserId2) -- Prevent self-friendship
+);
+GO
+
+
+DROP TABLE IF EXISTS UserAchievements;
+GO
+
+CREATE TABLE UserAchievements (
+    UserId INT,
+    AchievementId INT,
+    AwardedDate DATETIME,
+    PRIMARY KEY (UserId, AchievementId)
+);
+
+select *from UserAchievements
+------ inserst community
+GO
+
+INSERT INTO Users (
+    UserName,
+    Email,
+    Password,
+    PrivacyStatus,
+    OnlineStatus,
+    DateJoined,
+    ProfileImage,
+    TotalPoints,
+    CoursesCompleted,
+    QuizzesCompleted,
+    Streak,
+	LastActivityDate,
+	Accuracy
+)
+VALUES
+('Alice', 'alice@example.com', 'hashedpassword123', 1, 1, GETDATE(), 'alice.jpg', 1200, 5, 10, 7,NULL,95.50),
+('Bob', 'bob@example.com', 'securepassword456', 0, 0, GETDATE(), 'bob.jpg', 800, 3, 6, 2,'2024-12-31 14:30:00',95.50),
+('Charlie', 'charlie@example.com', 'mypassword789', 1, 1, GETDATE(), 'charlie.jpg', 2000, 10, 15, 12,NULL,95.50),
+('David', 'david@example.com', 'pass123', 1, 0, GETDATE(), 'david.jpg', 1500, 7, 12, 5,'2025-03-25 8:30:00',95.50),
+('Emma', 'emma@example.com', 'emmaPass456', 1, 1, GETDATE(), 'emma.jpg', 1800, 9, 18, 10,NULL,95.50),
+('Frank', 'frank@example.com', 'frankSecure', 0, 1, GETDATE(), 'frank.jpg', 2200, 12, 20, 15,NULL,95.50),
+('Alice2', 'alice@example.com', 'hashedpassword123', 1, 1, GETDATE(), 'alice.jpg', 1200, 5, 10, 7,NULL,95.50),
+('Bob2', 'bob@example.com', 'securepassword456', 0, 0, GETDATE(), 'bob.jpg', 800, 3, 6, 2,'2024-12-31 14:30:00',95.50),
+('Charli2e', 'charlie@example.com', 'mypassword789', 1, 1, GETDATE(), 'charlie.jpg', 2000, 10, 15, 12,NULL,95.50),
+('David2', 'david@example.com', 'pass123', 1, 0, GETDATE(), 'david.jpg', 1500, 7, 12, 5,'2025-03-25 8:30:00',95.50),
+('Emma2', 'emma@example.com', 'emmaPass456', 1, 1, GETDATE(), 'emma.jpg', 1800, 9, 18, 10,NULL,95.50),
+('Frank2', 'frank@example.com', 'frankSecure', 0, 1, GETDATE(), 'frank.jpg', 2200, 12, 20, 15,NULL,95.50),
+('Ali2ce', 'alice@example.com', 'hashedpassword123', 1, 1, GETDATE(), 'alice.jpg', 1200, 5, 10, 7,NULL,95.50),
+('Bo4b', 'bob@example.com', 'securepassword456', 0, 0, GETDATE(), 'bob.jpg', 800, 3, 6, 2,'2024-12-31 14:30:00',95.50),
+('Chdsarlie', 'charlie@example.com', 'mypassword789', 1, 1, GETDATE(), 'charlie.jpg', 2000, 10, 15, 12,NULL,95.50),
+('Da2vid', 'david@example.com', 'pass123', 1, 0, GETDATE(), 'david.jpg', 1500, 7, 12, 5,'2025-03-25 8:30:00',95.50),
+('Esdfmma', 'emma@example.com', 'emmaPass456', 1, 1, GETDATE(), 'emma.jpg', 1800, 9, 18, 10,NULL,95.50),
+('Frsdfank', 'frank@example.com', 'frankSecure', 0, 1, GETDATE(), 'frank.jpg', 2200, 12, 20, 15,NULL,95.50),
+('Alsdfice2', 'alice@example.com', 'hashedpassword123', 1, 1, GETDATE(), 'alice.jpg', 1200, 5, 10, 7,NULL,95.50),
+('Bosdfb2', 'bob@example.com', 'securepassword456', 0, 0, GETDATE(), 'bob.jpg', 800, 3, 6, 2,'2024-12-31 14:30:00',95.50),
+('Chsdfarli2e', 'charlie@example.com', 'mypassword789', 1, 1, GETDATE(), 'charlie.jpg', 2000, 10, 15, 12,NULL,95.50),
+('Dsdfavid2', 'david@example.com', 'pass123', 1, 0, GETDATE(), 'david.jpg', 1500, 7, 12, 5,'2025-03-25 8:30:00',95.50),
+('Emdsfsma2', 'emma@example.com', 'emmaPass456', 1, 1, GETDATE(), 'emma.jpg', 1800, 9, 18, 10,NULL,95.50),
+('Frdsfank2', 'frank@example.com', 'frankSecure', 0, 1, GETDATE(), 'frank.jpg', 2200, 12, 20, 15,NULL,95.50),
+('Alfsdfice', 'alice@example.com', 'hashedpassword123', 1, 1, GETDATE(), 'alice.jpg', 1200, 5, 10, 7,NULL,95.50),
+('Bsdfb', 'bob@example.com', 'securepassword456', 0, 0, GETDATE(), 'bob.jpg', 800, 3, 6, 2,'2024-12-31 14:30:00',95.50),
+('Chsdfarlie', 'charlie@example.com', 'mypassword789', 1, 1, GETDATE(), 'charlie.jpg', 2000, 10, 15, 12,NULL,95.50),
+('Dasdfvid', 'david@example.com', 'pass123', 1, 0, GETDATE(), 'david.jpg', 1500, 7, 12, 5,'2025-03-25 8:30:00',95.50),
+('Edfsmma', 'emma@example.com', 'emmaPass456', 1, 1, GETDATE(), 'emma.jpg', 1800, 9, 18, 10,NULL,95.50),
+('Fradsfnk', 'frank@example.com', 'frankSecure', 0, 1, GETDATE(), 'frank.jpg', 2200, 12, 20, 15,NULL,95.50),
+('Aldsfice2', 'alice@example.com', 'hashedpassword123', 1, 1, GETDATE(), 'alice.jpg', 1200, 5, 10, 7,NULL,95.50),
+('Bobsdf2', 'bob@example.com', 'securepassword456', 0, 0, GETDATE(), 'bob.jpg', 800, 3, 6, 2,'2024-12-31 14:30:00',95.50),
+('Chdsfarli2e', 'charlie@example.com', 'mypassword789', 1, 1, GETDATE(), 'charlie.jpg', 2000, 10, 15, 12,NULL,95.50),
+('Dadsfvid2', 'david@example.com', 'pass123', 1, 0, GETDATE(), 'david.jpg', 1500, 7, 12, 5,'2025-03-25 8:30:00',95.50),
+('Esdfmma2', 'emma@example.com', 'emmaPass456', 1, 1, GETDATE(), 'emma.jpg', 1800, 9, 18, 10,NULL,95.50),
+('Frdsfank2', 'frank@example.com', 'frankSecure', 0, 1, GETDATE(), 'frank.jpg', 2200, 12, 20, 15,NULL,95.50);
+
+GO
+INSERT INTO Categories (Id, Name) VALUES
+(1, 'General-Discussion'),
+(2, 'Lesson-Help'),
+(3, 'Off-topic'),
+(4, 'Discover'),
+(5, 'Announcements');
+go
+
+INSERT INTO Friends (UserId1, UserId2)
+VALUES 
+    (2, 3),  -- Bob and Charlie
+    (4, 5),  -- David and Emma
+    (5, 6);  -- Emma and Frank
+
+INSERT INTO Friends (UserId1, UserId2)
+VALUES 
+    (1, 6),  -- Bob and Charlie
+    (1, 5),  -- David and Emma
+    (1, 2),  -- Emma and Frank
+	(1,4);
+
+SELECT * FROM Friends;
+GO
+
+insert into Hashtags values ('a'), ('Mac'), ('Tech'), ('Innovation'), ('AI'), ('MachineLearning'), ('Coding'), ('Cybersecurity'), ('CloudComputing'), ('WebDevelopment'), ('MobileTech'), ('FutureOfTech');
+
+INSERT INTO Posts (Title, Description, UserID, CategoryID) VALUES
+('New Gadget', 'A review of the latest tech gadget.', 1, 2),
+('Paris Trip', 'My amazing trip to Paris and the Eiffel Tower.', 2, 2),
+('Delicious Pizza', 'Tried a new pizza place, it was fantastic!', 3, 3),
+('Coding Tips', 'Some useful tips for beginner programmers.', 1, 1),
+('Mountain Hike', 'Hiking in the beautiful mountains.', 2, 2),
+('Homemade Pasta', 'Making fresh pasta at home.', 3, 3),
+('AI Advancements', 'The latest developments in artificial intelligence.', 1, 1),
+('Tokyo Adventures', 'Exploring the streets of Tokyo.', 2, 2),
+('Chocolate Cake','A delicious chocolate cake recipe.', 3, 3),
+('Cloud Security', 'Understanding the importance of cloud security.', 1, 1),
+('London Calling', 'Exploring the iconic landmarks of London.', 2, 2),
+('Burger Mania', 'Trying out the best burger joint in town.', 3, 3),
+('Python Tricks', 'Advanced techniques in Python programming.', 1, 1),
+('Italian Dolomites', 'A breathtaking hike in the Italian Dolomites.', 28, 2),
+('Vegan Feast', 'Preparing a delicious and healthy vegan meal.', 3, 3),
+('Quantum Computing', 'An overview of the basics of quantum computing.', 1, 1),
+('New York City Guide', 'My recommendations for visiting New York City.', 3, 2),
+('Sushi Night', 'Enjoying a delightful sushi dinner.', 2, 3),
+('VR Development', 'Getting started with Virtual Reality development.', 4, 1);
+GO
+
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Great post!', 1, 1, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('I agree!', 2, 1, 1, 2);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Totally!', 3, 1, 2, 3);
+go
+
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Thanks for sharing!', 3, 2, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('My pleasure!', 1, 2, 4, 2);
+go
+
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('This is helpful.', 1, 3, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Glad you found it so!',2, 3, 7, 2);
+go
+
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Interesting perspective.', 4, 4, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Care to elaborate?', 3, 4, 9, 2);
+
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Where did you take this hike?', 5, 5, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('In the mountains nearby!', 7, 5, 11, 2);
+
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Looks delicious!', 6, 6, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('It was indeed!', 8, 6, 13, 2);
+
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Can you elaborate on that?', 7, 7, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Sure thing...', 9, 7, 15, 2);
+
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Beautiful scenery!', 8, 8, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Absolutely stunning!', 10, 8, 17, 2);
+
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('I should try this recipe.', 9, 9, NULL, 1);
+
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('What are your thoughts on this?', 10, 10, NULL, 1);
+go
+
+-- Additional 10 comments for posts 1 to 10 --
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Love this content!', 3, 1, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Very insightful.', 4, 2, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Well explained.', 5, 3, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Could you clarify?', 6, 4, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Great hike!', 7, 5, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('I have the same recipe!', 8, 6, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Very thought-provoking.', 9, 7, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Planning to visit soon!', 10, 8, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Great discussion.', 1, 9, NULL, 1);
+INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level) VALUES
+('Really useful information!', 2, 10, NULL, 1);
+go
+
+INSERT INTO PostHashtags (PostID, HashtagID) VALUES
+(1, 3),  -- New Gadget -> Tech
+(1, 4),  -- New Gadget -> Innovation
+(1, 11), -- New Gadget -> MobileTech
+
+(2, 1),  -- Paris Trip -> a
+(2, 12), -- Paris Trip -> FutureOfTech
+
+(3, 1),  -- Delicious Pizza -> a
+
+(4, 7),  -- Coding Tips -> Coding
+(4, 3),  -- Coding Tips -> Tech
+
+(5, 1),  -- Mountain Hike -> a
+
+(6, 1),  -- Homemade Pasta -> a
+
+(7, 5),  -- AI Advancements -> AI
+(7, 6),  -- AI Advancements -> MachineLearning
+(7, 4),  -- AI Advancements -> Innovation
+
+(8, 1),  -- Tokyo Adventures -> a
+
+(9, 1),  -- Chocolate Cake -> a
+
+(10, 8), -- Cloud Security -> Cybersecurity
+(10, 9), -- Cloud Security -> CloudComputing
+
+(11, 1), -- London Calling
+
+(12, 1), -- Burger Mania
+
+(13, 7), -- Python Tricks -> Coding
+(13, 3), -- Python Tricks -> Tech
+
+(14, 1), -- Italian Dolomites -> a
+
+(15, 1), -- Vegan Feast -> a
+
+(16, 4), -- Quantum Computing -> Innovation
+(16, 6), -- Quantum Computing -> MachineLearning
+(16, 10), -- Quantum Computing -> WebDevelopment
+
+(17, 1), -- New York City Guide
+
+(18, 1), -- Sushi Night 
+
+(19, 4), -- VR Development -> Innovation
+(19, 11); -- VR Development -> MobileTech
+go
+-- Insert achievements for streaks
+INSERT INTO Achievements (Name, Description, Rarity) VALUES
+('10 Day Streak', 'Achieve a 10-day streak', 'Common'),
+('50 Day Streak', 'Achieve a 50-day streak', 'Uncommon'),
+('100 Day Streak', 'Achieve a 100-day streak', 'Rare'),
+('250 Day Streak', 'Achieve a 250-day streak', 'Epic'),
+('500 Day Streak', 'Achieve a 500-day streak', 'Legendary'),
+('1000 Day Streak', 'Achieve a 1000-day streak', 'Mythic');
+
+-- Insert achievements for quizzes completed
+INSERT INTO Achievements (Name, Description, Rarity) VALUES
+('10 Quizzes Completed', 'Complete 10 quizzes', 'Common'),
+('50 Quizzes Completed', 'Complete 50 quizzes', 'Uncommon'),
+('100 Quizzes Completed', 'Complete 100 quizzes', 'Rare'),
+('250 Quizzes Completed', 'Complete 250 quizzes', 'Epic'),
+('500 Quizzes Completed', 'Complete 500 quizzes', 'Legendary'),
+('1000 Quizzes Completed', 'Complete 1000 quizzes', 'Mythic');
+
+-- Insert achievements for courses completed
+INSERT INTO Achievements (Name, Description, Rarity) VALUES
+('1 Course Completed', 'Complete 10 courses', 'Common'),
+('5 Courses Completed', 'Complete 50 courses', 'Uncommon'),
+('10 Courses Completed', 'Complete 100 courses', 'Rare'),
+('25 Courses Completed', 'Complete 250 courses', 'Epic'),
+('50 Courses Completed', 'Complete 500 courses', 'Legendary'),
+('100 Courses Completed', 'Complete 1000 courses', 'Mythic');
+go
+
+INSERT INTO FriendRequests (SenderId, ReceiverId, RequestDate)
+VALUES
+-- Pending friend requests
+(1, 2, GETDATE()), -- Alice â†’ Bob (Pending)
+(3, 4,  GETDATE()), -- Charlie â†’ David (Pending)
+
+-- Accepted friend requests
+(2, 3, GETDATE()), -- Bob â†’ Charlie (Accepted)
+(4, 5, GETDATE()), -- David â†’ Emma (Accepted)
+(5, 6, GETDATE()); -- Emma â†’ Frank (Accepted)
+GO
+
+INSERT INTO Categories (Id, Name) VALUES
+(1, 'General-Discussion'),
+(2, 'Lesson-Help'),
+(3, 'Off-topic'),
+(4, 'Discover'),
+(5, 'Announcements');
+
 -- =============================================
 -- INSERT Hashtags (IF NOT EXISTS)
 -- =============================================
@@ -231,7 +611,7 @@ BEGIN TRY
         SET @CommentID = SCOPE_IDENTITY();
         
         INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level)
-        VALUES ('It’s energy-intensive but improving.', 12, @PostID, @CommentID, 2);
+        VALUES ('Itâ€™s energy-intensive but improving.', 12, @PostID, @CommentID, 2);
         
         INSERT INTO Comments (Content, UserID, PostID, Level)
         VALUES ('What about water trade?', 13, @PostID, 1);
@@ -272,7 +652,7 @@ BEGIN TRY
         SET @CommentID = SCOPE_IDENTITY();
         
         INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level)
-        VALUES ('Totally, it’s our heritage!', 1, @PostID, @CommentID, 2);
+        VALUES ('Totally, itâ€™s our heritage!', 1, @PostID, @CommentID, 2);
         
         INSERT INTO Comments (Content, UserID, PostID, Level)
         VALUES ('Tech can help, right?', 1, @PostID, 1);
@@ -308,7 +688,7 @@ BEGIN TRY
             (@PostID, (SELECT Id FROM Hashtags WHERE Tag = 'PlateTectonics'));
         
         INSERT INTO Comments (Content, UserID, PostID, Level)
-        VALUES ('Japan’s preparedness is top-notch.', 2, @PostID, 1);
+        VALUES ('Japanâ€™s preparedness is top-notch.', 2, @PostID, 1);
         
         SET @CommentID = SCOPE_IDENTITY();
         
@@ -535,14 +915,14 @@ BEGIN TRY
                 'Latitude and longitude are used to locate any point on Earth.', CHAR(13), CHAR(10),
                 CHAR(13), CHAR(10),
                 '### Key Points:', CHAR(13), CHAR(10),
-                '- **Latitude**: Measures north-south (0° at Equator, 90° at poles).', CHAR(13), CHAR(10),
-                '- **Longitude**: Measures east-west (0° at Prime Meridian, 180° at International Date Line).', CHAR(13), CHAR(10),
+                '- **Latitude**: Measures north-south (0Â° at Equator, 90Â° at poles).', CHAR(13), CHAR(10),
+                '- **Longitude**: Measures east-west (0Â° at Prime Meridian, 180Â° at International Date Line).', CHAR(13), CHAR(10),
                 CHAR(13), CHAR(10),
                 '### Example:', CHAR(13), CHAR(10),
                 '| Location   | Latitude | Longitude |', CHAR(13), CHAR(10),
                 '|------------|----------|-----------|', CHAR(13), CHAR(10),
-                '| New York   | 40.7128° N | 74.0060° W |', CHAR(13), CHAR(10),
-                '| Sydney     | 33.8688° S | 151.2093° E |', CHAR(13), CHAR(10),
+                '| New York   | 40.7128Â° N | 74.0060Â° W |', CHAR(13), CHAR(10),
+                '| Sydney     | 33.8688Â° S | 151.2093Â° E |', CHAR(13), CHAR(10),
                 CHAR(13), CHAR(10),
                 'How do you read coordinates on a map?'
             ),
@@ -563,10 +943,10 @@ BEGIN TRY
         SET @CommentID = SCOPE_IDENTITY();
         
         INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level)
-        VALUES ('Yes, every 15° of longitude equals 1 hour of time difference.', 3, @PostID, @CommentID, 2);
+        VALUES ('Yes, every 15Â° of longitude equals 1 hour of time difference.', 3, @PostID, @CommentID, 2);
         
         INSERT INTO Comments (Content, UserID, PostID, Level)
-        VALUES ('What’s the easiest way to remember lat vs long?', 4, @PostID, 1);
+        VALUES ('Whatâ€™s the easiest way to remember lat vs long?', 4, @PostID, 1);
     END
 
     -- **Post 2: Volcanoes: Types and Formation**
@@ -615,7 +995,7 @@ BEGIN TRY
         VALUES ('Are there active volcanoes near me?', 8, @PostID, 1);
     END
 
-    -- **Post 3: Biomes: Earth’s Ecosystems**
+    -- **Post 3: Biomes: Earthâ€™s Ecosystems**
     IF NOT EXISTS (SELECT 1 FROM Posts WHERE Title = 'Biome Basics')
     BEGIN
         INSERT INTO Posts (Title, Description, UserID, CategoryID)
@@ -650,7 +1030,7 @@ BEGIN TRY
             (@PostID, (SELECT Id FROM Hashtags WHERE Tag = 'Sustainability'));
         
         INSERT INTO Comments (Content, UserID, PostID, Level)
-        VALUES ('What’s the difference between a biome and an ecosystem?', 10, @PostID, 1);
+        VALUES ('Whatâ€™s the difference between a biome and an ecosystem?', 10, @PostID, 1);
         
         SET @CommentID = SCOPE_IDENTITY();
         
@@ -748,7 +1128,7 @@ BEGIN TRY
         VALUES ('Yes, many are retreating rapidly.', 4, @PostID, @CommentID, 2);
         
         INSERT INTO Comments (Content, UserID, PostID, Level)
-        VALUES ('What’s the biggest glacier in the world?', 5, @PostID, 1);
+        VALUES ('Whatâ€™s the biggest glacier in the world?', 5, @PostID, 1);
     END
 
     -- **Post 6: Migration Patterns Explained**
@@ -793,7 +1173,7 @@ BEGIN TRY
         VALUES ('It can blend traditions or spark new ones.', 8, @PostID, @CommentID, 2);
         
         INSERT INTO Comments (Content, UserID, PostID, Level)
-        VALUES ('What’s the difference between immigration and emigration?', 9, @PostID, 1);
+        VALUES ('Whatâ€™s the difference between immigration and emigration?', 9, @PostID, 1);
     END
 
     -- **Post 7: Deserts: Features and Life**
@@ -829,12 +1209,12 @@ BEGIN TRY
             (@PostID, (SELECT Id FROM Hashtags WHERE Tag = 'PhysicalGeography'));
         
         INSERT INTO Comments (Content, UserID, PostID, Level)
-        VALUES ('What’s the largest desert?', 11, @PostID, 1);
+        VALUES ('Whatâ€™s the largest desert?', 11, @PostID, 1);
         
         SET @CommentID = SCOPE_IDENTITY();
         
         INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level)
-        VALUES ('Antarctica, technically—it’s a cold desert!', 12, @PostID, @CommentID, 2);
+        VALUES ('Antarctica, technicallyâ€”itâ€™s a cold desert!', 12, @PostID, @CommentID, 2);
         
         INSERT INTO Comments (Content, UserID, PostID, Level)
         VALUES ('How do animals cope with no water?', 13, @PostID, 1);
@@ -858,7 +1238,7 @@ BEGIN TRY
                 '| Current    | Impact             |', CHAR(13), CHAR(10),
                 '|------------|--------------------|', CHAR(13), CHAR(10),
                 '| Gulf Stream| Warms Western Europe |', CHAR(13), CHAR(10),
-                '| El Niño    | Alters weather     |', CHAR(13), CHAR(10),
+                '| El NiÃ±o    | Alters weather     |', CHAR(13), CHAR(10),
                 CHAR(13), CHAR(10),
                 'How do currents affect climate?'
             ),
@@ -882,7 +1262,7 @@ BEGIN TRY
         VALUES ('Wind, temperature, and salinity differences drive them.', 1, @PostID, @CommentID, 2);
         
         INSERT INTO Comments (Content, UserID, PostID, Level)
-        VALUES ('How does El Niño change rainfall?', 2, @PostID, 1);
+        VALUES ('How does El NiÃ±o change rainfall?', 2, @PostID, 1);
     END
 
     -- **Post 9: Landforms: Shaping Earth**
@@ -892,8 +1272,8 @@ BEGIN TRY
         VALUES (
             'Landform Lessons',
             CONCAT(
-                '## Earth’s Features', CHAR(13), CHAR(10),
-                'Landforms are natural shapes on Earth’s surface.', CHAR(13), CHAR(10),
+                '## Earthâ€™s Features', CHAR(13), CHAR(10),
+                'Landforms are natural shapes on Earthâ€™s surface.', CHAR(13), CHAR(10),
                 CHAR(13), CHAR(10),
                 '### Types:', CHAR(13), CHAR(10),
                 '- **Mountains**: Tectonic uplift (e.g., Alps).', CHAR(13), CHAR(10),
@@ -906,7 +1286,7 @@ BEGIN TRY
                 '| Mountains | Plate collision    |', CHAR(13), CHAR(10),
                 '| Plains    | Sediment deposit   |', CHAR(13), CHAR(10),
                 CHAR(13), CHAR(10),
-                'What’s your favorite landform?'
+                'Whatâ€™s your favorite landform?'
             ),
             3,
             2
@@ -1019,7 +1399,7 @@ BEGIN TRY
         DECLARE @MangroveCommentID INT = SCOPE_IDENTITY();
 
         INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level)
-        VALUES ('They’re natural barriers!', 4, @CoastalPostID, @MangroveCommentID, 2);
+        VALUES ('Theyâ€™re natural barriers!', 4, @CoastalPostID, @MangroveCommentID, 2);
 
         INSERT INTO Comments (Content, UserID, PostID, Level)
         VALUES ('Are they enough though?', 5, @CoastalPostID, 1);
@@ -1077,7 +1457,7 @@ BEGIN TRY
         VALUES (
             'Plate Tectonics 101',
             CONCAT(
-                '## Earth’s Moving Plates  ', CHAR(13), CHAR(10),
+                '## Earthâ€™s Moving Plates  ', CHAR(13), CHAR(10),
                 '*Basics:*  ', CHAR(13), CHAR(10),
                 '- Theory explained  ', CHAR(13), CHAR(10),
                 '- Boundary types:  ', CHAR(13), CHAR(10),
@@ -1145,7 +1525,7 @@ BEGIN TRY
         DECLARE @GISCommentID INT = SCOPE_IDENTITY();
 
         INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level)
-        VALUES ('QGIS—free and easy!', 13, @GISPostID, @GISCommentID, 2);
+        VALUES ('QGISâ€”free and easy!', 13, @GISPostID, @GISCommentID, 2);
 
         INSERT INTO Comments (Content, UserID, PostID, Level)
         VALUES ('Tutorials anywhere?', 14, @GISPostID, 1);
@@ -1158,11 +1538,11 @@ BEGIN TRY
         VALUES (
             'Must-Visit Places',
             CONCAT(
-                '## Geographer’s Travel List  ', CHAR(13), CHAR(10),
+                '## Geographerâ€™s Travel List  ', CHAR(13), CHAR(10),
                 '*Destinations:*  ', CHAR(13), CHAR(10),
                 '- Iceland: Volcanic wonders  ', CHAR(13), CHAR(10),
                 '- Silk Road: Historic routes  ', CHAR(13), CHAR(10),
-                'Where’s your next trip?'
+                'Whereâ€™s your next trip?'
             ),
             6,  -- UserID
             3   -- CategoryID: Off-topic
@@ -1200,7 +1580,7 @@ BEGIN TRY
                 '*Examples:*  ', CHAR(13), CHAR(10),
                 '- Inception: Cityscapes  ', CHAR(13), CHAR(10),
                 '- Planet Earth: Nature  ', CHAR(13), CHAR(10),
-                'What’s your fave?'
+                'Whatâ€™s your fave?'
             ),
             10,  -- UserID
             3   -- CategoryID: Off-topic
@@ -1426,7 +1806,7 @@ BEGIN TRY
         VALUES (
             'Deep Ocean Trenches',
             CONCAT(
-                '## Earth’s Hidden Depths  ', CHAR(13), CHAR(10),
+                '## Earthâ€™s Hidden Depths  ', CHAR(13), CHAR(10),
                 '*Key Facts:*  ', CHAR(13), CHAR(10),
                 '- Mariana Trench: 11 km  ', CHAR(13), CHAR(10),
                 '- Subduction zones  ', CHAR(13), CHAR(10),
@@ -1458,12 +1838,12 @@ BEGIN TRY
         VALUES ('How do they map it?', 8, @OceanPostID, 1);
     END
 
-    -- Post 3: Sahara’s Lost Rivers
-    IF NOT EXISTS (SELECT 1 FROM Posts WHERE Title = 'Sahara’s Lost Rivers')
+    -- Post 3: Saharaâ€™s Lost Rivers
+    IF NOT EXISTS (SELECT 1 FROM Posts WHERE Title = 'Saharaâ€™s Lost Rivers')
     BEGIN
         INSERT INTO Posts (Title, Description, UserID, CategoryID)
         VALUES (
-            'Sahara’s Lost Rivers',
+            'Saharaâ€™s Lost Rivers',
             CONCAT(
                 '## Ancient Waterways  ', CHAR(13), CHAR(10),
                 '*Discovery:*  ', CHAR(13), CHAR(10),
@@ -1534,18 +1914,18 @@ BEGIN TRY
         VALUES ('Other routes?', 1, @IcePostID, 1);
     END
 
-    -- Post 5: Antarctica’s Secrets
-    IF NOT EXISTS (SELECT 1 FROM Posts WHERE Title = 'Antarctica’s Secrets')
+    -- Post 5: Antarcticaâ€™s Secrets
+    IF NOT EXISTS (SELECT 1 FROM Posts WHERE Title = 'Antarcticaâ€™s Secrets')
     BEGIN
         INSERT INTO Posts (Title, Description, UserID, CategoryID)
         VALUES (
-            'Antarctica’s Secrets',
+            'Antarcticaâ€™s Secrets',
             CONCAT(
                 '## Icy Mysteries  ', CHAR(13), CHAR(10),
                 '*Revelations:*  ', CHAR(13), CHAR(10),
                 '- Subglacial lakes  ', CHAR(13), CHAR(10),
                 '- Ancient ice cores  ', CHAR(13), CHAR(10),
-                'What’s beneath?'
+                'Whatâ€™s beneath?'
             ),
             2,  -- UserID
             4   -- CategoryID: Discover
@@ -1604,7 +1984,7 @@ BEGIN TRY
         DECLARE @ErosionCommentID INT = SCOPE_IDENTITY();
 
         INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, Level)
-        VALUES ('High, it’s young!', 8, @IslandPostID, @ErosionCommentID, 2);
+        VALUES ('High, itâ€™s young!', 8, @IslandPostID, @ErosionCommentID, 2);
 
         INSERT INTO Comments (Content, UserID, PostID, Level)
         VALUES ('More examples?', 9, @IslandPostID, 1);
@@ -1655,7 +2035,7 @@ BEGIN TRY
         VALUES (
             'Magnetic Pole Shift',
             CONCAT(
-                '## Earth’s Compass  ', CHAR(13), CHAR(10),
+                '## Earthâ€™s Compass  ', CHAR(13), CHAR(10),
                 '*Phenomenon:*  ', CHAR(13), CHAR(10),
                 '- North Pole moving  ', CHAR(13), CHAR(10),
                 '- Past reversals  ', CHAR(13), CHAR(10),
@@ -1772,3 +2152,987 @@ BEGIN CATCH
     PRINT 'Error State: ' + CAST(ERROR_STATE() AS VARCHAR(10));
     PRINT 'Error Line: ' + CAST(ERROR_LINE() AS VARCHAR(10));
 END CATCH;
+GO
+
+
+
+---procedures
+
+GO 
+DROP PROCEDURE IF EXISTS AwardAchievement;
+go
+
+CREATE OR ALTER PROCEDURE AwardAchievement
+    @UserId INT,
+    @AchievementId INT,
+    @AwardedDate DATETIME
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM UserAchievements WHERE UserId = @UserId AND AchievementId = @AchievementId)
+    BEGIN
+        INSERT INTO UserAchievements (UserId, AchievementId, AwardedDate)
+        VALUES (@UserId, @AchievementId, @AwardedDate);
+    END
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetAllAchievements;
+GO
+
+
+CREATE OR ALTER PROCEDURE GetAllAchievements
+AS
+BEGIN
+    SELECT Id, Name, Description, Rarity
+    FROM Achievements
+END
+GO
+
+
+DROP PROCEDURE IF EXISTS GetUserAchievements;
+GO
+
+CREATE PROCEDURE GetUserAchievements
+    @UserId INT
+AS
+BEGIN
+    SELECT ua.AchievementId, a.Name, a.Description, a.Rarity, ua.AwardedDate
+    FROM UserAchievements ua
+    INNER JOIN Achievements a ON ua.AchievementId = a.Id
+    WHERE ua.UserId = @UserId
+END
+
+GO
+
+DROP PROCEDURE IF EXISTS GetFriends
+GO
+
+CREATE OR ALTER PROCEDURE GetFriends
+    @UserId INT
+AS
+BEGIN
+    SELECT 
+        u.UserId, 
+        u.UserName, 
+        u.Email, 
+        u.PrivacyStatus,
+        u.OnlineStatus,
+        u.DateJoined,
+        u.ProfileImage,
+        u.TotalPoints,
+        u.CoursesCompleted,
+        u.QuizzesCompleted,
+        u.Streak,
+        u.Password,
+		u.LastActivityDate,
+		u.Accuracy
+    FROM Friends f
+    JOIN Users u ON (f.UserId1 = @UserId AND f.UserId2 = u.UserId)
+                OR (f.UserId2 = @UserId AND f.UserId1 = u.UserId);
+END;
+GO
+
+DROP PROCEDURE IF EXISTS RemoveFriend
+GO
+
+CREATE OR ALTER PROCEDURE RemoveFriend
+    @UserId1 INT,
+    @UserId2 INT
+AS
+BEGIN
+    DELETE FROM Friends
+    WHERE (UserId1 = @UserId1 AND UserId2 = @UserId2)
+       OR (UserId1 = @UserId2 AND UserId2 = @UserId1);
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetTopFriendsByAccuracy
+GO
+
+CREATE OR ALTER PROCEDURE GetTopFriendsByAccuracy
+    @userId INT
+AS
+BEGIN
+    -- Return the user and their friends, if any
+    SELECT 
+        u.UserId, 
+        u.UserName,  
+        u.ProfileImage,
+        u.Accuracy,
+        u.QuizzesCompleted
+    FROM Users u
+    WHERE 
+        u.UserId = @UserId -- Always include the current user
+        OR u.UserId IN ( -- Include the user's friends
+            SELECT CASE 
+                WHEN f.UserId1 = @UserId THEN f.UserId2
+                WHEN f.UserId2 = @UserId THEN f.UserId1
+                ELSE NULL
+            END
+            FROM Friends f
+            WHERE f.UserId1 = @UserId OR f.UserId2 = @UserId
+        )
+    ORDER BY
+        u.Accuracy DESC;
+END;
+
+GO
+
+DROP PROCEDURE IF EXISTS GetTopFriendsByCompletedQuizzes;
+go
+
+CREATE or ALTER PROCEDURE GetTopFriendsByCompletedQuizzes
+    @userId INT
+AS
+BEGIN
+    -- Return the user and their friends, if any
+    SELECT 
+        u.UserId, 
+        u.UserName,  
+        u.ProfileImage,
+        u.Accuracy,
+        u.QuizzesCompleted
+    FROM Users u
+    WHERE 
+        u.UserId = @UserId -- Always include the current user
+        OR u.UserId IN ( -- Include the user's friends
+            SELECT CASE 
+                WHEN f.UserId1 = @UserId THEN f.UserId2
+                WHEN f.UserId2 = @UserId THEN f.UserId1
+                ELSE NULL
+            END
+            FROM Friends f
+            WHERE f.UserId1 = @UserId OR f.UserId2 = @UserId
+        )
+    ORDER BY
+        u.QuizzesCompleted DESC;
+END
+
+go
+
+drop procedure if exists GetTopUsersByAccuracy
+go
+
+CREATE or ALTER PROCEDURE GetTopUsersByAccuracy
+AS
+Begin
+	Select TOP 10
+	u.UserId,
+	u.UserName,
+	u.ProfileImage,
+	u.Accuracy,
+	u.QuizzesCompleted
+	FROM Users u
+	ORDER By u.Accuracy DESC
+End
+
+EXEC GetTopUsersByAccuracy
+go
+
+drop procedure if exists GetTopUsersByCompletedQuizzes
+GO
+
+CREATE or ALTER PROCEDURE GetTopUsersByCompletedQuizzes
+AS
+Begin
+	Select TOP 10 
+	u.UserId,
+	u.UserName,
+	u.ProfileImage,
+	u.Accuracy,
+	u.QuizzesCompleted
+	FROM Users u
+	ORDER By u.QuizzesCompleted DESC
+End
+
+GO
+
+DROP PROCEDURE IF EXISTS CreateUser
+GO
+
+CREATE OR ALTER PROCEDURE CreateUser
+    @UserName NVARCHAR(100),
+    @Email NVARCHAR(100),
+    @Password NVARCHAR(255), -- Added Password Parameter
+    @PrivacyStatus BIT,
+    @OnlineStatus BIT,
+    @DateJoined DATETIME,
+    @ProfileImage NVARCHAR(MAX),
+    @TotalPoints INT,
+    @CoursesCompleted INT,
+    @QuizzesCompleted INT,
+    @Streak INT,
+	@LastActivityDate DATETIME,
+	@Accuracy DECIMAL(5,2)
+AS
+BEGIN
+    INSERT INTO Users (
+        UserName, Email, Password, PrivacyStatus, OnlineStatus, DateJoined,
+        ProfileImage, TotalPoints, CoursesCompleted, QuizzesCompleted, Streak, LastActivityDate, Accuracy
+    )
+    VALUES (
+        @UserName, @Email, @Password, @PrivacyStatus, @OnlineStatus, @DateJoined,
+        @ProfileImage, @TotalPoints, @CoursesCompleted, @QuizzesCompleted, @Streak, @LastActivityDate, @Accuracy
+    );
+
+    SELECT SCOPE_IDENTITY() AS NewUserId;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS DeleteUser
+GO
+
+CREATE OR ALTER PROCEDURE DeleteUser
+    @UserId INT
+AS
+BEGIN
+    DELETE FROM Users WHERE UserId = @UserId;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetAllUsers
+GO
+
+CREATE OR ALTER PROCEDURE GetAllUsers
+AS
+BEGIN
+    SELECT * FROM Users;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetUserByEmail
+GO
+
+CREATE OR ALTER PROCEDURE GetUserByEmail
+    @Email NVARCHAR(100)
+AS
+BEGIN
+    SELECT *
+    FROM Users
+    WHERE Email = @Email;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetUserById
+GO
+
+
+CREATE OR ALTER PROCEDURE GetUserById
+    @UserId INT
+AS
+BEGIN
+    SELECT * FROM Users WHERE UserId = @UserId;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetUserByUsername
+GO
+
+CREATE OR ALTER PROCEDURE GetUserByUsername
+    @UserName NVARCHAR(100)
+AS
+BEGIN
+    SELECT *
+    FROM Users
+    WHERE UserName = @UserName;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetUserStats
+GO
+
+CREATE OR ALTER PROCEDURE GetUserStats
+    @UserId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        TotalPoints,
+        Streak,
+        QuizzesCompleted,
+        CoursesCompleted
+    FROM 
+        Users
+    WHERE 
+        UserId = @UserId;
+END
+
+GO
+
+DROP PROCEDURE IF EXISTS UpdateUser
+GO
+
+
+CREATE OR ALTER PROCEDURE UpdateUser
+    @UserId INT,
+    @UserName NVARCHAR(100),
+    @Email NVARCHAR(100),
+    @Password NVARCHAR(255), -- Added Password Parameter
+    @PrivacyStatus BIT,
+    @OnlineStatus BIT,
+    @DateJoined DATETIME,
+    @ProfileImage NVARCHAR(MAX),
+    @TotalPoints INT,
+    @CoursesCompleted INT,
+    @QuizzesCompleted INT,
+    @Streak INT,
+	@LastActivityDate DATETIME,
+	@Accuracy DECIMAL(5,2)
+AS
+BEGIN
+    UPDATE Users
+    SET
+        UserName = @UserName,
+        Email = @Email,
+        Password = @Password,
+        PrivacyStatus = @PrivacyStatus,
+        OnlineStatus = @OnlineStatus,
+        DateJoined = @DateJoined,
+        ProfileImage = @ProfileImage,
+        TotalPoints = @TotalPoints,
+        CoursesCompleted = @CoursesCompleted,
+        QuizzesCompleted = @QuizzesCompleted,
+        Streak = @Streak,
+		LastActivityDate = @LastActivityDate,
+		Accuracy = @Accuracy
+    WHERE UserId = @UserId;
+END;
+GO
+
+
+/****** Object:  StoredProcedure [dbo].[AddHashtagToPost]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[AddHashtagToPost]
+    @PostID INT,
+    @HashtagID INT
+AS
+BEGIN
+    INSERT INTO PostHashtags (PostID, HashtagID)
+   VALUES (@PostID, @HashtagID);
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[CreateComment]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[CreateComment]
+    @Content NVARCHAR(1000),
+    @UserID INT,
+    @PostID INT,
+    @ParentCommentID INT = NULL, 
+    @Level INT
+AS
+BEGIN
+    INSERT INTO Comments (Content, UserID, PostID, ParentCommentID, CreatedAt, LikeCount, Level)
+    VALUES (@Content, @UserID, @PostID, @ParentCommentID, GETDATE(), 0, @Level);
+END;
+
+GO
+/****** Object:  StoredProcedure [dbo].[CreateHashtag]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[CreateHashtag]
+    @Tag NVARCHAR(20)
+AS
+BEGIN
+    INSERT INTO Hashtags (Tag)
+    VALUES (@Tag);
+
+    -- Return the newly created ID
+    SELECT SCOPE_IDENTITY();
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[CreatePost]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[CreatePost] (
+    @Title VARCHAR (20),
+    @Description VARCHAR (4000),
+    @UserID INT,
+    @CategoryID INT,
+    @CreatedAt DATETIME,
+    @UpdatedAt DATETIME,
+    @LikeCount INT
+) AS
+BEGIN
+    INSERT INTO Posts
+        (Title, Description, UserID, CategoryID, CreatedAt, UpdatedAt, LikeCount)
+    VALUES
+        (@Title, @Description, @UserID, @CategoryID, @CreatedAt, @UpdatedAt, @LikeCount);
+        
+    -- Return the ID of the newly inserted post
+    SELECT SCOPE_IDENTITY() AS NewPostID;
+END
+GO
+/****** Object:  StoredProcedure [dbo].[CreateUser]    Script Date: 24/03/2025 19:54:36 ******/
+/****** Object:  StoredProcedure [dbo].[DeleteComment]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[DeleteComment]
+    @CommentID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- Use a CTE to recursively find all child comments
+    WITH CommentTree AS (
+        -- Start with the comment we want to delete
+        SELECT Id
+        FROM Comments
+        WHERE Id = @CommentID
+        
+        UNION ALL
+        
+        -- Find all children of comments in the tree
+        SELECT c.Id
+        FROM Comments c
+        INNER JOIN CommentTree ct ON c.ParentCommentID = ct.Id
+    )
+    
+    -- Delete all comments in the tree, starting with the leaves (to avoid FK constraint errors)
+    DELETE FROM Comments
+    WHERE Id IN (SELECT Id FROM CommentTree)
+    
+    -- Return the number of rows affected
+    RETURN @@ROWCOUNT;
+END;
+
+GO
+/****** Object:  StoredProcedure [dbo].[DeleteHashtag]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[DeleteHashtag]
+    @Id INT
+AS
+BEGIN
+    DELETE FROM Hashtags WHERE Id = @Id;
+END;
+
+GO
+/****** Object:  StoredProcedure [dbo].[DeleteHashtagFromPost]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[DeleteHashtagFromPost]
+    @PostID INT,
+    @HashtagID INT
+AS
+BEGIN
+    -- Delete the hashtag from the given post
+    DELETE FROM PostHashtags
+    WHERE PostID = @PostID AND HashtagID = @HashtagID;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[DeletePost]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[DeletePost] (
+    @Id INT
+) AS
+BEGIN
+	DELETE FROM Comments WHERE PostID = @Id;
+    DELETE FROM Posts
+    WHERE Id = @Id
+END
+GO
+/****** Object:  StoredProcedure [dbo].[GetAllComments]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetAllComments]
+AS
+BEGIN
+SELECT * FROM Comments
+END
+GO
+/****** Object:  StoredProcedure [dbo].[GetAllHashtags]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[GetAllHashtags]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT Id, Tag
+    FROM Hashtags
+    ORDER BY Tag ASC;
+END; 
+GO
+/****** Object:  StoredProcedure [dbo].[GetAllPosts]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetAllPosts]
+AS
+BEGIN
+	select * from Posts
+END
+
+GO
+/****** Object:  StoredProcedure [dbo].[GetByHashtags]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[GetByHashtags]
+    @hashtags NVARCHAR(MAX),
+    @PageSize INT,
+    @Offset INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    DECLARE @HashtagTable TABLE (Hashtag NVARCHAR(100));
+    
+    INSERT INTO @HashtagTable
+    SELECT value FROM STRING_SPLIT(@hashtags, ',');
+    
+    SELECT DISTINCT p.*
+    FROM Posts p
+    INNER JOIN PostHashtags ph ON p.Id = ph.PostId
+    INNER JOIN Hashtags h ON ph.HashtagId = h.Id
+    WHERE h.Tag IN (SELECT Hashtag FROM @HashtagTable)
+    ORDER BY p.CreatedAt DESC
+    OFFSET @Offset ROWS
+    FETCH NEXT @PageSize ROWS ONLY;
+END
+GO
+/****** Object:  StoredProcedure [dbo].[GetCategories]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetCategories]
+AS
+Begin
+	SELECT * FROM Categories
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[GetCategoryByName]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetCategoryByName]
+	@name varchar(50)
+AS
+BEGIN
+	SELECT * from Categories C
+	where C.Name = @name
+END
+
+GO
+/****** Object:  StoredProcedure [dbo].[GetCategoryPostCounts]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetCategoryPostCounts]
+AS
+BEGIN
+    SELECT 
+        c.Id AS CategoryID,
+        c.Name AS CategoryName,
+        COUNT(p.Id) AS PostCount
+    FROM 
+        Categories c
+    LEFT JOIN 
+        Posts p ON c.Id = p.CategoryID
+    GROUP BY 
+        c.Id, c.Name
+    ORDER BY 
+        c.Id;
+END
+GO
+/****** Object:  StoredProcedure [dbo].[GetCommentByID]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetCommentByID]
+	@CommentID INT
+	AS
+	BEGIN
+		SELECT * FROM Comments WHERE Id = @CommentID;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[GetCommentsByPostID]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetCommentsByPostID]
+    @PostID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    WITH CommentHierarchy AS 
+    (
+        SELECT 
+            c.Id AS CommentID,
+            c.Content,
+            c.UserID,
+            c.PostID,
+            c.ParentCommentID,
+            c.CreatedAt,
+            c.Level,
+            c.LikeCount
+        FROM Comments c
+        WHERE c.PostID = @PostID AND c.ParentCommentID IS NULL
+
+        UNION ALL
+
+        SELECT 
+            c.Id AS CommentID,
+            c.Content,
+            c.UserID,
+            c.PostID,
+            c.ParentCommentID,
+            c.CreatedAt,
+            c.Level,
+            c.LikeCount
+        FROM Comments c
+        INNER JOIN CommentHierarchy ch ON c.ParentCommentID = ch.CommentID
+        WHERE c.Level <= 3
+    )
+
+    SELECT * FROM CommentHierarchy ORDER BY CreatedAt;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[GetCommentsCountForPost]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetCommentsCountForPost]
+	@PostID int
+AS
+BEGIN
+SELECT COUNT(*) FROM Comments WHERE PostID = @PostID
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[GetHashtagByText]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[GetHashtagByText]
+    @text VARCHAR(20)
+AS
+BEGIN
+    SELECT * FROM Hashtags WHERE Tag = @text;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[GetHashtagsByCategory]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[GetHashtagsByCategory]
+    @CategoryID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT DISTINCT h.Id, h.Tag
+    FROM Hashtags h
+    INNER JOIN PostHashtags ph ON h.Id = ph.HashtagId
+    INNER JOIN Posts p ON ph.PostId = p.Id
+    WHERE p.CategoryID = @CategoryID
+    ORDER BY h.Tag ASC;
+END; 
+GO
+/****** Object:  StoredProcedure [dbo].[GetHashtagsForPost]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetHashtagsForPost] 
+    @PostID INT
+AS
+BEGIN
+    SELECT h.Id, h.Tag
+    FROM Hashtags h
+    INNER JOIN PostHashtags ph ON h.Id = ph.HashtagID
+    WHERE ph.PostID = @PostID;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[GetPaginatedPosts]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[GetPaginatedPosts]
+    @Offset INT,
+    @PageSize INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        p.Id, 
+        p.Title, 
+        p.Description, 
+        p.UserID, 
+        p.CategoryID, 
+        p.CreatedAt, 
+        p.UpdatedAt, 
+        p.LikeCount, 
+        u.Username
+    FROM Posts p
+    JOIN Users u ON p.UserID = u.userID
+    JOIN Categories c ON p.CategoryID = c.Id 
+    ORDER BY p.CreatedAt DESC  
+    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+END; 
+GO
+/****** Object:  StoredProcedure [dbo].[GetPostById]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetPostById] (
+    @Id INT
+) AS
+BEGIN
+    SELECT Id,
+           Title,
+           Description,
+           UserID,
+           CategoryID,
+           CreatedAt,
+           UpdatedAt,
+           LikeCount
+    FROM Posts
+    WHERE Id = @Id
+END
+GO
+/****** Object:  StoredProcedure [dbo].[GetPostCountByCategory]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[GetPostCountByCategory]
+    @CategoryID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT COUNT(*) AS CategoryPostCount 
+    FROM Posts
+    WHERE CategoryID = @CategoryID;
+END; 
+GO
+/****** Object:  StoredProcedure [dbo].[GetPostCountByHashtags]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[GetPostCountByHashtags]
+    @Hashtags NVARCHAR(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    DECLARE @HashtagTable TABLE (Hashtag NVARCHAR(100));
+    
+    INSERT INTO @HashtagTable
+    SELECT value FROM STRING_SPLIT(@Hashtags, ',');
+    
+    SELECT COUNT(DISTINCT p.Id) AS HashtagPostCount
+    FROM Posts p
+    INNER JOIN PostHashtags ph ON p.Id = ph.PostId
+    INNER JOIN Hashtags h ON ph.HashtagId = h.Id
+    WHERE h.Tag IN (SELECT Hashtag FROM @HashtagTable);
+END; 
+GO
+/****** Object:  StoredProcedure [dbo].[GetPostsByCategory]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[GetPostsByCategory] (
+    @CategoryID INT,
+    @PageSize INT,
+    @Offset INT
+) AS
+BEGIN 
+    SELECT Id, Title, Description, UserID, CategoryID, CreatedAt, UpdatedAt, LikeCount
+    FROM Posts
+    WHERE CategoryID = @CategoryID
+    ORDER BY CreatedAt DESC
+    OFFSET @Offset ROWS
+    FETCH NEXT @PageSize ROWS ONLY
+END
+GO
+/****** Object:  StoredProcedure [dbo].[GetReplies]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetReplies]
+    @ParentCommentID INT
+AS
+BEGIN
+    WITH ReplyHierarchy AS 
+    (
+        SELECT 
+            c.Id AS CommentID,
+            c.Content,
+            c.UserID,
+            c.PostID,
+            c.ParentCommentID,
+            c.CreatedAt,
+            c.Level,
+            c.LikeCount
+        FROM Comments c
+        WHERE c.ParentCommentID = @ParentCommentID
+
+        UNION ALL
+
+        SELECT 
+            c.Id AS CommentID,
+            c.Content,
+            c.UserID,
+            c.PostID,
+            c.ParentCommentID,
+            c.CreatedAt,
+            c.Level,
+            c.LikeCount
+        FROM Comments c
+        INNER JOIN ReplyHierarchy r ON c.ParentCommentID = r.CommentID
+        WHERE c.Level <= 3
+    )
+
+    SELECT * FROM ReplyHierarchy ORDER BY CreatedAt;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[GetTotalPostCount]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[GetTotalPostCount]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT COUNT(*) AS TotalCount FROM Posts;
+END; 
+GO
+/****** Object:  StoredProcedure [dbo].[GetUserById]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[GetUserById]
+    @UserId INT
+AS
+BEGIN
+    SELECT * FROM Users WHERE userID = @UserId;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[GetUserByUsername]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create or alter procedure [dbo].[GetUserByUsername]
+    @Username nvarchar(50)
+as
+begin
+    select * from Users where Username = @Username
+end
+GO
+/****** Object:  StoredProcedure [dbo].[IncrementLikeCount]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[IncrementLikeCount]
+	@CommentID int
+AS
+BEGIN
+
+UPDATE Comments
+SET LikeCount = LikeCount + 1
+WHERE Id = @CommentId
+
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[ReadHashtagById]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[ReadHashtagById]
+    @Id INT
+AS
+BEGIN
+    SELECT * FROM Hashtags WHERE Id = @Id;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[UpdateComment]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+create or alter procedure [dbo].[UpdateComment]
+    @CommentID INT,
+    @NewContent NVARCHAR(1000)
+AS
+BEGIN
+    UPDATE Comments
+    SET Content = @NewContent
+    WHERE Id = @CommentID;
+END;
+
+GO
+/****** Object:  StoredProcedure [dbo].[UpdatePost]    Script Date: 24/03/2025 19:54:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+
+create or alter procedure [dbo].[UpdatePost] (
+    @Id INT,
+    @Title NVARCHAR(20),
+    @Description NVARCHAR(4000),
+    @UserID INT,
+    @CategoryID INT,
+    @UpdatedAt DATETIME,
+    @LikeCount INT
+) AS
+BEGIN
+    UPDATE Posts
+    SET Title = @Title,
+        Description = @Description,
+        UserID = @UserID,
+        CategoryID = @CategoryID,
+        UpdatedAt = @UpdatedAt,
+        LikeCount = @LikeCount
+    WHERE Id = @Id
+END
+
+GO

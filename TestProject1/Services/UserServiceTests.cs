@@ -54,7 +54,7 @@ namespace TestProject1.Services
             var currentUser = _userService.GetCurrentUser();
             Assert.NotNull(currentUser);
             Assert.Equal(VALID_USER_ID, currentUser.UserId);
-            Assert.Equal(VALID_USERNAME, currentUser.Username);
+            Assert.Equal(VALID_USERNAME, currentUser.UserName);
             _mockUserRepository.Verify(repo => repo.GetUserByUsername(VALID_USERNAME), Times.Once);
             _mockUserRepository.Verify(repo => repo.CreateUser(It.IsAny<User>()), Times.Never);
         }
@@ -68,7 +68,7 @@ namespace TestProject1.Services
             _mockUserRepository.Setup(repo => repo.GetUserByUsername(newUsername))
                 .Returns((User)null);
             
-            _mockUserRepository.Setup(repo => repo.CreateUser(It.Is<User>(u => u.Username == newUsername)))
+            _mockUserRepository.Setup(repo => repo.CreateUser(It.Is<User>(u => u.UserName == newUsername)))
                 .Returns(VALID_USER_ID);
             
             // Second call after user creation should return the new user
@@ -83,9 +83,9 @@ namespace TestProject1.Services
             var currentUser = _userService.GetCurrentUser();
             Assert.NotNull(currentUser);
             Assert.Equal(VALID_USER_ID, currentUser.UserId);
-            Assert.Equal(newUsername, currentUser.Username);
+            Assert.Equal(newUsername, currentUser.UserName);
             _mockUserRepository.Verify(repo => repo.GetUserByUsername(newUsername), Times.AtLeastOnce);
-            _mockUserRepository.Verify(repo => repo.CreateUser(It.Is<User>(u => u.Username == newUsername)), Times.Once);
+            _mockUserRepository.Verify(repo => repo.CreateUser(It.Is<User>(u => u.UserName == newUsername)), Times.Once);
         }
         
         [Fact]
@@ -120,7 +120,7 @@ namespace TestProject1.Services
             var currentUser = _userService.GetCurrentUser();
             Assert.NotNull(currentUser);
             Assert.Equal(VALID_USER_ID, currentUser.UserId);
-            Assert.Equal(username, currentUser.Username);
+            Assert.Equal(username, currentUser.UserName);
         }
         
         [Fact]
@@ -162,7 +162,7 @@ namespace TestProject1.Services
             // Assert
             Assert.NotNull(result);
             Assert.Equal(VALID_USER_ID, result.UserId);
-            Assert.Equal(VALID_USERNAME, result.Username);
+            Assert.Equal(VALID_USERNAME, result.UserName);
         }
         
         [Fact]
@@ -191,7 +191,7 @@ namespace TestProject1.Services
             // Assert
             Assert.NotNull(result);
             Assert.Equal(VALID_USER_ID, result.UserId);
-            Assert.Equal(VALID_USERNAME, result.Username);
+            Assert.Equal(VALID_USERNAME, result.UserName);
             _mockUserRepository.Verify(repo => repo.GetUserById(VALID_USER_ID), Times.Once);
         }
         
@@ -241,7 +241,7 @@ namespace TestProject1.Services
             // Assert
             Assert.NotNull(result);
             Assert.Equal(VALID_USER_ID, result.UserId);
-            Assert.Equal(VALID_USERNAME, result.Username);
+            Assert.Equal(VALID_USERNAME, result.UserName);
             _mockUserRepository.Verify(repo => repo.GetUserByUsername(VALID_USERNAME), Times.Once);
         }
         

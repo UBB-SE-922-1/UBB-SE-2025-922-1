@@ -17,7 +17,7 @@ namespace TestProject1.Models
 
             // Assert
             Assert.Equal(expectedUserId, user.UserId);
-            Assert.Equal(expectedUsername, user.Username);
+            Assert.Equal(expectedUsername, user.UserName);
         }
 
         [Fact]
@@ -31,7 +31,7 @@ namespace TestProject1.Models
 
             // Assert
             Assert.Equal(0, user.UserId);
-            Assert.Equal(expectedUsername, user.Username);
+            Assert.Equal(expectedUsername, user.UserName);
         }
 
         [Fact]
@@ -44,11 +44,11 @@ namespace TestProject1.Models
 
             // Act
             user.UserId = newUserId;
-            user.Username = newUsername;
+            user.UserName = newUsername;
 
             // Assert
             Assert.Equal(newUserId, user.UserId);
-            Assert.Equal(newUsername, user.Username);
+            Assert.Equal(newUsername, user.UserName);
         }
     }
 } 

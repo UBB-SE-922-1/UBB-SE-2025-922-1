@@ -12,7 +12,7 @@ namespace TestMessi.Repositories
     public class CommentRepositoryTests
     {
         const int ERROR_CODE = 404;
-        private IDatabaseConnection _dataLinkMock;
+        private IDataLink _dataLinkMock;
         
         public CommentRepositoryTests()
         {

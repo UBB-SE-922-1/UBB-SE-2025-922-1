@@ -1,5 +1,347 @@
-USE [Duo]
+﻿
+GO 
+DROP PROCEDURE IF EXISTS AwardAchievement;
+go
+
+CREATE OR ALTER PROCEDURE AwardAchievement
+    @UserId INT,
+    @AchievementId INT,
+    @AwardedDate DATETIME
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM UserAchievements WHERE UserId = @UserId AND AchievementId = @AchievementId)
+    BEGIN
+        INSERT INTO UserAchievements (UserId, AchievementId, AwardedDate)
+        VALUES (@UserId, @AchievementId, @AwardedDate);
+    END
+END;
 GO
+
+DROP PROCEDURE IF EXISTS GetAllAchievements;
+GO
+
+
+CREATE OR ALTER PROCEDURE GetAllAchievements
+AS
+BEGIN
+    SELECT Id, Name, Description, Rarity
+    FROM Achievements
+END
+GO
+
+
+DROP PROCEDURE IF EXISTS GetUserAchievements;
+GO
+
+CREATE PROCEDURE GetUserAchievements
+    @UserId INT
+AS
+BEGIN
+    SELECT ua.AchievementId, a.Name, a.Description, a.Rarity, ua.AwardedDate
+    FROM UserAchievements ua
+    INNER JOIN Achievements a ON ua.AchievementId = a.Id
+    WHERE ua.UserId = @UserId
+END
+
+GO
+
+DROP PROCEDURE IF EXISTS GetFriends
+GO
+
+CREATE OR ALTER PROCEDURE GetFriends
+    @UserId INT
+AS
+BEGIN
+    SELECT 
+        u.UserId, 
+        u.UserName, 
+        u.Email, 
+        u.PrivacyStatus,
+        u.OnlineStatus,
+        u.DateJoined,
+        u.ProfileImage,
+        u.TotalPoints,
+        u.CoursesCompleted,
+        u.QuizzesCompleted,
+        u.Streak,
+        u.Password,
+		u.LastActivityDate,
+		u.Accuracy
+    FROM Friends f
+    JOIN Users u ON (f.UserId1 = @UserId AND f.UserId2 = u.UserId)
+                OR (f.UserId2 = @UserId AND f.UserId1 = u.UserId);
+END;
+GO
+
+DROP PROCEDURE IF EXISTS RemoveFriend
+GO
+
+CREATE OR ALTER PROCEDURE RemoveFriend
+    @UserId1 INT,
+    @UserId2 INT
+AS
+BEGIN
+    DELETE FROM Friends
+    WHERE (UserId1 = @UserId1 AND UserId2 = @UserId2)
+       OR (UserId1 = @UserId2 AND UserId2 = @UserId1);
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetTopFriendsByAccuracy
+GO
+
+CREATE OR ALTER PROCEDURE GetTopFriendsByAccuracy
+    @userId INT
+AS
+BEGIN
+    -- Return the user and their friends, if any
+    SELECT 
+        u.UserId, 
+        u.UserName,  
+        u.ProfileImage,
+        u.Accuracy,
+        u.QuizzesCompleted
+    FROM Users u
+    WHERE 
+        u.UserId = @UserId -- Always include the current user
+        OR u.UserId IN ( -- Include the user's friends
+            SELECT CASE 
+                WHEN f.UserId1 = @UserId THEN f.UserId2
+                WHEN f.UserId2 = @UserId THEN f.UserId1
+                ELSE NULL
+            END
+            FROM Friends f
+            WHERE f.UserId1 = @UserId OR f.UserId2 = @UserId
+        )
+    ORDER BY
+        u.Accuracy DESC;
+END;
+
+GO
+
+DROP PROCEDURE IF EXISTS GetTopFriendsByCompletedQuizzes;
+go
+
+CREATE or ALTER PROCEDURE GetTopFriendsByCompletedQuizzes
+    @userId INT
+AS
+BEGIN
+    -- Return the user and their friends, if any
+    SELECT 
+        u.UserId, 
+        u.UserName,  
+        u.ProfileImage,
+        u.Accuracy,
+        u.QuizzesCompleted
+    FROM Users u
+    WHERE 
+        u.UserId = @UserId -- Always include the current user
+        OR u.UserId IN ( -- Include the user's friends
+            SELECT CASE 
+                WHEN f.UserId1 = @UserId THEN f.UserId2
+                WHEN f.UserId2 = @UserId THEN f.UserId1
+                ELSE NULL
+            END
+            FROM Friends f
+            WHERE f.UserId1 = @UserId OR f.UserId2 = @UserId
+        )
+    ORDER BY
+        u.QuizzesCompleted DESC;
+END
+
+go
+
+drop procedure if exists GetTopUsersByAccuracy
+go
+
+CREATE or ALTER PROCEDURE GetTopUsersByAccuracy
+AS
+Begin
+	Select TOP 10
+	u.UserId,
+	u.UserName,
+	u.ProfileImage,
+	u.Accuracy,
+	u.QuizzesCompleted
+	FROM Users u
+	ORDER By u.Accuracy DESC
+End
+
+EXEC GetTopUsersByAccuracy
+go
+
+drop procedure if exists GetTopUsersByCompletedQuizzes
+GO
+
+CREATE or ALTER PROCEDURE GetTopUsersByCompletedQuizzes
+AS
+Begin
+	Select TOP 10 
+	u.UserId,
+	u.UserName,
+	u.ProfileImage,
+	u.Accuracy,
+	u.QuizzesCompleted
+	FROM Users u
+	ORDER By u.QuizzesCompleted DESC
+End
+
+GO
+
+DROP PROCEDURE IF EXISTS CreateUser
+GO
+
+CREATE OR ALTER PROCEDURE CreateUser
+    @UserName NVARCHAR(100),
+    @Email NVARCHAR(100),
+    @Password NVARCHAR(255), -- Added Password Parameter
+    @PrivacyStatus BIT,
+    @OnlineStatus BIT,
+    @DateJoined DATETIME,
+    @ProfileImage NVARCHAR(MAX),
+    @TotalPoints INT,
+    @CoursesCompleted INT,
+    @QuizzesCompleted INT,
+    @Streak INT,
+	@LastActivityDate DATETIME,
+	@Accuracy DECIMAL(5,2)
+AS
+BEGIN
+    INSERT INTO Users (
+        UserName, Email, Password, PrivacyStatus, OnlineStatus, DateJoined,
+        ProfileImage, TotalPoints, CoursesCompleted, QuizzesCompleted, Streak, LastActivityDate, Accuracy
+    )
+    VALUES (
+        @UserName, @Email, @Password, @PrivacyStatus, @OnlineStatus, @DateJoined,
+        @ProfileImage, @TotalPoints, @CoursesCompleted, @QuizzesCompleted, @Streak, @LastActivityDate, @Accuracy
+    );
+
+    SELECT SCOPE_IDENTITY() AS NewUserId;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS DeleteUser
+GO
+
+CREATE OR ALTER PROCEDURE DeleteUser
+    @UserId INT
+AS
+BEGIN
+    DELETE FROM Users WHERE UserId = @UserId;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetAllUsers
+GO
+
+CREATE OR ALTER PROCEDURE GetAllUsers
+AS
+BEGIN
+    SELECT * FROM Users;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetUserByEmail
+GO
+
+CREATE OR ALTER PROCEDURE GetUserByEmail
+    @Email NVARCHAR(100)
+AS
+BEGIN
+    SELECT *
+    FROM Users
+    WHERE Email = @Email;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetUserById
+GO
+
+
+CREATE OR ALTER PROCEDURE GetUserById
+    @UserId INT
+AS
+BEGIN
+    SELECT * FROM Users WHERE UserId = @UserId;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetUserByUsername
+GO
+
+CREATE OR ALTER PROCEDURE GetUserByUsername
+    @UserName NVARCHAR(100)
+AS
+BEGIN
+    SELECT *
+    FROM Users
+    WHERE UserName = @UserName;
+END;
+GO
+
+DROP PROCEDURE IF EXISTS GetUserStats
+GO
+
+CREATE OR ALTER PROCEDURE GetUserStats
+    @UserId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        TotalPoints,
+        Streak,
+        QuizzesCompleted,
+        CoursesCompleted
+    FROM 
+        Users
+    WHERE 
+        UserId = @UserId;
+END
+
+GO
+
+DROP PROCEDURE IF EXISTS UpdateUser
+GO
+
+
+CREATE OR ALTER PROCEDURE UpdateUser
+    @UserId INT,
+    @UserName NVARCHAR(100),
+    @Email NVARCHAR(100),
+    @Password NVARCHAR(255), -- Added Password Parameter
+    @PrivacyStatus BIT,
+    @OnlineStatus BIT,
+    @DateJoined DATETIME,
+    @ProfileImage NVARCHAR(MAX),
+    @TotalPoints INT,
+    @CoursesCompleted INT,
+    @QuizzesCompleted INT,
+    @Streak INT,
+	@LastActivityDate DATETIME,
+	@Accuracy DECIMAL(5,2)
+AS
+BEGIN
+    UPDATE Users
+    SET
+        UserName = @UserName,
+        Email = @Email,
+        Password = @Password,
+        PrivacyStatus = @PrivacyStatus,
+        OnlineStatus = @OnlineStatus,
+        DateJoined = @DateJoined,
+        ProfileImage = @ProfileImage,
+        TotalPoints = @TotalPoints,
+        CoursesCompleted = @CoursesCompleted,
+        QuizzesCompleted = @QuizzesCompleted,
+        Streak = @Streak,
+		LastActivityDate = @LastActivityDate,
+		Accuracy = @Accuracy
+    WHERE UserId = @UserId;
+END;
+GO
+
+
 /****** Object:  StoredProcedure [dbo].[AddHashtagToPost]    Script Date: 24/03/2025 19:54:36 ******/
 SET ANSI_NULLS ON
 GO
@@ -73,21 +415,6 @@ BEGIN
 END
 GO
 /****** Object:  StoredProcedure [dbo].[CreateUser]    Script Date: 24/03/2025 19:54:36 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-create or alter procedure [dbo].[CreateUser]
-    @Username NVARCHAR(30)
-AS
-BEGIN
-    INSERT INTO Users (Username)
-    VALUES (@Username);
-    
-    -- Return the newly created ID
-    SELECT SCOPE_IDENTITY() AS UserID;
-END;
-GO
 /****** Object:  StoredProcedure [dbo].[DeleteComment]    Script Date: 24/03/2025 19:54:36 ******/
 SET ANSI_NULLS ON
 GO

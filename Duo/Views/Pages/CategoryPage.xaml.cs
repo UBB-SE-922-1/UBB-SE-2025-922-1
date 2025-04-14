@@ -62,12 +62,12 @@ namespace Duo.Views.Pages
                 {
                     var item = new NavigationViewItem
                     {
-                        Content = categoryName,
+                        Content = categoryName.Replace("-", " "),
                         Icon = new SymbolIcon(Symbol.Message),
                         Tag = categoryName
                     };
 
-                    ToolTipService.SetToolTip(item, categoryName);
+                    ToolTipService.SetToolTip(item, categoryName.Replace("-", " "));
 
                     CommunityItem.MenuItems.Add(item);
                 }
@@ -116,6 +116,12 @@ namespace Duo.Views.Pages
                         break;
                     case "OffTopic":
                         contentFrame.Navigate(typeof(PostListPage), "Off-topic");
+                        break;
+                    default:
+                        if (selectedItem.Tag is string categoryName)
+                        {
+                            contentFrame.Navigate(typeof(PostListPage), categoryName);
+                        }
                         break;
                 }
             }

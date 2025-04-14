@@ -50,7 +50,7 @@ namespace TestProject1.Repositories
             // Assert
             Assert.NotNull(user);
             Assert.Equal(1, user.UserId);
-            Assert.Equal("User1", user.Username);
+            Assert.Equal("User1", user.UserName);
             Assert.IsType<User>(user);
         }
 
@@ -84,7 +84,7 @@ namespace TestProject1.Repositories
             // Assert
             Assert.NotNull(user);
             Assert.Equal(1, user.UserId);
-            Assert.Equal("User1", user.Username);
+            Assert.Equal("User1", user.UserName);
         }
 
         [Fact]

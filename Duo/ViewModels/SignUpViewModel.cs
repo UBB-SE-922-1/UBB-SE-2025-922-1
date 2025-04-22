@@ -1,6 +1,6 @@
 ﻿using System;
 using Duo.Services;
-using Duo.Models;
+using Server.Entities;
 using System.Threading.Tasks;
 using Duo.Interfaces;
 using Duo.Validators;

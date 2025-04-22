@@ -1,5 +1,5 @@
 ﻿using Duo.Interfaces;
-using Duo.Models;
+using Server.Entities;
 using Duo.Repositories;
 using System;
 using System.Threading.Tasks;

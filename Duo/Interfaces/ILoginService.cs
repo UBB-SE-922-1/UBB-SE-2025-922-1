@@ -1,4 +1,4 @@
-using Duo.Models;
+using Server.Entities;
 
 namespace Duo.Interfaces
 {

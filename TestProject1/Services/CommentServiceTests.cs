@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Moq;
 using Xunit;
-using Duo.Models;
+using Server.Entities;
 using Duo.Services;
 using Duo.Services.Interfaces;
 using Duo.Repositories.Interfaces;

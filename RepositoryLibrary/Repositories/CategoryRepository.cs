@@ -1,13 +1,10 @@
-﻿namespace Duo.Repositories
+﻿namespace DuoClassLibrary.Repositories
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Data;
     using Duo.Data;
-    using Duo.Models;
     using Duo.Repositories.Interfaces;
-    using Microsoft.Data.SqlClient;
 
     /// <summary>
     /// Repository for managing categories.

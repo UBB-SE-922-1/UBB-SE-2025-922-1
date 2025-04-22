@@ -3,7 +3,7 @@ using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System;
-using Duo.Models;
+using Server.Entities;
 using Duo.Data;
 using Duo.Repositories.Interfaces;
 using Duo.Helpers;

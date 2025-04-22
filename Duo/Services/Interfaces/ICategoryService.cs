@@ -6,7 +6,7 @@ namespace Duo.Services.Interfaces
 {
     using System;
     using System.Collections.Generic;
-    using Duo.Models;
+    using Server.Entities;
 
     public interface ICategoryService
     {

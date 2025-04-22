@@ -1,4 +1,4 @@
-using Duo.Models;
+using Server.Entities;
 using System.Collections.Generic;
 
 namespace Duo.Repositories.Interfaces

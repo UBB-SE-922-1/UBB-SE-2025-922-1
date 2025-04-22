@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Duo.Models;
+using Server.Entities;
 
 namespace Duo.Services.Interfaces
 {

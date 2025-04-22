@@ -1,6 +1,6 @@
 using System;
 using System.Windows.Input;
-using Duo.Models;
+using Server.Entities;
 using Duo.Services;
 using Microsoft.UI.Xaml;
 using System.ComponentModel;
@@ -40,7 +40,7 @@ namespace Duo.ViewModels
 
         public void LoadCategories()
         {
-                Categories = _categoryService.GetAllCategories();
+            Categories = _categoryService.GetAllCategories();
         }
 
         public List<string> GetCategoryNames()

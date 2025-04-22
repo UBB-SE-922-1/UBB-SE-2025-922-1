@@ -39,6 +39,10 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.4">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.3" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.3" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
@@ -69,12 +73,15 @@
 		<Folder Include="Data\Queries\PostHashtag\GetHashtagsForPost\" />
 	</ItemGroup>
 	<ItemGroup>
+	  <ProjectReference Include="..\Server\Server.csproj" />
+	</ItemGroup>
+	<ItemGroup>
 		<Compile Update="MainWindow.xaml.cs">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Compile>
 	</ItemGroup>
 	<ItemGroup>
-		<None Update="appsettings.json">
+		<None Update="duoappsettings.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>

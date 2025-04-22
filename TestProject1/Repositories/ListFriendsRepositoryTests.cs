@@ -14,7 +14,7 @@ namespace TestsDuo2.Repositories
         private readonly MockDataLink mockDataLink;
         private readonly UserRepository mockUserRepository;
         private readonly ListFriendsRepository listFriendsRepository;
-        private readonly List<Duo.Models.User> testFriends;
+        private readonly List<Server.Entities.User> testFriends;
 
         public ListFriendsRepositoryTests()
         {
@@ -23,7 +23,7 @@ namespace TestsDuo2.Repositories
             listFriendsRepository = new ListFriendsRepository(mockUserRepository);
 
             // Set up test friends list
-            testFriends = new List<Duo.Models.User>
+            testFriends = new List<Server.Entities.User>
             {
                 UserFactory.CreateUser(
                     id: 1,

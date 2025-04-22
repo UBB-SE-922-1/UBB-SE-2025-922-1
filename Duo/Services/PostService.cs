@@ -2,14 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Microsoft.Data.SqlClient;
-using Duo.Models;
+using Server.Entities;
 using Duo.Services;
 using Duo.Services.Interfaces;
 using Duo.Repositories;
 using Duo.Repositories.Interfaces;
 using System.Diagnostics;
 using System.Linq;
-using Duo.Repositories.Interfaces;
 
 namespace Duo.Services
 {

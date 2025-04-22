@@ -4,7 +4,7 @@ using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Duo.Models;
+using Server.Entities;
 using System.Linq;
 
 namespace Duo.Repositories

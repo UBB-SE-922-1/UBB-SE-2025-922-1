@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Duo.Models;
+using Server.Entities;
 
 namespace Duo.Services.Interfaces
 {

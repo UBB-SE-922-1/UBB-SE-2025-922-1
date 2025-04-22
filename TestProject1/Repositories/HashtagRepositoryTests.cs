@@ -5,7 +5,7 @@ using Microsoft.Data.SqlClient;
 using Xunit;
 using Duo.Repositories;
 using Duo.Data;
-using Duo.Models;
+using Server.Entities;
 using Duo.Repositories.Interfaces;
 
 namespace TestProject1.Repositories

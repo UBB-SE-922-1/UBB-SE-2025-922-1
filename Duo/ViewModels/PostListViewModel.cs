@@ -1,6 +1,6 @@
 using System;
 using System.Windows.Input;
-using Duo.Models;
+using Server.Entities;
 using Duo.Services;
 using Duo.Commands;
 using Microsoft.UI.Xaml;

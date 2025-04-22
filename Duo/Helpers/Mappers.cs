@@ -1,6 +1,6 @@
 ﻿using System.Data;
 using System;
-using Duo.Models;
+using Server.Entities;
 
 namespace Duo.Helpers;
 

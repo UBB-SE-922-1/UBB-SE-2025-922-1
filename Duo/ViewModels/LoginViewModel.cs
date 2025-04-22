@@ -1,5 +1,5 @@
 using Duo.Interfaces;
-using Duo.Models;
+using Server.Entities;
 using System;
 
 namespace Duo.ViewModels

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Duo.Models;
+using Server.Entities;
 
 namespace Duo.Repositories.Interfaces
 {

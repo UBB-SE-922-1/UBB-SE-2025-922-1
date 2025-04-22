@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Diagnostics;
-using Duo.Models;
+using Server.Entities;
 using System.Collections.Generic;
 using Duo.ViewModels;
 using Duo.Views.Components;
@@ -55,11 +55,22 @@ namespace Duo.Views.Pages
             try
             {
                 var categoryNames = _viewModel.CategoryNames;
+                if (categoryNames == null || categoryNames.Count == 0)
+                {
+                    Debug.WriteLine("No categories found or categoryNames is null");
+                    return;
+                }
 
                 CommunityItem.MenuItems.Clear();
 
                 foreach (string categoryName in categoryNames)
                 {
+                    if (string.IsNullOrEmpty(categoryName))
+                    {
+                        Debug.WriteLine("Skipping null or empty category name");
+                        continue;
+                    }
+
                     var item = new NavigationViewItem
                     {
                         Content = categoryName.Replace("-", " "),
@@ -68,7 +79,6 @@ namespace Duo.Views.Pages
                     };
 
                     ToolTipService.SetToolTip(item, categoryName.Replace("-", " "));
-
                     CommunityItem.MenuItems.Add(item);
                 }
             }

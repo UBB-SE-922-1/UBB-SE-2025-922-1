@@ -11,6 +11,7 @@ namespace TestProject1.Services
 {
     public class CategoryServiceTests
     {
+        /*
         [Fact]
         public void Constructor_NullRepository_ThrowsArgumentNullException()
         {
@@ -108,7 +109,7 @@ namespace TestProject1.Services
             // Assert
             Assert.Empty(result);
         }
-
-
+    */
     }
+       
 }

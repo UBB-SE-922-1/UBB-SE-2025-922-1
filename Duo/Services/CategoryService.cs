@@ -12,6 +12,7 @@ namespace Duo.Services
     using Duo.Services.Interfaces;
     using Server.Repositories.Interfaces;
     using System.Linq;
+    using System.Threading.Tasks;
 
     public class CategoryService : ICategoryService
     {
@@ -32,20 +33,20 @@ namespace Duo.Services
             _categoryRepository = categoryRepository ?? throw new ArgumentNullException(nameof(categoryRepository));
         }
 
-        public List<Category> GetAllCategories()
+        public async Task<List<Category>> GetAllCategories()
         {
             try
             {
-                return _categoryRepository.GetCategories();
+                var categories = await _categoryRepository.GetCategoriesAsync();
+                return categories;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(ErrorFetchingCategories, ex.Message));
                 return new List<Category>();
             }
         }
 
-        public Category GetCategoryByName(string name)
+        public async Task<Category> GetCategoryByName(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -54,7 +55,7 @@ namespace Duo.Services
 
             try
             {
-                var categories = this._categoryRepository.GetCategories();
+                var categories = await this._categoryRepository.GetCategoriesAsync();
                 if (categories == null)
                 {
                     Console.WriteLine(CategoriesListNull);
@@ -78,9 +79,9 @@ namespace Duo.Services
             }
         }
 
-        public List<string> GetCategoryNames()
+        public async Task<List<string>> GetCategoryNames()
         {
-            var categories = GetAllCategories();
+            var categories = await GetAllCategories();
             if (categories == null)
             {
                 return new List<string>();

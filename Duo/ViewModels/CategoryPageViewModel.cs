@@ -7,6 +7,7 @@ using Duo.ViewModels.Base;
 using Microsoft.UI.Xaml.Controls;
 using System.Diagnostics;
 using Duo.Services.Interfaces;
+using System.Threading.Tasks;
 
 namespace Duo.ViewModels
 {
@@ -19,6 +20,7 @@ namespace Duo.ViewModels
         private int _currentCategoryId = 0;
         private string _currentCategoryName = string.Empty;
         private string _username = "Guest";
+        private bool _isLoading;
 
         public event EventHandler<Type> NavigationRequested;
         public event EventHandler<string> CategoryNavigationRequested;
@@ -30,10 +32,16 @@ namespace Duo.ViewModels
             _userService = App.userService;
             _categoryViewModel = new CategoryViewModel(_categoryService);
             
-            GetUserInfo();
+            _ = InitializeAsync();
             
             SelectCategoryCommand = new RelayCommandWithParameter<string>(SelectCategory);
             CreatePostCommand = new RelayCommand(CreatePost);
+        }
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set => SetProperty(ref _isLoading, value);
         }
 
         public string Username
@@ -59,7 +67,25 @@ namespace Duo.ViewModels
         public ICommand SelectCategoryCommand { get; }
         public ICommand CreatePostCommand { get; }
 
-        private void GetUserInfo()
+        private async Task InitializeAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                await GetUserInfoAsync();
+                await _categoryViewModel.LoadCategoriesAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Initialization failed: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GetUserInfoAsync()
         {
             try
             {

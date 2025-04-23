@@ -7,24 +7,21 @@ namespace Server.Entities
     // test pr
     public class Category
     {
-        private int _id;
-        private string _name;
+        [Key]
+        public int Id { get; set; }
+        
+        public string Name { get; set; }
 
+        // Default constructor for serialization
+        public Category()
+        {
+        }
+
+        // Constructor for manual creation
         public Category(int id, string name)
         {
-            _id = id;
-            _name = name;
-        }
-        [Key]
-        public int Id
-        {
-            get { return _id; }
-            set { _id = value; }
-        }
-        public string Name
-        {
-            get { return _name; }
-            set { _name = value; }
+            Id = id;
+            Name = name;
         }
     }
 }

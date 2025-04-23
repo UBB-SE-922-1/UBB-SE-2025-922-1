@@ -9,6 +9,7 @@ using Duo.ViewModels;
 using Duo.Views.Components;
 using static Duo.App;
 using DuolingoNou.Views.Pages;
+using System.Threading.Tasks;
 
 namespace Duo.Views.Pages
 {
@@ -21,7 +22,18 @@ namespace Duo.Views.Pages
             try
             {
                 this.InitializeComponent();
+                _ = InitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Page initialization failed: {ex.Message}");
+            }
+        }
 
+        private async Task InitializeAsync()
+        {
+            try
+            {
                 _viewModel = new CategoryPageViewModel();
                 this.DataContext = _viewModel;
 
@@ -29,6 +41,12 @@ namespace Duo.Views.Pages
                 _viewModel.NavigationRequested += OnNavigationRequested;
                 _viewModel.CategoryNavigationRequested += OnCategoryNavigationRequested;
                 _viewModel.PostCreationSucceeded += OnPostCreationSucceeded;
+
+                // Wait for categories to load
+                while (_viewModel.IsLoading)
+                {
+                    await Task.Delay(100);
+                }
 
                 PopulateCommunityMenuItems();
                 
@@ -46,7 +64,7 @@ namespace Duo.Views.Pages
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Page initialization failed: {ex.Message}");
+                Debug.WriteLine($"Async initialization failed: {ex.Message}");
             }
         }
 

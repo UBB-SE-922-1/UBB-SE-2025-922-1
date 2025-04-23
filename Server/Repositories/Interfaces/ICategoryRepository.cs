@@ -4,6 +4,6 @@ namespace Server.Repositories.Interfaces
 {
     public interface ICategoryRepository
     {
-        List<Category> GetCategories();
+        public Task<List<Category>> GetCategoriesAsync();
     }
 }

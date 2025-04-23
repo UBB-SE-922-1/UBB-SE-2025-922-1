@@ -2,6 +2,7 @@
 using Server.Entities;
 using Server.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace Server.Repositories.Repos
 {
@@ -14,11 +15,11 @@ namespace Server.Repositories.Repos
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public List<Category> GetCategories()
+        public async Task<List<Category>> GetCategoriesAsync()
         {
             try
             {
-                return _context.Categories.ToList();
+                return await _context.Categories.ToListAsync();
             }
             catch (Exception ex)
             {

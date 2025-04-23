@@ -17,9 +17,9 @@ namespace Server.Controllers
         }
 
         [HttpGet(Name = "GetAllCategories")]
-        public IEnumerable<Category> Get()
+        public async Task<IEnumerable<Category>> Get()
         {
-            return this._categoryRepository.GetCategories();
+            return await _categoryRepository.GetCategoriesAsync();
         }
     }
 }

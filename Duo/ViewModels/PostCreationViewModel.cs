@@ -400,11 +400,11 @@ namespace Duo.ViewModels
         #endregion
 
 
-        private void LoadCommunities()
+        private async void LoadCommunities()
         {
             try
             {
-                var allCategories = _categoryService.GetAllCategories();
+                var allCategories = await _categoryService.GetAllCategories();
                 
                 Communities.Clear();
                 foreach (var category in allCategories)

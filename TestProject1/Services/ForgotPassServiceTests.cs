@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Duo.Constants;
 using Duo.Interfaces;
-using Duo.Models;
+using Server.Entities;
 using Duo.Repositories.Interfaces;
 using Duo.Services;
 using Duo.Services.Interfaces;

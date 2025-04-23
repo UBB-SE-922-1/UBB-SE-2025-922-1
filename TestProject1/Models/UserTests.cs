@@ -1,5 +1,5 @@
 using Xunit;
-using Duo.Models;
+using Server.Entities;
 
 namespace TestProject1.Models
 {

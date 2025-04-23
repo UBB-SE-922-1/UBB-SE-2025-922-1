@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
-namespace Duo.Models
+namespace Server.Entities
 {
     public class Hashtag
     {
@@ -14,6 +15,7 @@ namespace Duo.Models
             _tag = tag;
         }
 
+        [Key]
         public int Id
         {
             get { return _id; }

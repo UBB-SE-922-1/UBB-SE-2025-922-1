@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Linq;
 using Microsoft.Data.SqlClient;
-using Duo.Models;
+using Server.Entities;
 using Duo.Data;
 using Duo.Repositories.Interfaces;
 

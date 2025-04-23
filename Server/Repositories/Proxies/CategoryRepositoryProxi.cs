@@ -1,0 +1,37 @@
+﻿using Server.Entities;
+using Server.Repositories.Interfaces;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+public class CategoryRepositoryProxi : ICategoryRepository, IDisposable
+{
+    private readonly HttpClient _httpClient;
+
+    public CategoryRepositoryProxi()
+    {
+        _httpClient = new HttpClient();
+    }
+
+    public async Task<List<Category>> GetCategoriesAsync()
+    {
+        var response = await _httpClient.GetAsync("https://localhost:7160/category");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"Failed to fetch categories. Status code: {response.StatusCode}");
+        }
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<List<Category>>(jsonResponse, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        return result;
+    }
+
+    public void Dispose()
+    {
+        _httpClient.Dispose();
+    }
+}

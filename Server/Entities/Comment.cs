@@ -1,6 +1,8 @@
 using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Duo.Models
+namespace Server.Entities
 {
     public class Comment
     {
@@ -37,24 +39,28 @@ namespace Duo.Models
             _username = string.Empty;
         }
 
+        [Key]
         public int Id
         {
             get { return _id; }
             set { _id = value; }
         }
 
+        [ForeignKey("Post")]
         public int PostId
         {
             get { return _postId; }
             set { _postId = value; }
         }
 
+        [ForeignKey("User")]
         public int UserId
         {
             get { return _userId; }
             set { _userId = value; }
         }
 
+        [ForeignKey("ParentComment")]
         public int? ParentCommentId
         {
             get { return _parentCommentId; }

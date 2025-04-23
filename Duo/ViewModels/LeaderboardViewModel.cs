@@ -1,4 +1,4 @@
-﻿using Duo.Models;
+﻿using Server.Entities;
 using Duo.Services;
 using Duo.Constants;
 using System;

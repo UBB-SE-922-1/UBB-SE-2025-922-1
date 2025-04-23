@@ -6,11 +6,12 @@ namespace Duo.Services.Interfaces
 {
     using System;
     using System.Collections.Generic;
-    using Duo.Models;
+    using System.Threading.Tasks;
+    using Server.Entities;
 
     public interface ICategoryService
     {
-        List<Category> GetAllCategories();
-        Category GetCategoryByName(string name);
+        Task<List<Category>> GetAllCategories();
+        Task<Category> GetCategoryByName(string name);
     }
 }

@@ -103,7 +103,7 @@ namespace Duo.Data
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error - ExecuteReader: {ex.Message}");
+                throw new Exception($"Error - ExecuteReader: {ex.Message} {storedProcedure}");
             }
             finally
             {

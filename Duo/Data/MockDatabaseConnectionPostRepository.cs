@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using Duo.Models;
+using Server.Entities;
 
 namespace Duo.Data
 {

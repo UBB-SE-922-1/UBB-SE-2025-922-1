@@ -3,12 +3,13 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Diagnostics;
-using Duo.Models;
+using Server.Entities;
 using System.Collections.Generic;
 using Duo.ViewModels;
 using Duo.Views.Components;
 using static Duo.App;
 using DuolingoNou.Views.Pages;
+using System.Threading.Tasks;
 
 namespace Duo.Views.Pages
 {
@@ -21,7 +22,18 @@ namespace Duo.Views.Pages
             try
             {
                 this.InitializeComponent();
+                _ = InitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Page initialization failed: {ex.Message}");
+            }
+        }
 
+        private async Task InitializeAsync()
+        {
+            try
+            {
                 _viewModel = new CategoryPageViewModel();
                 this.DataContext = _viewModel;
 
@@ -29,6 +41,12 @@ namespace Duo.Views.Pages
                 _viewModel.NavigationRequested += OnNavigationRequested;
                 _viewModel.CategoryNavigationRequested += OnCategoryNavigationRequested;
                 _viewModel.PostCreationSucceeded += OnPostCreationSucceeded;
+
+                // Wait for categories to load
+                while (_viewModel.IsLoading)
+                {
+                    await Task.Delay(100);
+                }
 
                 PopulateCommunityMenuItems();
                 
@@ -46,7 +64,7 @@ namespace Duo.Views.Pages
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Page initialization failed: {ex.Message}");
+                Debug.WriteLine($"Async initialization failed: {ex.Message}");
             }
         }
 
@@ -55,11 +73,22 @@ namespace Duo.Views.Pages
             try
             {
                 var categoryNames = _viewModel.CategoryNames;
+                if (categoryNames == null || categoryNames.Count == 0)
+                {
+                    Debug.WriteLine("No categories found or categoryNames is null");
+                    return;
+                }
 
                 CommunityItem.MenuItems.Clear();
 
                 foreach (string categoryName in categoryNames)
                 {
+                    if (string.IsNullOrEmpty(categoryName))
+                    {
+                        Debug.WriteLine("Skipping null or empty category name");
+                        continue;
+                    }
+
                     var item = new NavigationViewItem
                     {
                         Content = categoryName.Replace("-", " "),
@@ -68,7 +97,6 @@ namespace Duo.Views.Pages
                     };
 
                     ToolTipService.SetToolTip(item, categoryName.Replace("-", " "));
-
                     CommunityItem.MenuItems.Add(item);
                 }
             }

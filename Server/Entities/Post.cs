@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Duo.Models
+namespace Server.Entities
 {
     public class Post
     {
@@ -12,11 +14,17 @@ namespace Duo.Models
             Hashtags = new List<string>();
         }
 
+        [Key]
         public int Id { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
+        
+        [ForeignKey("User")]
         public int UserID { get; set; }
+        
+        [ForeignKey("Category")]
         public int CategoryID { get; set; }
+        
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public int LikeCount { get; set; }

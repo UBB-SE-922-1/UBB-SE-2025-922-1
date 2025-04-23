@@ -6,7 +6,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System;
 using Duo.Helpers;
-using Duo.Models;
+using Server.Entities;
 using static Duo.App;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml.Media;

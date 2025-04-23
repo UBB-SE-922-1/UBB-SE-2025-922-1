@@ -23,11 +23,13 @@ using Duo.Services;
 using Duo.Data;
 using Duo.Repositories;
 using Duo.Repositories.Interfaces;
-using Duo.Models;
+using Server.Entities;
 using Duo.Interfaces;
 using Duo.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Duo.Services.Interfaces;
+using Server.Repositories;
+using Server.Repositories.Interfaces;
 
 namespace Duo
 {
@@ -45,7 +47,7 @@ namespace Duo
         public static IHashtagRepository _hashtagRepository;
         public static CommentRepository _commentRepository;
         public static PostService _postService;
-        public static CategoryService _categoryService;
+        public static ICategoryService _categoryService;
         public static SearchService _searchService;
 
         public App()
@@ -60,7 +62,7 @@ namespace Duo
             _postRepository = new PostRepository(_dataLink);
             _hashtagRepository = new HashtagRepository(_dataLink);
             _commentRepository = new CommentRepository(_dataLink);
-            CategoryRepository categoryRepository = new CategoryRepository(_dataLink);
+            ICategoryRepository categoryRepository = new CategoryRepositoryProxi();      
 
             userService = new UserService(userRepository);
             _searchService = new SearchService();
@@ -107,7 +109,7 @@ namespace Duo
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                .AddJsonFile("duoappsettings.json", optional: false, reloadOnChange: true);
 
             return builder.Build();
         }

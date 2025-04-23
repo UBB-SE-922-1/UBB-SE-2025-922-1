@@ -1,6 +1,6 @@
 using System;
 using System.Windows.Input;
-using Duo.Models;
+using Server.Entities;
 using Duo.Services;
 using Duo.Commands;
 using Microsoft.UI.Xaml;
@@ -163,7 +163,7 @@ namespace Duo.ViewModels
         public void LoadPosts()
         {
             var (posts, totalCount) = _postService.GetFilteredAndFormattedPosts(
-                _categoryID,
+                0,
                 _selectedHashtags.ToList(),
                 _filterText,
                 _currentPage,

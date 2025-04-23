@@ -1,10 +1,12 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
-namespace Duo.Models
+namespace Server.Entities
 {
     public class User
     {
         // User identification
+        [Key]
         public int UserId { get; set; }
         public string UserName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;

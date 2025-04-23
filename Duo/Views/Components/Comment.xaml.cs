@@ -1,4 +1,4 @@
-using Duo.Models;
+using Server.Entities;
 using Duo.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

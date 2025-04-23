@@ -1,5 +1,5 @@
 using Duo.Data;
-using Duo.Models;
+using Server.Entities;
 using Duo.Repositories;
 using Microsoft.Data.SqlClient;
 using Moq;

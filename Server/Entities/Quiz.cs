@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
-namespace Duo.Models
+namespace Server.Entities
 {
     public class Quiz
     {
+        [Key]
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;

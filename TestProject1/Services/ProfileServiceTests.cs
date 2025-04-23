@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Duo.Interfaces;
-using Duo.Models;
+using Server.Entities;
 using Duo.Services;
 using Moq;
 using Duo.Repositories.Interfaces;

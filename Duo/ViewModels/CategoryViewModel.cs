@@ -1,6 +1,6 @@
 using System;
 using System.Windows.Input;
-using Duo.Models;
+using Server.Entities;
 using Duo.Services;
 using Microsoft.UI.Xaml;
 using System.ComponentModel;
@@ -8,6 +8,8 @@ using System.Runtime.CompilerServices;
 using Duo.Commands;
 using System.Collections.Generic;
 using Duo.Services.Interfaces;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace Duo.ViewModels
 {
@@ -16,6 +18,7 @@ namespace Duo.ViewModels
         private readonly ICategoryService _categoryService;
         private string _categoryName = string.Empty;
         private List<Category> _categories = new List<Category>();
+        private bool _isLoading;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -32,25 +35,52 @@ namespace Duo.ViewModels
             }
         }
 
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                if (_isLoading != value)
+                {
+                    _isLoading = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public CategoryViewModel(ICategoryService categoryService)
         {
             _categoryService = categoryService ?? throw new ArgumentNullException(nameof(categoryService));
-            LoadCategories();
+            _ = LoadCategoriesAsync();
         }
 
-        public void LoadCategories()
+        public async Task LoadCategoriesAsync()
         {
-                Categories = _categoryService.GetAllCategories();
+            try
+            {
+                IsLoading = true;
+                Categories = await _categoryService.GetAllCategories();
+            }
+            catch (Exception ex)
+            {
+                // Log the error or show a message to the user
+                Console.WriteLine($"Error loading categories: {ex.Message}");
+                Categories = new List<Category>();
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         public List<string> GetCategoryNames()
         {
-            List<string> categoryNames = new List<string>();
-            foreach (var category in Categories)
+            if (Categories == null || Categories.Count == 0)
             {
-                categoryNames.Add(category.Name);
+                return new List<string>();
             }
-            return categoryNames;
+            var catNames = Categories.Select(c => c.Name).ToList();
+            return catNames;
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

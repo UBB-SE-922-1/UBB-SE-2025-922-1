@@ -1,5 +1,5 @@
 using Duo.Data;
-using Duo.Models;
+using Server.Entities;
 using System.Collections.Generic;
 using Duo.Interfaces;
 

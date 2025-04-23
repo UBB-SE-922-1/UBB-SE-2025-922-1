@@ -7,7 +7,7 @@ using System;
 using Windows.Storage;
 using Duo;
 using Duo.ViewModels;
-using Duo.Models;
+using Server.Entities;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 

@@ -8,13 +8,13 @@ using Duo.ViewModels.Base;
 using Duo.Services;
 using static Duo.App;
 using Duo.Data;
-using Duo.Models;
+using Server.Entities;
 
 namespace Duo.ViewModels
 {
     public class CommentViewModel : ViewModelBase
     {
-        private Models.Comment _comment;
+        private Server.Entities.Comment _comment;
         private ObservableCollection<CommentViewModel> _replies;
         private bool _isExpanded = true;
         private string _replyText;

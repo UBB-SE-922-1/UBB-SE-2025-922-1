@@ -2,7 +2,6 @@
 using DuolingoClassLibrary.Entities;
 using DuolingoClassLibrary.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 
 namespace DuolingoClassLibrary.Repositories.Repos
 {

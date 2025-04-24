@@ -18,7 +18,24 @@ namespace DuolingoClassLibrary.Data
         public DbSet<LeaderboardEntry> LeaderboardEntries { get; set; }
         public DbSet<MyCourse> MyCourses { get; set; }
         public DbSet<Quiz> Quizzes { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Configure decimal precision for LeaderboardEntry
+            modelBuilder.Entity<LeaderboardEntry>()
+                .Property(e => e.Accuracy)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<LeaderboardEntry>()
+                .Property(e => e.ScoreValue)
+                .HasPrecision(18, 2);
+
+            // Configure decimal precision for User
+            modelBuilder.Entity<User>()
+                .Property(e => e.Accuracy)
+                .HasPrecision(18, 2);
+        }
     }
-
-
 }

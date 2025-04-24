@@ -1,6 +1,7 @@
 ## UBB-SE-2025-Messi (Messi > Ronaldo)
 
 ![CleanShot 2025-03-25 at 2  02 49@2x](https://github.com/user-attachments/assets/56bb5065-f478-4481-81dd-3cb8ba18745e)
+
 > Best looking Windows app ^^
 
 ## Dev
@@ -15,6 +16,7 @@ Create a `appsettings.json` file in the `Duo` directory with the following conte
 ```
 
 You can find the pipe by running:
+
 ```cmd
 SqlLocalDB.exe start
 SqlLocalDB.exe info MSSQLLocalDB

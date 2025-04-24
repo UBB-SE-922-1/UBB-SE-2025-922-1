@@ -1,6 +1,6 @@
 using System;
 using System.Windows.Input;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Microsoft.UI.Xaml;
 using System.ComponentModel;

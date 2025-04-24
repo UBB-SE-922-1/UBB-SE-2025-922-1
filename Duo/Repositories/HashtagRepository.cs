@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Collections.ObjectModel;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Data;
 using System.Diagnostics;
 using Duo.Repositories.Interfaces;

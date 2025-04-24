@@ -1,4 +1,4 @@
-﻿using Server.Entities;
+﻿using DuolingoClassLibrary.Entities;
 using DuolingoNou.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;

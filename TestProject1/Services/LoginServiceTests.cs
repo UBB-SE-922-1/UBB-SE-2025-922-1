@@ -1,6 +1,6 @@
 using System;
 using Duo.Interfaces;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Repositories.Interfaces;
 using Duo.Services;
 using Moq;

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 
 namespace Duo.Repositories.Interfaces
 {

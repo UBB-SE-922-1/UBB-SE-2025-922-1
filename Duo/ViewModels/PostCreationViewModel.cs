@@ -1,6 +1,6 @@
 using System;
 using System.Windows.Input;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Microsoft.UI.Xaml;
 using System.ComponentModel;
@@ -213,7 +213,7 @@ namespace Duo.ViewModels
                 var currentUser = _userService.GetCurrentUser();
                 
                 // Create a new Post object
-                var newPost = new Server.Entities.Post
+                var newPost = new DuolingoClassLibrary.Entities.Post
                 {
                     Title = Title,
                     Description = Content,
@@ -300,7 +300,7 @@ namespace Duo.ViewModels
                 var currentUser = _userService.GetCurrentUser();
                 
                 // Create a new Post object
-                var newPost = new Server.Entities.Post
+                var newPost = new DuolingoClassLibrary.Entities.Post
                 {
                     Title = Title,
                     Description = Content,

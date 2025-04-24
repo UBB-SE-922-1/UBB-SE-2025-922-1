@@ -6,7 +6,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System;
 using Duo.Helpers;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using static Duo.App;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml.Media;

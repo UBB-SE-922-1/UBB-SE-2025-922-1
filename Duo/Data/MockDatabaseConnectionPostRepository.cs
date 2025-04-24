@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 
 namespace Duo.Data
 {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 
-namespace Server.Data
+namespace DuolingoClassLibrary.Data
 {
     public class DataContext : DbContext
     {
@@ -11,7 +11,6 @@ namespace Server.Data
         
         public DbSet<Achievement> Achievements { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<Post> Posts { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Hashtag> Hashtags { get; set; }
         public DbSet<Category> Categories { get; set; }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Duo.Constants;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using DuolingoNou.Services;
 using Moq;

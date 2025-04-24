@@ -1,10 +1,10 @@
-﻿using Server.Data;
-using Server.Entities;
-using Server.Repositories.Interfaces;
+﻿using DuolingoClassLibrary.Data;
+using DuolingoClassLibrary.Entities;
+using DuolingoClassLibrary.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
-namespace Server.Repositories.Repos
+namespace DuolingoClassLibrary.Repositories.Repos
 {
     public class CategoryRepository : ICategoryRepository
     {

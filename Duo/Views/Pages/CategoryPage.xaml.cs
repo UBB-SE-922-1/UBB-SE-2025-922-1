@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Diagnostics;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using System.Collections.Generic;
 using Duo.ViewModels;
 using Duo.Views.Components;

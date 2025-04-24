@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Moq;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Duo.Data

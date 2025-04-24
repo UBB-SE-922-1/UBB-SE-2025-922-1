@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
 using Duo.Commands;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Duo.ViewModels.Base;
 using Duo.Views.Components;
@@ -13,7 +13,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using static Duo.App;
 using Duo.Services.Interfaces;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 
 namespace Duo.ViewModels
 {
@@ -22,9 +22,9 @@ namespace Duo.ViewModels
         private readonly IPostService _postService;
         private readonly ICommentService _commentService;
         private readonly IUserService _userService;
-        private Server.Entities.Post _post;
+        private DuolingoClassLibrary.Entities.Post _post;
         private ObservableCollection<CommentViewModel> _commentViewModels;
-        private ObservableCollection<Server.Entities.Comment> _comments;
+        private ObservableCollection<DuolingoClassLibrary.Entities.Comment> _comments;
         private CommentCreationViewModel _commentCreationViewModel;
         private bool _isLoading;
         private bool _hasComments;
@@ -46,13 +46,13 @@ namespace Duo.ViewModels
             _commentService = _commentService ?? new CommentService(_commentRepository, _postRepository, userService);
             _userService = _userService ?? App.userService;
 
-            _post = new Server.Entities.Post
+            _post = new DuolingoClassLibrary.Entities.Post
             { 
                 Title = "",
                 Description = "",
                 Hashtags = new List<string>()
             };
-            _comments = new ObservableCollection<Server.Entities.Comment>();
+            _comments = new ObservableCollection<DuolingoClassLibrary.Entities.Comment>();
             _commentViewModels = new ObservableCollection<CommentViewModel>();
             _commentCreationViewModel = new CommentCreationViewModel();
             _commentCreationViewModel.CommentSubmitted += CommentCreationViewModel_CommentSubmitted;
@@ -63,13 +63,13 @@ namespace Duo.ViewModels
             BackCommand = new RelayCommand(GoBack);
         }
 
-        public Server.Entities.Post Post
+        public DuolingoClassLibrary.Entities.Post Post
         {
             get => _post;
             set => SetProperty(ref _post, value);
         }
 
-        public ObservableCollection<Server.Entities.Comment> Comments
+        public ObservableCollection<DuolingoClassLibrary.Entities.Comment> Comments
         {
             get => _comments;
             set => SetProperty(ref _comments, value);
@@ -138,7 +138,7 @@ namespace Duo.ViewModels
 
                 if (Post == null)
                 {
-                    Post = new Server.Entities.Post { 
+                    Post = new DuolingoClassLibrary.Entities.Post { 
                         Title = "",
                         Description = "",
                         Hashtags = new List<string>()

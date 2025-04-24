@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace Server.Migrations
+namespace DuolingoClassLibrary.Migrations
 {
     /// <inheritdoc />
     public partial class _20250422_001 : Migration

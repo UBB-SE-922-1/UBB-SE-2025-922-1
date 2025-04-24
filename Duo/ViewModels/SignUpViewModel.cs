@@ -1,6 +1,6 @@
 ﻿using System;
 using Duo.Services;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using System.Threading.Tasks;
 using Duo.Interfaces;
 using Duo.Validators;

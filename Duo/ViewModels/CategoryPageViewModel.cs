@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Input;
 using Duo.Commands;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.ViewModels.Base;
 using Microsoft.UI.Xaml.Controls;
 using System.Diagnostics;

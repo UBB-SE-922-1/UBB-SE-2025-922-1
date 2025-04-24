@@ -5,18 +5,18 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 
-namespace Server.Entities
+namespace DuolingoClassLibrary.Entities
 {
-    public class MyCourse
+    public class Quiz
     {
         [Key]
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
-        public string Language { get; set; } = string.Empty;
-        public double CompletionPercentage { get; set; }
-        public DateTime EnrollmentDate { get; set; }
+        public string Category { get; set; } = string.Empty;
+        public double AccuracyPercentage { get; set; }
+        public DateTime CompletionDate { get; set; }
 
         // Added formatted property
-        public string FormattedCompletion => $"{CompletionPercentage * 100:F0}%";
+        public string FormattedAccuracy => $"{AccuracyPercentage * 100:F0}%";
     }
 }

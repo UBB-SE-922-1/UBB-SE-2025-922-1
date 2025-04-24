@@ -1,4 +1,4 @@
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Duo.Views.Components;
 using Duo.Repositories;
@@ -40,7 +40,7 @@ namespace Duo.Views.Pages
         {
             base.OnNavigatedTo(e);
 
-            if (e.Parameter is Server.Entities.Post post && post.Id > INVALID_ID)
+            if (e.Parameter is DuolingoClassLibrary.Entities.Post post && post.Id > INVALID_ID)
             {
                 ViewModel.LoadPostDetails(post.Id);
             }

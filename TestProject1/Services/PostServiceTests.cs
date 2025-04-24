@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Repositories.Interfaces;
 using Duo.Services;
 using Duo.Services.Interfaces;

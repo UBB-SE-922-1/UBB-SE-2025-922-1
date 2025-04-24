@@ -20,4 +20,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DuolingoClassLibrary\DuolingoClassLibrary.csproj" />
+  </ItemGroup>
+
 </Project>

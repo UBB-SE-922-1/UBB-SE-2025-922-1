@@ -7,7 +7,7 @@ namespace Duo.Services.Interfaces
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using Server.Entities;
+    using DuolingoClassLibrary.Entities;
 
     public interface ICategoryService
     {

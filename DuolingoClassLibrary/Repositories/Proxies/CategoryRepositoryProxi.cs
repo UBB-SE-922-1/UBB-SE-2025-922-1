@@ -1,5 +1,5 @@
-﻿using Server.Entities;
-using Server.Repositories.Interfaces;
+﻿using DuolingoClassLibrary.Entities;
+using DuolingoClassLibrary.Repositories.Interfaces;
 using System.Text.Json;
 using System.Threading.Tasks;
 

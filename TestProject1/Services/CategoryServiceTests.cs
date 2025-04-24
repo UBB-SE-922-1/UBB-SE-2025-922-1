@@ -1,8 +1,8 @@
 using Xunit;
 using Moq;
 using Duo.Services;
-using Server.Entities;
-using Server.Repositories.Interfaces;
+using DuolingoClassLibrary.Entities;
+using DuolingoClassLibrary.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;

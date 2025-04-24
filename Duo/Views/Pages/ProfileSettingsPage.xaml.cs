@@ -7,7 +7,7 @@ using System;
 using Windows.Storage;
 using Duo;
 using Duo.ViewModels;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 

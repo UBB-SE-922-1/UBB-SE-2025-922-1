@@ -4,7 +4,7 @@ namespace TestsDuo2.TestHelpers
 {
     public static class UserFactory
     {
-        public static Server.Entities.User CreateUser(
+        public static DuolingoClassLibrary.Entities.User CreateUser(
             int id = 0, 
             string username = "testuser", 
             string email = "test@example.com",
@@ -20,7 +20,7 @@ namespace TestsDuo2.TestHelpers
             DateTime? lastActivityDate = null,
             decimal accuracy = 0)
         {
-            return new Server.Entities.User
+            return new DuolingoClassLibrary.Entities.User
             {
                 UserId = id,
                 UserName = username,

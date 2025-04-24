@@ -1,5 +1,5 @@
 ﻿using Duo.Interfaces;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Repositories;
 using System;
 using System.Threading.Tasks;

@@ -1,5 +1,5 @@
 using Duo.Data;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Repositories;
 using Microsoft.Data.SqlClient;
 using System;
@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Xunit;
-using Server.Repositories.Repos;
+using DuolingoClassLibrary.Repositories.Repos;
 using Moq;
 
 namespace TestProject1.Repositories

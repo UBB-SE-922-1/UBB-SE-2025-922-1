@@ -12,7 +12,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using System.Collections.ObjectModel;
 using Duo.Data;
 using Duo.Helpers;

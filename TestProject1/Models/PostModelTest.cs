@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 
 namespace TestMessi.Models
 {

@@ -1,7 +1,7 @@
 ﻿using Duo.Data;
 using Duo.Helpers;
 using Duo.Interfaces;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;

@@ -1,6 +1,6 @@
 ﻿using System.Data;
 using System;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 
 namespace Duo.Helpers;
 

@@ -73,7 +73,7 @@
 		<Folder Include="Data\Queries\PostHashtag\GetHashtagsForPost\" />
 	</ItemGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\Server\Server.csproj" />
+	  <ProjectReference Include="..\DuolingoClassLibrary\DuolingoClassLibrary.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Update="MainWindow.xaml.cs">

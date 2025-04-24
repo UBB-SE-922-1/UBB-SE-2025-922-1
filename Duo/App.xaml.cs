@@ -23,13 +23,13 @@ using Duo.Services;
 using Duo.Data;
 using Duo.Repositories;
 using Duo.Repositories.Interfaces;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Interfaces;
 using Duo.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Duo.Services.Interfaces;
-using Server.Repositories;
-using Server.Repositories.Interfaces;
+using DuolingoClassLibrary.Repositories;
+using DuolingoClassLibrary.Repositories.Interfaces;
 
 namespace Duo
 {

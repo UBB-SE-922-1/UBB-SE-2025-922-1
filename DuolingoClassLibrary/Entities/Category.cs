@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Server.Entities
+namespace DuolingoClassLibrary.Entities
 {
     // test pr
     public class Category

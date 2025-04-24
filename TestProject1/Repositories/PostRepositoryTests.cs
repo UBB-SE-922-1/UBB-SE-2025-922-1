@@ -1,5 +1,5 @@
 ﻿using Duo.Data;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Repositories;
 using Microsoft.Data.SqlClient;
 using System;

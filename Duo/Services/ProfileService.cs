@@ -1,4 +1,4 @@
-﻿using Server.Entities;
+﻿using DuolingoClassLibrary.Entities;
 using Duo.Repositories;
 using Duo.Interfaces;
 using System.Collections.Generic;

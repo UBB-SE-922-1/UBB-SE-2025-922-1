@@ -1,5 +1,5 @@
 using Xunit;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 
 namespace TestProject1.Models
 {

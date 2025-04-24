@@ -1,5 +1,5 @@
 ﻿using System;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 
 namespace Duo.Services.Interfaces
 {

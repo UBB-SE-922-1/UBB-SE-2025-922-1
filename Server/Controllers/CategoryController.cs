@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Server.Data;
-using Server.Entities;
-using Server.Repositories.Repos;
+using DuolingoClassLibrary.Data;
+using DuolingoClassLibrary.Entities;
+using DuolingoClassLibrary.Repositories.Repos;
 
-namespace Server.Controllers
+namespace DuolingoClassLibrary.Controllers
 {
     [ApiController]
     [Route("[controller]")]

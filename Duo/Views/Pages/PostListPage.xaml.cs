@@ -6,7 +6,7 @@ using System.Linq;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.ViewModels;
 using Duo.Services;
 using Duo.Repositories;

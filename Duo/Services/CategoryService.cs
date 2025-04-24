@@ -6,11 +6,11 @@ namespace Duo.Services
 {
     using System;
     using System.Collections.Generic;
-    using Server.Entities;
+    using DuolingoClassLibrary.Entities;
     using Duo.Repositories;
     using Duo.Repositories.Interfaces;
     using Duo.Services.Interfaces;
-    using Server.Repositories.Interfaces;
+    using DuolingoClassLibrary.Repositories.Interfaces;
     using System.Linq;
     using System.Threading.Tasks;
 

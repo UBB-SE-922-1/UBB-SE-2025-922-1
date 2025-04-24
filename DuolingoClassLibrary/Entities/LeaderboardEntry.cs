@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Server.Entities;
+namespace DuolingoClassLibrary.Entities;
 
 public class LeaderboardEntry
 {

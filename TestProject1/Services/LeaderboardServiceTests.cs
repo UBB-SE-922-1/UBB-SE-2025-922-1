@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Duo.Constants;
 using Duo.Interfaces;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Moq;
 using Xunit;

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Server.Data;
-using Server.Repositories.Repos;
+using DuolingoClassLibrary.Data;
+using DuolingoClassLibrary.Repositories.Repos;
 
 var builder = WebApplication.CreateBuilder(args);
 

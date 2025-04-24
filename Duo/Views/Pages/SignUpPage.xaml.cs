@@ -1,7 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Duo.ViewModels;
-using Server.Entities;
+using DuolingoClassLibrary.Entities;
 using System;
 using System.Threading.Tasks;
 using DuolingoNou.Views;

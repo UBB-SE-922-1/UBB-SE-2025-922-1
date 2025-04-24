@@ -194,7 +194,7 @@ namespace Duo.Views.Components
             if (frame != null)
             {
                 // Create a Post with the current post's data
-                var post = new Server.Entities.Post
+                var post = new DuolingoClassLibrary.Entities.Post
                 {
                     Title = this.Title ?? string.Empty,
                     Description = this.Content ?? string.Empty,

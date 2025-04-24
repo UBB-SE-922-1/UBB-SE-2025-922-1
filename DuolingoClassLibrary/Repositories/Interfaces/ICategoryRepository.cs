@@ -1,6 +1,6 @@
-﻿using Server.Entities;
+﻿using DuolingoClassLibrary.Entities;
 
-namespace Server.Repositories.Interfaces
+namespace DuolingoClassLibrary.Repositories.Interfaces
 {
     public interface ICategoryRepository
     {

@@ -1,7 +1,7 @@
-﻿using Server.Entities;
-using Server.Repositories.Interfaces;
+﻿using DuolingoClassLibrary.Entities;
+using DuolingoClassLibrary.Repositories.Interfaces;
 using System.Text.Json;
-using System.Threading.Tasks;
+using DuolingoClassLibrary.Constants;
 
 public class CategoryRepositoryProxi : ICategoryRepository, IDisposable
 {
@@ -14,7 +14,7 @@ public class CategoryRepositoryProxi : ICategoryRepository, IDisposable
 
     public async Task<List<Category>> GetCategoriesAsync()
     {
-        var response = await _httpClient.GetAsync("https://localhost:7160/category");
+        var response = await _httpClient.GetAsync(Enviroment.BaseUrl + "category");
 
         if (!response.IsSuccessStatusCode)
         {

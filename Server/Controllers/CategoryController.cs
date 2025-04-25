@@ -3,7 +3,7 @@ using DuolingoClassLibrary.Data;
 using DuolingoClassLibrary.Entities;
 using DuolingoClassLibrary.Repositories.Repos;
 
-namespace DuolingoClassLibrary.Controllers
+namespace Server.Controllers
 {
     [ApiController]
     [Route("[controller]")]

@@ -18,6 +18,7 @@ namespace DuolingoClassLibrary.Data
         public DbSet<LeaderboardEntry> LeaderboardEntries { get; set; }
         public DbSet<MyCourse> MyCourses { get; set; }
         public DbSet<Quiz> Quizzes { get; set; }
+        public DbSet<Post> Posts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

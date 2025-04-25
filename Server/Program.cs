@@ -15,6 +15,7 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 // Register repositories
 builder.Services.AddScoped<CategoryRepository>();
+builder.Services.AddScoped<PostRepository>();
 
 var app = builder.Build();
 

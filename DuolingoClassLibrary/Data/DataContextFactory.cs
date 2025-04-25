@@ -15,9 +15,9 @@ namespace DuolingoClassLibrary.Data
 
             // Build configuration
             var configuration = new ConfigurationBuilder()
-                .SetBasePath(projectDir)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .Build();
+           .SetBasePath(Path.Combine(Path.Combine(projectDir, "UBB-SE-2025-Duolingo"), "DuolingoClassLibrary"))
+           .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+           .Build();
 
             // Get connection string
             var connectionString = configuration.GetConnectionString("DefaultConnection");

@@ -29,9 +29,13 @@ namespace DuolingoClassLibrary.Entities
         public DateTime UpdatedAt { get; set; }
         public int LikeCount { get; set; }
 
-        public string Content { get => Description; set => Description = value; } 
-        public string Username { get; set; } 
-        public string Date { get; set; } 
+        [NotMapped]
+        public string? Content { get => Description; set => Description = value; }
+        [NotMapped]
+        public string? Username { get; set; }
+        [NotMapped]
+        public string? Date { get; set; }
+        [NotMapped]
         public List<string> Hashtags { get; set; } = new List<string>(); 
     }
 }

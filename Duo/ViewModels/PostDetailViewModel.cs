@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
+using System.Threading.Tasks;
 using Duo.Commands;
 using DuolingoClassLibrary.Entities;
 using Duo.Services;
@@ -14,6 +15,7 @@ using Microsoft.UI.Xaml.Media;
 using static Duo.App;
 using Duo.Services.Interfaces;
 using DuolingoClassLibrary.Entities;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Duo.ViewModels
 {
@@ -43,7 +45,7 @@ namespace Duo.ViewModels
         public PostDetailViewModel()
         {
             _postService = _postService ?? App._postService;
-            _commentService = _commentService ?? new CommentService(_commentRepository, _postRepository, userService);
+            _commentService = _commentService ?? App._commentService;
             _userService = _userService ?? App.userService;
 
             _post = new DuolingoClassLibrary.Entities.Post
@@ -57,9 +59,9 @@ namespace Duo.ViewModels
             _commentCreationViewModel = new CommentCreationViewModel();
             _commentCreationViewModel.CommentSubmitted += CommentCreationViewModel_CommentSubmitted;
 
-            LoadPostDetailsCommand = new RelayCommandWithParameter<int>(LoadPostDetails);
-            AddCommentCommand = new RelayCommandWithParameter<string>(AddComment);
-            AddReplyCommand = new RelayCommandWithParameter<Tuple<int, string>>(AddReply);
+            LoadPostDetailsCommand = new RelayCommandWithParameter<int>(async (id) => await LoadPostDetailsAsync(id));
+            AddCommentCommand = new RelayCommandWithParameter<string>(async (text) => await AddCommentAsync(text));
+            AddReplyCommand = new RelayCommandWithParameter<Tuple<int, string>>(async (data) => await AddReplyAsync(data));
             BackCommand = new RelayCommand(GoBack);
         }
 
@@ -115,16 +117,16 @@ namespace Duo.ViewModels
             // This is a placeholder - actual navigation will be handled in the view
         }
 
-        private void CommentCreationViewModel_CommentSubmitted(object sender, EventArgs e)
+        private async void CommentCreationViewModel_CommentSubmitted(object sender, EventArgs e)
         {
             if (sender is CommentCreationViewModel viewModel && !string.IsNullOrWhiteSpace(viewModel.CommentText))
             {
-                AddComment(viewModel.CommentText);
+                await AddCommentAsync(viewModel.CommentText);
                 viewModel.ClearComment();
             }
         }
 
-        public void LoadPostDetails(int postId)
+        public async Task LoadPostDetailsAsync(int postId)
         {
             IsLoading = true;
             ErrorMessage = string.Empty;
@@ -146,12 +148,12 @@ namespace Duo.ViewModels
                 }
 
                 // Use the service method that encapsulates all the business logic
-                var post = _postService.GetPostDetailsWithMetadata(postId);
+                var post = await _postService.GetPostDetailsWithMetadata(postId);
                 
                 if (post != null)
                 {
                     Post = post;
-                    LoadComments(post.Id);
+                    await LoadCommentsAsync(post.Id);
                 }
                 else
                 {
@@ -169,7 +171,7 @@ namespace Duo.ViewModels
             }
         }
 
-        public void LoadComments(int postId)
+        public async Task LoadCommentsAsync(int postId)
         {
             try
             {
@@ -179,7 +181,7 @@ namespace Duo.ViewModels
                 }
 
                 // Use service method to get pre-processed comments
-                var (allComments, topLevelComments, repliesByParentId) = _commentService.GetProcessedCommentsByPostId(postId);
+                var (allComments, topLevelComments, repliesByParentId) = await _commentService.GetProcessedCommentsByPostId(postId);
 
                 Comments.Clear();
                 CommentViewModels.Clear();
@@ -218,12 +220,12 @@ namespace Duo.ViewModels
             }
         }
 
-        private void AddComment(string commentText)
+        private async Task AddCommentAsync(string commentText)
         {
             try
             {
-                _commentService.CreateComment(commentText, Post.Id, null);
-                LoadComments(Post.Id);
+                await _commentService.CreateComment(commentText, Post.Id, null);
+                await LoadCommentsAsync(Post.Id);
             }
             catch (Exception ex)
             {
@@ -232,45 +234,43 @@ namespace Duo.ViewModels
             }
         }
 
-        private void AddReply(Tuple<int, string> data)
+        private async Task AddReplyAsync(Tuple<int, string> data)
         {
             if (data == null)
                 return;
                 
-            AddReplyToComment(data.Item1, data.Item2);
+            await AddReplyToCommentAsync(data.Item1, data.Item2);
         }
 
-        public void DeleteComment(int commentId)
-         {
-
-             try
-             {
-                User currentUser = userService.GetCurrentUser();
-
-                bool success = _commentService.DeleteComment(commentId, currentUser.UserId);
-                if (success)
-                {
-                    LoadComments(Post.Id);
-                }                
-             }
-             catch (Exception ex)
-             {
-                 System.Diagnostics.Debug.WriteLine($"Error deleting comment: {ex.Message}");
-             }
-         }
-
-        public void AddReplyToComment(int parentCommentId, string replyText)
+        public async Task DeleteCommentAsync(int commentId)
         {
             try
             {
-                var (success, newReplySignature) = _commentService.CreateReplyWithDuplicateCheck(
+                User currentUser = await _userService.GetCurrentUserAsync();
+                bool success = await _commentService.DeleteComment(commentId, currentUser.UserId);
+                if (success)
+                {
+                    await LoadCommentsAsync(Post.Id);
+                }                
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error deleting comment: {ex.Message}");
+            }
+        }
+
+        public async Task AddReplyToCommentAsync(int parentCommentId, string replyText)
+        {
+            try
+            {
+                var (success, newReplySignature) = await _commentService.CreateReplyWithDuplicateCheck(
                     replyText,
                     Post?.Id ?? 0,
                     parentCommentId,
                     Comments,
                     _lastProcessedReply);
-                    _lastProcessedReply = newReplySignature;
-                    LoadComments(Post.Id);
+                _lastProcessedReply = newReplySignature;
+                await LoadCommentsAsync(Post.Id);
             }
             catch (Exception ex)
             {
@@ -309,6 +309,42 @@ namespace Duo.ViewModels
             {
                 ErrorMessage = $"Failed to like comment: {ex.Message}";
             }
+        }
+        
+        // Legacy method for backward compatibility with XAML bindings
+        public void LoadPostDetails(int postId)
+        {
+            _ = LoadPostDetailsAsync(postId);
+        }
+        
+        // Legacy method for backward compatibility with XAML bindings
+        public void LoadComments(int postId)
+        {
+            _ = LoadCommentsAsync(postId);
+        }
+        
+        // Legacy method for backward compatibility with XAML bindings
+        public void AddComment(string commentText)
+        {
+            _ = AddCommentAsync(commentText);
+        }
+        
+        // Legacy method for backward compatibility with XAML bindings
+        public void AddReply(Tuple<int, string> data)
+        {
+            _ = AddReplyAsync(data);
+        }
+        
+        // Legacy method for backward compatibility with XAML bindings
+        public void DeleteComment(int commentId)
+        {
+            _ = DeleteCommentAsync(commentId);
+        }
+        
+        // Legacy method for backward compatibility with XAML bindings
+        public void AddReplyToComment(int parentCommentId, string replyText)
+        {
+            _ = AddReplyToCommentAsync(parentCommentId, replyText);
         }
     }
 } 

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System;
+using System.Threading.Tasks;
 using DuolingoClassLibrary.Entities;
 using Duo.ViewModels;
 using Duo.Services;
@@ -44,7 +45,7 @@ namespace Duo.Views.Pages
             SetupHashtagDragScrolling();
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
@@ -56,7 +57,7 @@ namespace Duo.Views.Pages
 
                 if (_viewModel.CategoryID == INVALID_ID && _viewModel.CategoryName != null)
                 {
-                    var categoryInfo = _categoryService.GetCategoryByName(_viewModel.CategoryName);
+                    var categoryInfo = await App._categoryService.GetCategoryByName(_viewModel.CategoryName);
                     if (categoryInfo != null)
                     {
                         _viewModel.CategoryID = categoryInfo.Id;
@@ -64,7 +65,7 @@ namespace Duo.Views.Pages
                 }
             }
 
-            _viewModel.LoadPosts();
+            await _viewModel.LoadPostsAsync();
 
             UpdateHashtagsList();
         }
@@ -105,11 +106,11 @@ namespace Duo.Views.Pages
             _viewModel.FilterText = FilterByTitle.Text;
         }
 
-        private void Hashtag_Click(object sender, RoutedEventArgs e)
+        private async void Hashtag_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.Tag is string hashtag)
             {
-                _viewModel.ToggleHashtag(hashtag);
+                await _viewModel.ToggleHashtagAsync(hashtag);
 
                 UpdateHashtagButtonStyles();
 
@@ -131,9 +132,9 @@ namespace Duo.Views.Pages
             }
         }
 
-        private void ClearHashtags_Click(object sender, RoutedEventArgs e)
+        private async void ClearHashtags_Click(object sender, RoutedEventArgs e)
         {
-            _viewModel.ClearFilters();
+            await _viewModel.ClearFiltersAsync();
             UpdateHashtagButtonStyles();
 
             PostsPager.NumberOfPages = _viewModel.TotalPages;

@@ -172,7 +172,7 @@ namespace Duo.ViewModels
             _userService = _userService ?? App.userService;
 
             // Initialize commands
-            CreatePostCommand = new RelayCommand(CreatePost);
+            CreatePostCommand = new RelayCommand(async () => await CreatePostAsync());
             AddHashtagCommand = new RelayCommandWithParameter<string>(AddHashtag);
             RemoveHashtagCommand = new RelayCommandWithParameter<string>(RemoveHashtag);
             SelectCommunityCommand = new RelayCommandWithParameter<int>(SelectCommunity);
@@ -183,7 +183,7 @@ namespace Duo.ViewModels
 
         #region Public Methods
 
-        public void CreatePost()
+        public async Task CreatePostAsync()
         {
             if (string.IsNullOrWhiteSpace(Title) || string.IsNullOrWhiteSpace(Content))
             {
@@ -210,7 +210,7 @@ namespace Duo.ViewModels
             try
             {
                 // Get current user ID
-                var currentUser = _userService.GetCurrentUser();
+                var currentUser = await _userService.GetCurrentUserAsync();
                 
                 // Create a new Post object
                 var newPost = new DuolingoClassLibrary.Entities.Post
@@ -224,7 +224,7 @@ namespace Duo.ViewModels
                 };
                 
                 // Create post in database using the original CreatePost method
-                int createdPostId = _postService.CreatePost(newPost);
+                int createdPostId = await _postService.CreatePost(newPost);
                 
                 // Add hashtags if any
                 if (Hashtags.Count > DEFAULT_COUNT)
@@ -233,7 +233,7 @@ namespace Duo.ViewModels
                     {
                         try
                         {
-                            _postService.AddHashtagToPost(createdPostId, hashtagText, currentUser.UserId);
+                            await _postService.AddHashtagToPost(createdPostId, hashtagText, currentUser.UserId);
                         }
                         catch (Exception hashtagException)
                         {
@@ -250,11 +250,15 @@ namespace Duo.ViewModels
                 // Clear form
                 ClearForm();
             }
-            catch (Exception postCreationException)
+            catch (Exception ex)
             {
-                Debug.WriteLine($"Error creating post: {postCreationException.Message}");
-                LastError = $"Failed to create post: {postCreationException.Message}";
                 IsSuccess = false;
+                LastError = $"Error creating post: {ex.Message}";
+                Debug.WriteLine($"Error creating post: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
             }
             finally
             {
@@ -264,73 +268,70 @@ namespace Duo.ViewModels
 
         public async Task<bool> CreatePostAsync(string title, string content, int categoryId, List<string> hashtags = null)
         {
-            // Set properties
-            Title = title;
-            Content = content;
-            SelectedCategoryId = categoryId;
-            
-            // Additional detailed debugging
-            System.Diagnostics.Debug.WriteLine($"CreatePostAsync - START - Title: '{title}', Content length: {content?.Length ?? 0}, CategoryID: {categoryId}");
-            System.Diagnostics.Debug.WriteLine($"CreatePostAsync - Received hashtags: {hashtags?.Count ?? 0}");
-            if (hashtags != null && hashtags.Count > DEFAULT_COUNT)
+            if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(content))
             {
-                System.Diagnostics.Debug.WriteLine($"CreatePostAsync - Hashtags to add: {string.Join(", ", hashtags)}");
+                LastError = "Title and content are required.";
+                return false;
             }
-            
-            // Process hashtags
-            List<string> processedHashtags = new List<string>();
-            if (hashtags != null && hashtags.Count > DEFAULT_COUNT)
+
+            var (isTitleValid, titleError) = ValidationHelper.ValidatePostTitle(title);
+            if (!isTitleValid)
             {
-                foreach (var hashtagText in hashtags)
-                {
-                    if (!string.IsNullOrWhiteSpace(hashtagText))
-                    {
-                        processedHashtags.Add(hashtagText.Trim());
-                    }
-                }
+                LastError = titleError;
+                return false;
             }
-            
-            // Create the post
+
+            if (categoryId <= INVALID_ID)
+            {
+                LastError = "Please select a valid community.";
+                return false;
+            }
+
             IsLoading = true;
             LastError = EMPTY_STRING;
 
             try
             {
                 // Get current user ID
-                var currentUser = _userService.GetCurrentUser();
+                var currentUser = await _userService.GetCurrentUserAsync();
                 
                 // Create a new Post object
                 var newPost = new DuolingoClassLibrary.Entities.Post
                 {
-                    Title = Title,
-                    Description = Content,
+                    Title = title,
+                    Description = content,
                     UserID = currentUser.UserId,
-                    CategoryID = SelectedCategoryId,
+                    CategoryID = categoryId,
                     CreatedAt = DateTimeHelper.EnsureUtcKind(DateTime.UtcNow),
                     UpdatedAt = DateTimeHelper.EnsureUtcKind(DateTime.UtcNow)
                 };
                 
-                // Create post and add hashtags in a single operation
-                int createdPostId = _postService.CreatePostWithHashtags(newPost, processedHashtags, currentUser.UserId);
+                // Create post in database using the CreatePostWithHashtags method
+                var hashtagsList = hashtags ?? new List<string>();
+                int createdPostId = await _postService.CreatePostWithHashtags(newPost, hashtagsList, currentUser.UserId);
                 
-                // Now that we have a valid post ID, update our hashtags collection
-                Hashtags.Clear();
-                foreach (var hashtagText in processedHashtags)
+                if (createdPostId > 0)
                 {
-                    _postHashtags.Add(hashtagText);
+                    // Handle success
+                    IsSuccess = true;
+                    PostCreationSuccessful?.Invoke(this, EventArgs.Empty);
+                    return true;
                 }
-                
-                // Handle success
-                IsSuccess = true;
-                PostCreationSuccessful?.Invoke(this, EventArgs.Empty);
-                
-                return true;
+                else
+                {
+                    LastError = "Error creating post. Please try again.";
+                    return false;
+                }
             }
-            catch (Exception postCreationException)
+            catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error creating post: {postCreationException.Message}");
-                LastError = $"Failed to create post: {postCreationException.Message}";
                 IsSuccess = false;
+                LastError = $"Error creating post: {ex.Message}";
+                Debug.WriteLine($"Error creating post: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
                 return false;
             }
             finally
@@ -343,41 +344,33 @@ namespace Duo.ViewModels
         {
             if (string.IsNullOrWhiteSpace(hashtag))
             {
-                System.Diagnostics.Debug.WriteLine("AddHashtag - Empty hashtag provided, ignoring");
                 return;
             }
 
-            string trimmedHashtag = hashtag.Trim();
-            
-            // Add the hashtag if it doesn't already exist
-            if (!Hashtags.Contains(trimmedHashtag))
+            // Normalize hashtag format
+            hashtag = hashtag.Trim();
+            if (!hashtag.StartsWith("#"))
             {
-                // Add directly to the collection
-                _postHashtags.Add(trimmedHashtag);
-                
-                // Debug output
-                System.Diagnostics.Debug.WriteLine($"Added hashtag to ViewModel: {trimmedHashtag}, Count now: {Hashtags.Count}");
-                
-                // Explicitly notify that the Hashtags collection has changed
-                OnPropertyChanged(nameof(Hashtags));
+                hashtag = "#" + hashtag;
             }
-            else
+
+            // Check if hashtag already exists
+            if (!Hashtags.Contains(hashtag))
             {
-                System.Diagnostics.Debug.WriteLine($"Hashtag '{trimmedHashtag}' already exists in collection, not adding duplicate");
+                Hashtags.Add(hashtag);
             }
         }
 
         public void RemoveHashtag(string hashtag)
         {
-            if (!string.IsNullOrWhiteSpace(hashtag) && Hashtags.Contains(hashtag))
+            if (string.IsNullOrWhiteSpace(hashtag))
+            {
+                return;
+            }
+
+            if (Hashtags.Contains(hashtag))
             {
                 Hashtags.Remove(hashtag);
-                
-                // Debug output
-                System.Diagnostics.Debug.WriteLine($"Removed hashtag from ViewModel: {hashtag}, Count now: {Hashtags.Count}");
-                
-                // Explicitly notify that the Hashtags collection has changed
-                OnPropertyChanged(nameof(Hashtags));
             }
         }
 
@@ -390,46 +383,46 @@ namespace Duo.ViewModels
         {
             Title = EMPTY_STRING;
             Content = EMPTY_STRING;
-            SelectedCategoryId = INVALID_ID;
+            SelectedCategoryId = 0;
             Hashtags.Clear();
-            UpdateSelectedCommunity();
             LastError = EMPTY_STRING;
             IsSuccess = false;
         }
 
         #endregion
 
+        #region Private Methods
 
         private async void LoadCommunities()
         {
             try
             {
-                var allCategories = await _categoryService.GetAllCategories();
-                
                 Communities.Clear();
-                foreach (var category in allCategories)
+                var categories = await _categoryService.GetAllCategories();
+                Communities.Add(new CommunityItem { Id = 0, Name = "Select a community" });
+                
+                foreach (var category in categories)
                 {
-                    Communities.Add(new CommunityItem
+                    if (category != null)
                     {
-                        Id = category.Id,
-                        Name = category.Name,
-                        IsSelected = (category.Id == SelectedCategoryId)
-                    });
+                        Communities.Add(new CommunityItem 
+                        { 
+                            Id = category.Id, 
+                            Name = category.Name 
+                        });
+                    }
                 }
             }
             catch (Exception ex)
             {
+                LastError = $"Error loading communities: {ex.Message}";
                 Debug.WriteLine($"Error loading communities: {ex.Message}");
-                LastError = $"Failed to load communities: {ex.Message}";
             }
         }
 
         private void UpdateSelectedCommunity()
         {
-            foreach (var community in Communities)
-            {
-                community.IsSelected = (community.Id == SelectedCategoryId);
-            }
+            // Update the selected community in the UI, if needed
         }
 
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
@@ -437,5 +430,12 @@ namespace Duo.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+        #endregion
+        
+        // Legacy method for backward compatibility
+        public void CreatePost()
+        {
+            _ = CreatePostAsync();
+        }
     }
 }

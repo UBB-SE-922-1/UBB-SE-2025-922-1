@@ -7,6 +7,7 @@ using DuolingoClassLibrary.Entities;
 using Duo.Data;
 using System.Diagnostics;
 using Duo.Repositories.Interfaces;
+using System.Threading.Tasks;
 
 namespace Duo.Repositories
 {
@@ -23,7 +24,7 @@ namespace Duo.Repositories
             _dataLink = dataLink;
         }
 
-        public Hashtag GetHashtagByText(string textToSearchBy)
+        public async Task<Hashtag> GetHashtagByText(string textToSearchBy)
         {
             if(string.IsNullOrWhiteSpace(textToSearchBy)) throw new Exception("Error - GetHashtagByText: Text cannot be null or empty");
 
@@ -36,7 +37,7 @@ namespace Duo.Repositories
                     new SqlParameter("@text", textToSearchBy)
                 };
 
-                dataTable = _dataLink.ExecuteReader("GetHashtagByText", sqlParameters);
+                dataTable = await Task.Run(() => _dataLink.ExecuteReader("GetHashtagByText", sqlParameters));
 
                 if (dataTable.Rows.Count == EMPTY) 
                     throw new Exception("Error - GetHashtagByText: No records found");
@@ -59,7 +60,7 @@ namespace Duo.Repositories
 
         }
 
-        public Hashtag CreateHashtag(string newHashtagTag)
+        public async Task<Hashtag> CreateHashtag(string newHashtagTag)
         {
             if (string.IsNullOrWhiteSpace(newHashtagTag)) throw new Exception("Error - CreateHashtag: Text cannot be null or empty");
 
@@ -69,7 +70,7 @@ namespace Duo.Repositories
                 {
                     new SqlParameter("@Tag", newHashtagTag)
                 };
-                var result = _dataLink.ExecuteScalar<int>("CreateHashtag", sqlParameters);
+                var result = await Task.Run(() => _dataLink.ExecuteScalar<int>("CreateHashtag", sqlParameters));
 
                 if (result == QUERRY_ERROR) 
                     throw new Exception("Error - CreateHashtag: Hashtag could not be created!");
@@ -87,7 +88,7 @@ namespace Duo.Repositories
             }
         }
 
-        public List<Hashtag> GetHashtagsByPostId(int postId)
+        public async Task<List<Hashtag>> GetHashtagsByPostId(int postId)
         {
             if (postId <= INVALID) throw new Exception("Error - GetHashtagsByPostId: PostId must be greater than 0");
             DataTable? dataTable = null;
@@ -97,7 +98,7 @@ namespace Duo.Repositories
                 {
                     new SqlParameter("@PostID", postId)
                 };
-                dataTable = _dataLink.ExecuteReader("GetHashtagsForPost", sqlParameters);
+                dataTable = await Task.Run(() => _dataLink.ExecuteReader("GetHashtagsForPost", sqlParameters));
 
                 Debug.WriteLine("am aj  ");
                 List<Hashtag> foundHashtags = new List<Hashtag>();
@@ -127,7 +128,7 @@ namespace Duo.Repositories
 
         }
 
-        public bool AddHashtagToPost(int postId, int hashtagId)
+        public async Task<bool> AddHashtagToPost(int postId, int hashtagId)
         {
             if (postId <= INVALID) throw new Exception("Error - AddHashtagToPost: PostId must be greater than 0");
             if (hashtagId <= INVALID) 
@@ -141,7 +142,7 @@ namespace Duo.Repositories
                     new SqlParameter("@HashtagID", hashtagId)
                 };
                 
-                var result = _dataLink.ExecuteNonQuery("AddHashtagToPost", sqlParameters);
+                var result = await Task.Run(() => _dataLink.ExecuteNonQuery("AddHashtagToPost", sqlParameters));
                 
                 if (result == QUERRY_ERROR)
                 {
@@ -155,7 +156,8 @@ namespace Duo.Repositories
                 throw new Exception($"Error - AddHashtagToPost: {caughtException.Message}");
             }
         }
-        public bool RemoveHashtagFromPost(int postId, int hashtagId)
+        
+        public async Task<bool> RemoveHashtagFromPost(int postId, int hashtagId)
         {
             if (postId <= INVALID) throw new Exception("Error - RemoveHashtagFromPost: PostId must be greater than 0");
             if (hashtagId <= INVALID) 
@@ -167,7 +169,7 @@ namespace Duo.Repositories
                     new SqlParameter("@PostID", postId),
                     new SqlParameter("@HashtagID", hashtagId)
                 };
-                var queryResult = _dataLink.ExecuteNonQuery("DeleteHashtagFromPost", sqlParameters);
+                var queryResult = await Task.Run(() => _dataLink.ExecuteNonQuery("DeleteHashtagFromPost", sqlParameters));
                 if (queryResult == QUERRY_ERROR) 
                     throw new Exception("Error - RemoveHashtagFromPost: Hashtag could not be removed from post!");
                 return true;
@@ -178,18 +180,18 @@ namespace Duo.Repositories
             }
         }
 
-        public Hashtag GetHashtagByName(string hashtagName)
+        public async Task<Hashtag> GetHashtagByName(string hashtagName)
         {
-            return GetHashtagByText(hashtagName);
+            return await GetHashtagByText(hashtagName);
         }
 
-        public List<Hashtag> GetAllHashtags()
+        public async Task<List<Hashtag>> GetAllHashtags()
         {
             DataTable? dataTable = null;
 
             try
             {
-                dataTable = _dataLink.ExecuteReader("GetAllHashtags");
+                dataTable = await Task.Run(() => _dataLink.ExecuteReader("GetAllHashtags"));
 
                 List<Hashtag> allHashtags = new List<Hashtag>();
 
@@ -220,7 +222,7 @@ namespace Duo.Repositories
             }
         }
 
-        public List<Hashtag> GetHashtagsByCategory(int categoryId)
+        public async Task<List<Hashtag>> GetHashtagsByCategory(int categoryId)
         {
             if (categoryId <= 0) throw new Exception("Error - GetHashtagsByCategory: CategoryId must be greater than 0");
 
@@ -233,7 +235,7 @@ namespace Duo.Repositories
                     new SqlParameter("@CategoryID", categoryId)
                 };
 
-                dataTable = _dataLink.ExecuteReader("GetHashtagsByCategory", sqlParameters);
+                dataTable = await Task.Run(() => _dataLink.ExecuteReader("GetHashtagsByCategory", sqlParameters));
 
                 List<Hashtag> foundHashtags = new List<Hashtag>();
 

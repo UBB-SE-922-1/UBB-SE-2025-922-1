@@ -1,18 +1,17 @@
 ﻿using System;
 using DuolingoClassLibrary.Entities;
+using System.Threading.Tasks;
 
 namespace Duo.Services.Interfaces
 {
     public interface IUserService
     {
+        public Task SetUserAsync(string username);
 
-        public void setUser(string username);
+        public Task<User> GetCurrentUserAsync();
 
-        public User GetCurrentUser();
+        public Task<User> GetUserByIdAsync(int id);
 
-        public User GetUserById(int id);
-
-        public User GetUserByUsername(string username);
-
+        public Task<User> GetUserByUsernameAsync(string username);
     }
 } 

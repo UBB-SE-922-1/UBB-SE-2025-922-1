@@ -30,5 +30,61 @@ namespace DuolingoClassLibrary.Repositories.Repos
                 return new List<Post>();
             }
         }
+
+        public async Task<int> CreatePost(Post post)
+        {
+            try
+            {
+                if (post == null)
+                {
+                    throw new ArgumentNullException(nameof(post));
+                }
+                _context.Posts.Add(post);
+                _context.SaveChanges();
+                return await Task.FromResult(post.Id);
+            }
+            catch (Exception ex)
+            {
+                // Log the error
+                Console.WriteLine($"Error creating post: {ex.Message}");
+                return await Task.FromResult(-1);
+            }
+        }
+        
+        public async Task DeletePost(int id)
+        {
+            try
+            {
+                var post = await _context.Posts.FindAsync(id);
+                if (post != null)
+                {
+                    _context.Posts.Remove(post);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error
+                Console.WriteLine($"Error deleting post: {ex.Message}");
+            }
+        }
+        
+        public async Task UpdatePost(Post post)
+        {
+            try
+            {
+                if (post == null)
+                {
+                    throw new ArgumentNullException(nameof(post));
+                }
+                _context.Posts.Update(post);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log the error
+                Console.WriteLine($"Error updating post: {ex.Message}");
+            }
+        }
     }
 }

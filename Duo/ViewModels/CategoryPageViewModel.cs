@@ -89,7 +89,7 @@ namespace Duo.ViewModels
         {
             try
             {
-                User currentUser = _userService.GetCurrentUser();
+                User currentUser = await _userService.GetCurrentUserAsync();
                 Username = currentUser.UserName;
             }
             catch (Exception ex)

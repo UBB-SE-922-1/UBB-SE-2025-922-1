@@ -61,7 +61,7 @@ namespace Duo.Views.Components
         {
             InitializeComponent();
             
-            UpdateMoreOptionsVisibility();
+            _ = UpdateMoreOptionsVisibilityAsync();
             UpdateHighlightState();
             
             // Subscribe to the Loaded event
@@ -108,17 +108,7 @@ namespace Duo.Views.Components
             {
                 try
                 {
-                    if (App._postService.LikePost(PostId))
-                    {
-                       // LikeCount++;
-                        
-                        if (_likeButton != null)
-                        {
-                            _likeButton.IncrementLikeCount();
-                        }
-                        
-                        System.Diagnostics.Debug.WriteLine($"Post liked: ID {PostId}, new count: {LikeCount}");
-                    }
+                    _ = LikePostAsync(e.TargetId);
                 }
                 catch (Exception ex)
                 {
@@ -127,17 +117,39 @@ namespace Duo.Views.Components
             }
         }
 
-        private void UpdateMoreOptionsVisibility()
+        private async Task LikePostAsync(int postId)
         {
-            var currentUser = userService.GetCurrentUser();
-            if (currentUser != null)
+            bool success = await App._postService.LikePost(postId);
+            if (success)
             {
-                MoreOptions.Visibility = (this.Username == currentUser.UserName) 
-                    ? Visibility.Visible 
-                    : Visibility.Collapsed;
+                if (_likeButton != null)
+                {
+                    _likeButton.IncrementLikeCount();
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"Post liked: ID {PostId}, new count: {LikeCount}");
             }
-            else
+        }
+
+        private async Task UpdateMoreOptionsVisibilityAsync()
+        {
+            try
             {
+                var currentUser = await userService.GetCurrentUserAsync();
+                if (currentUser != null)
+                {
+                    MoreOptions.Visibility = (this.Username == currentUser.UserName) 
+                        ? Visibility.Visible 
+                        : Visibility.Collapsed;
+                }
+                else
+                {
+                    MoreOptions.Visibility = Visibility.Collapsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating options visibility: {ex.Message}");
                 MoreOptions.Visibility = Visibility.Collapsed;
             }
         }
@@ -198,21 +210,14 @@ namespace Duo.Views.Components
                 {
                     Title = this.Title ?? string.Empty,
                     Description = this.Content ?? string.Empty,
-                    Username = this.Username,
-                    Date = this.Date,
-                    LikeCount = this.LikeCount
+                    Id = this.PostId,
+                    Username = this.Username ?? UNKNOWN_USER_TEXT,
+                    Date = this.Date ?? string.Empty,
+                    LikeCount = this.LikeCount,
+                    Hashtags = this.Hashtags?.ToList() ?? new List<string>()
                 };
-
-                // Copy hashtags
-                if (this.Hashtags != null)
-                {
-                    foreach (var hashtag in this.Hashtags)
-                    {
-                        post.Hashtags.Add(hashtag);
-                    }
-                }
-
-                // Navigate to the post detail page
+                
+                // Navigate to the DetailPage
                 frame.Navigate(typeof(PostDetailPage), post);
             }
         }
@@ -220,22 +225,22 @@ namespace Duo.Views.Components
         // Helper method to determine if a tap originated from the LikeButton
         private bool IsLikeButtonTap(DependencyObject element)
         {
-            // If null, it can't be the LikeButton
             if (element == null)
+            {
                 return false;
-                
+            }
+            
             // Check if the element is a LikeButton
             if (element is LikeButton)
-                return true;
-                
-            // Check parent hierarchy
-            DependencyObject parent = VisualTreeHelper.GetParent(element);
-            while (parent != null && !(parent is Post))
             {
-                if (parent is LikeButton)
-                    return true;
-                    
-                parent = VisualTreeHelper.GetParent(parent);
+                return true;
+            }
+            
+            // Recursively check parent elements
+            DependencyObject parent = VisualTreeHelper.GetParent(element);
+            if (parent != null)
+            {
+                return IsLikeButtonTap(parent);
             }
             
             return false;
@@ -244,313 +249,271 @@ namespace Duo.Views.Components
         // Helper method to find the parent Frame
         private Frame FindParentFrame()
         {
-            DependencyObject parent = this;
-            while (parent != null && !(parent is Frame))
+            DependencyObject element = this;
+            while (element != null && !(element is Frame))
             {
-                parent = VisualTreeHelper.GetParent(parent);
+                element = VisualTreeHelper.GetParent(element);
             }
-            return parent as Frame;
+            
+            return element as Frame;
         }
 
         // Event handlers for the MoreDropdown component
         private async void MoreOptions_EditClicked(object sender, RoutedEventArgs e)
         {
-            // Verify that the current user is the owner of the post            
-            if(this.Username != $"{userService.GetCurrentUser().UserName}")
+            try
             {
-                // Display an error dialog if the user is not the owner
-                ContentDialog errorDialog = new ContentDialog
+                // Check if the current user is the author of the post
+                var currentUser = await userService.GetCurrentUserAsync();
+                if (currentUser == null || currentUser.UserName != this.Username)
                 {
-                    XamlRoot = this.XamlRoot,
-                    Title = "Error",
-                    Content = "You do not have permission to edit this item.",
-                    CloseButtonText = "OK"
+                    return;
+                }
+                
+                // Create a content dialog for editing the post
+                ContentDialog editDialog = new ContentDialog
+                {
+                    Title = "Edit Post",
+                    PrimaryButtonText = "Save",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Primary,
+                    XamlRoot = this.XamlRoot
                 };
-                await errorDialog.ShowAsync();
-                return;
-            }
-
-            // Handle the edit logic here
-            // Display Edit Post dialog with prefilled data
-            var dialogComponent = new DialogComponent();
-            
-            var post = _postService.GetPostById(this.PostId);
-            if (post == null)
-            {
-                var errorDialog = new ContentDialog
+                
+                // Create layout for edit fields
+                StackPanel editPanel = new StackPanel
                 {
-                    XamlRoot = this.XamlRoot,
-                    Title = "Error",
-                    Content = "Post not found in database",
-                    CloseButtonText = "OK"
+                    Spacing = 15
                 };
-                await errorDialog.ShowAsync();
-                return;
-            }
-            
-            var result = await dialogComponent.ShowEditPostDialog(
-                this.XamlRoot, 
-                this.Title,          // Pass the current post title
-                this.Content,        // Pass the current post content
-                [.. this.Hashtags],  // Convert IEnumerable<string> to List<string> before passing
-                post.CategoryID      // Pass the current post's category ID
-            );
-
-            // If the dialog returned successfully, update the post with the new data
-            if (result.Success)
-            {
-                try
+                
+                // Title field
+                TextBox titleBox = new TextBox
                 {
-                    // Check if category was changed (should not be possible with UI changes, but double-check)
-                    if (post.CategoryID != result.CommunityId)
+                    Header = "Title",
+                    Text = this.Title,
+                    PlaceholderText = "Enter post title",
+                    IsSpellCheckEnabled = true
+                };
+                
+                // Content field
+                TextBox contentBox = new TextBox
+                {
+                    Header = "Content",
+                    Text = this.Content,
+                    PlaceholderText = "Enter post content",
+                    AcceptsReturn = true,
+                    TextWrapping = TextWrapping.Wrap,
+                    Height = 150,
+                    IsSpellCheckEnabled = true
+                };
+                
+                // Add fields to panel
+                editPanel.Children.Add(titleBox);
+                editPanel.Children.Add(contentBox);
+                
+                // Set content of dialog
+                editDialog.Content = editPanel;
+                
+                // Show the dialog and handle result
+                var result = await editDialog.ShowAsync();
+                
+                if (result == ContentDialogResult.Primary)
+                {
+                    // Get updated values from dialog
+                    string updatedTitle = titleBox.Text?.Trim() ?? string.Empty;
+                    string updatedContent = contentBox.Text?.Trim() ?? string.Empty;
+                    
+                    // Validate input
+                    if (string.IsNullOrEmpty(updatedTitle) || string.IsNullOrEmpty(updatedContent))
                     {
+                        // Show validation error dialog
                         ContentDialog errorDialog = new ContentDialog
                         {
-                            XamlRoot = this.XamlRoot,
-                            Title = "Error",
-                            Content = "Changing the post's community/category is not allowed.",
-                            CloseButtonText = "OK"
+                            Title = "Validation Error",
+                            Content = "Title and content cannot be empty.",
+                            CloseButtonText = "OK",
+                            XamlRoot = this.XamlRoot
                         };
+                        
                         await errorDialog.ShowAsync();
                         return;
                     }
                     
-                    // Update the post properties
-                    post.Title = result.Title;
-                    post.Description = result.Content;
-                    post.UpdatedAt = DateTime.UtcNow;
-                    
-                    // Call the service to update the post
-                    _postService.UpdatePost(post);
-                    
-                    // Update hashtags
-                    try {
-                        // First clear existing hashtags and then add new ones
-                        var existingHashtags = _postService.GetHashtagsByPostId(this.PostId);
-                        foreach (var hashtag in existingHashtags)
-                        {
-                            _postService.RemoveHashtagFromPost(this.PostId, hashtag.Id, userService.GetCurrentUser().UserId);
-                        }
-
-                        // Add new hashtags
-                        foreach (var hashtag in result.Hashtags)
-                        {
-                            try
-                            {
-                                var hashtagRepo = App._hashtagRepository;
-                                var userId = userService.GetCurrentUser().UserId;
-                                
-                                var existingHashtag = hashtagRepo.GetHashtagByName(hashtag);
-                                
-                                if (existingHashtag == null)
-                                {
-                                    var newHashtag = hashtagRepo.CreateHashtag(hashtag);
-                                    hashtagRepo.AddHashtagToPost(this.PostId, newHashtag.Id);
-                                }
-                                else
-                                {
-                                    hashtagRepo.AddHashtagToPost(this.PostId, existingHashtag.Id);
-                                }
-                            }
-                            catch (Exception tagEx)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"Error processing hashtag '{hashtag}': {tagEx.Message}");
-                            }
-                        }
-                    
-                        this.Hashtags = result.Hashtags;
-                    }
-                    catch (Exception hashtagEx)
+                    // Create updated post
+                    var updatedPost = new DuolingoClassLibrary.Entities.Post
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error updating hashtags: {hashtagEx.Message}");
-                    }
-                    
-                    // Update the UI elements with the new data
-                    this.Title = result.Title;
-                    this.Content = result.Content;
-                    
-                    // Show success message
-                    ContentDialog successDialog = new ContentDialog
-                    {
-                        XamlRoot = this.XamlRoot,
-                        Title = "Updated",
-                        Content = "The post has been successfully updated.",
-                        CloseButtonText = "OK"
+                        Id = this.PostId,
+                        Title = updatedTitle,
+                        Description = updatedContent,
+                        UpdatedAt = DateTime.UtcNow
                     };
-                    await successDialog.ShowAsync();
-                }
-                catch (Exception ex)
-                {
-                    // Handle error
-                    ContentDialog errorDialog = new ContentDialog
+                    
+                    try
                     {
-                        XamlRoot = this.XamlRoot,
-                        Title = "Error",
-                        Content = "An error occurred while updating the post\n" + ex.Message,
-                        CloseButtonText = "OK"
-                    };
-                    await errorDialog.ShowAsync();
+                        // Call service to update post
+                        await App._postService.UpdatePost(updatedPost);
+                        
+                        // Update UI
+                        this.Title = updatedTitle;
+                        this.Content = updatedContent;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Show error dialog
+                        ContentDialog errorDialog = new ContentDialog
+                        {
+                            Title = "Error",
+                            Content = $"Failed to update post: {ex.Message}",
+                            CloseButtonText = "OK",
+                            XamlRoot = this.XamlRoot
+                        };
+                        
+                        await errorDialog.ShowAsync();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error editing post: {ex.Message}");
             }
         }
 
         private async void MoreOptions_DeleteClicked(object sender, RoutedEventArgs e)
         {
-            if(this.Username != $"{userService.GetCurrentUser().UserName}")
+            try
             {
-                // Display an error dialog if the user is not the owner
-                ContentDialog errorDialog = new ContentDialog
+                // Check if the current user is the author of the post
+                var currentUser = await userService.GetCurrentUserAsync();
+                if (currentUser == null || currentUser.UserName != this.Username)
                 {
-                    XamlRoot = this.XamlRoot,
-                    Title = "Error",
-                    Content = "You do not have permission to delete this item.",
-                    CloseButtonText = "OK"
-                };
-                await errorDialog.ShowAsync();
-                return;
-            }
-
-            // Instantiate a DeleteDialog
-            var deleteDialog = new DialogComponent();
-
-            // Create the deletion confirmation (add whatever text you wish to display)
-            bool isConfirmed = await deleteDialog.ShowConfirmationDialog(
-                "Confirm Deletion",
-                "Are you sure you want to delete this item?",
-                this.XamlRoot
-            );
-                
-            if (isConfirmed)
-            {
-                try {
-                _postService.DeletePost(this.PostId);
-                }
-                catch (Exception ex)
-                {
-                    ContentDialog errorDialog = new ContentDialog
-                    {
-                        XamlRoot = this.XamlRoot,
-                        Title = "Error",
-                        Content = "An error occurred while deleting the item. Please try again.\n" + ex.Message,
-                        CloseButtonText = "OK"
-                    };
-                    await errorDialog.ShowAsync();
                     return;
                 }
-
-                ContentDialog successDialog = new ContentDialog
+                
+                // Show confirmation dialog
+                ContentDialog deleteDialog = new ContentDialog
                 {
-                    XamlRoot = this.XamlRoot,
-                    Title = "Deleted",
-                    Content = "The item has been successfully deleted.",
-                    CloseButtonText = "OK"
+                    Title = "Delete Post",
+                    Content = "Are you sure you want to delete this post? This action cannot be undone.",
+                    PrimaryButtonText = "Delete",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot
                 };
-                await successDialog.ShowAsync();
-
-                var frame = FindParentFrame();
-                 if (frame != null)
-                 {
-                     if (frame.Content is Duo.Views.Pages.PostDetailPage)
-                     {
-                         if (frame.CanGoBack)
-                         {
-                             frame.GoBack();
-                         }
-                     }
-                     else if (frame.Content is Duo.Views.Pages.PostListPage postListPage)
-                     {
-                         var viewModel = postListPage.DataContext as Duo.ViewModels.PostListViewModel;
-                         if (viewModel != null)
-                         {
-                             viewModel.LoadPosts();
-                         }
-                     }
-                     else if (frame.Content is Duo.Views.Pages.CategoryPage categoryPage)
-                     {
-                         categoryPage.RefreshCurrentView();
-                     }
-                 }
+                
+                // Show dialog and handle result
+                var result = await deleteDialog.ShowAsync();
+                
+                if (result == ContentDialogResult.Primary)
+                {
+                    try
+                    {
+                        // Call service to delete post
+                        await App._postService.DeletePost(this.PostId);
+                        
+                        // Navigate back if in detail view
+                        var frame = FindParentFrame();
+                        if (frame != null && frame.CanGoBack)
+                        {
+                            frame.GoBack();
+                        }
+                        else
+                        {
+                            // If in list view, remove this post
+                            var parent = VisualTreeHelper.GetParent(this) as Panel;
+                            if (parent != null)
+                            {
+                                parent.Children.Remove(this);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Show error dialog
+                        ContentDialog errorDialog = new ContentDialog
+                        {
+                            Title = "Error",
+                            Content = $"Failed to delete post: {ex.Message}",
+                            CloseButtonText = "OK",
+                            XamlRoot = this.XamlRoot
+                        };
+                        
+                        await errorDialog.ShowAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error deleting post: {ex.Message}");
             }
         }
 
         // Event handlers for MarkdownTextBlock
         private void MarkdownText_MarkdownRendered(object sender, CommunityToolkit.WinUI.UI.Controls.MarkdownRenderedEventArgs e)
         {
-            // This event is fired when the markdown content is rendered
-            // You can perform additional actions here if needed
+            // This method can be left empty or used for additional handling after markdown renders
         }
 
         private async void MarkdownText_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
         {
-            // Handle link clicks in markdown text
-            // For example, you might want to open URLs in the default browser
-            if (Uri.TryCreate(e.Link, UriKind.Absolute, out Uri? uri))
+            // Handle link clicks in the markdown text
+            if (!string.IsNullOrEmpty(e.Link))
             {
-                // Launch the URI in the default browser
-                await Windows.System.Launcher.LaunchUriAsync(uri);
+                await Windows.System.Launcher.LaunchUriAsync(new Uri(e.Link));
             }
         }
 
         private void UpdateHighlightState()
         {
-            if (PostBorder != null)
+            if (IsAlwaysHighlighted)
             {
-                if (IsAlwaysHighlighted)
-                {
-                    PostBorder.Background = Application.Current.Resources["SystemControlBackgroundAltHighBrush"] as Microsoft.UI.Xaml.Media.Brush;
-                    PostBorder.BorderBrush = Application.Current.Resources["SystemControlBackgroundListLowBrush"] as Microsoft.UI.Xaml.Media.Brush;
-                }
-                else if (!_isPointerOver) // Only reset if not being hovered
-                {
-                    PostBorder.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                        Microsoft.UI.Colors.Transparent);
-                    PostBorder.BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                        Microsoft.UI.Colors.Transparent);
-                }
+                PostBorder.Background = Application.Current.Resources["SystemControlBackgroundAltHighBrush"] as Microsoft.UI.Xaml.Media.Brush;
+                PostBorder.BorderBrush = Application.Current.Resources["SystemControlBackgroundListLowBrush"] as Microsoft.UI.Xaml.Media.Brush;
+            }
+            else if (!_isPointerOver)
+            {
+                PostBorder.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                    Microsoft.UI.Colors.Transparent);
+                PostBorder.BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                    Microsoft.UI.Colors.Transparent);
             }
         }
 
         public string Username
         {
-            get => (string)GetValue(UsernameProperty);
-            set 
-            { 
-                SetValue(UsernameProperty, value);
-                // Update visibility when username changes
-                UpdateMoreOptionsVisibility();
-            }
+            get { return (string)GetValue(UsernameProperty); }
+            set { SetValue(UsernameProperty, value); }
         }
-
+        
         public string Date
         {
-            get => (string)GetValue(DateProperty);
-            set => SetValue(DateProperty, value);
+            get { return (string)GetValue(DateProperty); }
+            set { SetValue(DateProperty, value); }
         }
-
+        
         public string Title
         {
-            get => (string)GetValue(TitleProperty);
-            set => SetValue(TitleProperty, value);
+            get { return (string)GetValue(TitleProperty); }
+            set { SetValue(TitleProperty, value); }
         }
-
+        
         public new string Content
         {
-            get => (string)GetValue(ContentProperty);
-            set => SetValue(ContentProperty, value);
+            get { return (string)GetValue(ContentProperty); }
+            set { SetValue(ContentProperty, value); }
         }
-
+        
         public int LikeCount
         {
-            get => (int)GetValue(LikeCountProperty);
-            set => SetValue(LikeCountProperty, value);
+            get { return (int)GetValue(LikeCountProperty); }
+            set { SetValue(LikeCountProperty, value); }
         }
-
+        
         public IEnumerable<string> Hashtags
         {
-            get => (IEnumerable<string>)GetValue(HashtagsProperty);
-            set => SetValue(HashtagsProperty, value);
+            get { return (IEnumerable<string>)GetValue(HashtagsProperty); }
+            set { SetValue(HashtagsProperty, value); }
         }
-
+        
         public int PostId
         {
             get { return (int)GetValue(PostIdProperty); }

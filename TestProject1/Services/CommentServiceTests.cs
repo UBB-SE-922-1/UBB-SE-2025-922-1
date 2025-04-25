@@ -6,6 +6,7 @@ using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Duo.Services.Interfaces;
 using Duo.Repositories.Interfaces;
+using DuolingoClassLibrary.Repositories.Interfaces;
 
 namespace TestProject1.Services
 {

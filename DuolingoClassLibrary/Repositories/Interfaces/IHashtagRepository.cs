@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using DuolingoClassLibrary.Entities;
 using System.Threading.Tasks;
 
-namespace Duo.Repositories.Interfaces
+namespace DuolingoClassLibrary.Repositories.Interfaces
 {
     public interface IHashtagRepository
     {

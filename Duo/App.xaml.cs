@@ -30,10 +30,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Duo.Services.Interfaces;
 using DuolingoClassLibrary.Repositories;
 using DuolingoClassLibrary.Repositories.Interfaces;
+using DuolingoClassLibrary.Repositories.Repos;
+using DuolingoClassLibrary.Repositories.Proxies;
 
 namespace Duo
 {
-
     public partial class App : Application
     {
         public static IServiceProvider ServiceProvider;
@@ -43,12 +44,13 @@ namespace Duo
         private static IConfiguration _configuration;
         public static DataLink _dataLink;
         public static UserRepository userRepository;
-        public static PostRepository _postRepository;
-        public static IHashtagRepository _hashtagRepository;
-        public static CommentRepository _commentRepository;
+        public static IPostRepository _postRepository;
+        public static DuolingoClassLibrary.Repositories.Interfaces.IHashtagRepository _hashtagRepository;
+        public static DuolingoClassLibrary.Repositories.Interfaces.ICommentRepository _commentRepository;
         public static PostService _postService;
         public static ICategoryService _categoryService;
         public static SearchService _searchService;
+        public static ICommentService _commentService;
 
         public App()
         {
@@ -59,15 +61,16 @@ namespace Duo
             _dataLink = new DataLink(_configuration);
 
             userRepository = new UserRepository(_dataLink);
-            _postRepository = new PostRepository(_dataLink);
-            _hashtagRepository = new HashtagRepository(_dataLink);
-            _commentRepository = new CommentRepository(_dataLink);
+            _postRepository = new PostRepositoryProxi();
+            _hashtagRepository = new HashtagRepositoryProxi();
+            _commentRepository = new CommentRepositoryProxi();
             ICategoryRepository categoryRepository = new CategoryRepositoryProxi();      
 
             userService = new UserService(userRepository);
             _searchService = new SearchService();
             _postService = new PostService(_postRepository, _hashtagRepository, userService, _searchService);
             _categoryService = new CategoryService(categoryRepository);
+            _commentService = new CommentService(_commentRepository, _postRepository, userService);
 
             var services = new ServiceCollection();
             ConfigureServices(services);
@@ -88,6 +91,10 @@ namespace Duo
             services.AddSingleton<UserRepository>();  // Add direct UserRepository registration
             services.AddSingleton<IFriendsRepository, FriendsRepository>();
             services.AddSingleton<ListFriendsRepository>();  // Add ListFriendsRepository
+            services.AddSingleton<ICategoryRepository, CategoryRepositoryProxi>();
+            services.AddSingleton<IPostRepository, PostRepositoryProxi>();
+            services.AddSingleton<DuolingoClassLibrary.Repositories.Interfaces.IHashtagRepository, HashtagRepositoryProxi>();
+            services.AddSingleton<DuolingoClassLibrary.Repositories.Interfaces.ICommentRepository, CommentRepositoryProxi>();
 
             // Register services
             services.AddTransient<ILoginService, LoginService>();
@@ -95,6 +102,9 @@ namespace Duo
             services.AddTransient<SignUpService>();
             services.AddTransient<ProfileService>();
             services.AddTransient<LeaderboardService>();
+            services.AddTransient<IPostService, PostService>();
+            services.AddTransient<IUserService, UserService>();
+            services.AddTransient<ICommentService, CommentService>();
 
             // Register view models
             services.AddTransient<LoginViewModel>();

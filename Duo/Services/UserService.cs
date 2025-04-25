@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DuolingoClassLibrary.Entities;
 using Duo.Repositories.Interfaces;
 using Duo.Services.Interfaces;
+using System.Threading.Tasks;
 
 namespace Duo.Services
 {
@@ -16,7 +17,7 @@ namespace Duo.Services
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         }
 
-        public void setUser(string username)
+        public async Task SetUserAsync(string username)
         {
             if (string.IsNullOrWhiteSpace(username))
             {
@@ -25,22 +26,21 @@ namespace Duo.Services
 
             try 
             {
-                var existingUser = GetUserByUsername(username);
+                var existingUser = await GetUserByUsernameAsync(username);
 
                 if (existingUser != null)
                 {
-
                     _currentUser = existingUser;
                     return;
                 }
 
                 var newUser = new User();
-                int userId = _userRepository.CreateUser(newUser);
+                int userId = await Task.Run(() => _userRepository.CreateUser(newUser));
                 _currentUser = new User(userId, username);
             }
             catch (Exception ex)
             {
-                var lastAttemptUser = GetUserByUsername(username);
+                var lastAttemptUser = await GetUserByUsernameAsync(username);
                 if (lastAttemptUser != null)
                 {
                     _currentUser = lastAttemptUser;
@@ -51,20 +51,20 @@ namespace Duo.Services
             }
         }
 
-        public User GetCurrentUser()
+        public async Task<User> GetCurrentUserAsync()
         {
             if (_currentUser == null)
             {
                 throw new InvalidOperationException("No user is currently logged in.");
             }
-            return _currentUser;
+            return await Task.FromResult(_currentUser);
         }
 
-        public User GetUserById(int id)
+        public async Task<User> GetUserByIdAsync(int id)
         {
             try
             {
-                return _userRepository.GetUserById(id);
+                return await Task.Run(() => _userRepository.GetUserById(id));
             }
             catch (Exception ex)
             {
@@ -72,16 +72,38 @@ namespace Duo.Services
             }
         }
 
-        public User GetUserByUsername(string username)
+        public async Task<User> GetUserByUsernameAsync(string username)
         {
             try
             {
-                return _userRepository.GetUserByUsername(username);
+                return await Task.Run(() => _userRepository.GetUserByUsername(username));
             }
             catch (Exception)
             {
                 return null;
             }
+        }
+        
+        // Keep the non-async methods for backward compatibility
+        
+        public void setUser(string username)
+        {
+            SetUserAsync(username).GetAwaiter().GetResult();
+        }
+
+        public User GetCurrentUser()
+        {
+            return GetCurrentUserAsync().GetAwaiter().GetResult();
+        }
+
+        public User GetUserById(int id)
+        {
+            return GetUserByIdAsync(id).GetAwaiter().GetResult();
+        }
+
+        public User GetUserByUsername(string username)
+        {
+            return GetUserByUsernameAsync(username).GetAwaiter().GetResult();
         }
     }
 }

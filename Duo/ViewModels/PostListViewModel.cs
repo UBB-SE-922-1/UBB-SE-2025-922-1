@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Duo.Services.Interfaces;
 
 namespace Duo.ViewModels
@@ -46,13 +47,13 @@ namespace Duo.ViewModels
             _currentPage = DEFAULT_PAGE_NUMBER;
             _selectedHashtags.Add(ALL_HASHTAGS_FILTER);
 
-            LoadPostsCommand = new RelayCommand(LoadPosts);
-            NextPageCommand = new RelayCommand(NextPage);
-            PreviousPageCommand = new RelayCommand(PreviousPage);
-            FilterPostsCommand = new RelayCommand(FilterPosts);
-            ClearFiltersCommand = new RelayCommand(ClearFilters);
+            LoadPostsCommand = new RelayCommand(async () => await LoadPostsAsync());
+            NextPageCommand = new RelayCommand(async () => await NextPageAsync());
+            PreviousPageCommand = new RelayCommand(async () => await PreviousPageAsync());
+            FilterPostsCommand = new RelayCommand(async () => await FilterPostsAsync());
+            ClearFiltersCommand = new RelayCommand(async () => await ClearFiltersAsync());
 
-            LoadAllHashtags();
+            LoadAllHashtagsAsync();
         }
 
         public ObservableCollection<Post> Posts
@@ -82,7 +83,7 @@ namespace Duo.ViewModels
             {
                 _filterText = value;
                 OnPropertyChanged();
-                FilterPosts();
+                FilterPostsAsync();
             }
         }
 
@@ -94,7 +95,7 @@ namespace Duo.ViewModels
                 _categoryID = value;
                 OnPropertyChanged();
 
-                LoadAllHashtags();
+                LoadAllHashtagsAsync();
             }
         }
 
@@ -136,15 +137,15 @@ namespace Duo.ViewModels
         public ICommand FilterPostsCommand { get; }
         public ICommand ClearFiltersCommand { get; }
 
-        private void LoadAllHashtags()
+        private async void LoadAllHashtagsAsync()
         {
             try
             {
                 _allHashtags.Clear();
                 _allHashtags.Add(ALL_HASHTAGS_FILTER);
 
-
-                foreach (var hashtag in _postService.GetHashtags(_categoryID))
+                var hashtags = await _postService.GetHashtags(_categoryID);
+                foreach (var hashtag in hashtags)
                 {
                     if (!_allHashtags.Contains(hashtag.Name))
                     {
@@ -156,75 +157,113 @@ namespace Duo.ViewModels
             }
             catch (Exception ex)
             {
-
+                System.Diagnostics.Debug.WriteLine($"Error loading hashtags: {ex.Message}");
             }
         }
 
-        public void LoadPosts()
+        public async Task LoadPostsAsync()
         {
-            var (posts, totalCount) = _postService.GetFilteredAndFormattedPosts(
-                0,
-                _selectedHashtags.ToList(),
-                _filterText,
-                _currentPage,
-                ItemsPerPage);
-
-            Posts.Clear();
-            foreach (var post in posts)
+            try
             {
-                Posts.Add(post);
-            }
+                var (posts, totalCount) = await _postService.GetFilteredAndFormattedPosts(
+                    _categoryID,
+                    _selectedHashtags.ToList(),
+                    _filterText,
+                    _currentPage,
+                    ItemsPerPage);
 
-            _totalPostCount = totalCount;
-            TotalPages = Math.Max(DEFAULT_TOTAL_PAGES, (int)Math.Ceiling(_totalPostCount / (double)ItemsPerPage));
-            OnPropertyChanged(nameof(TotalPages));
+                Posts.Clear();
+                foreach (var post in posts)
+                {
+                    Posts.Add(post);
+                }
+
+                _totalPostCount = totalCount;
+                TotalPages = Math.Max(DEFAULT_TOTAL_PAGES, (int)Math.Ceiling(_totalPostCount / (double)ItemsPerPage));
+                OnPropertyChanged(nameof(TotalPages));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading posts: {ex.Message}");
+            }
         }
 
-        private void NextPage()
+        private async Task NextPageAsync()
         {
             if (CurrentPage < TotalPages)
             {
                 CurrentPage++;
-                LoadPosts();
+                await LoadPostsAsync();
             }
         }
 
-        private void PreviousPage()
+        private async Task PreviousPageAsync()
         {
             if (CurrentPage > DEFAULT_PAGE_NUMBER)
             {
                 CurrentPage--;
-                LoadPosts();
+                await LoadPostsAsync();
             }
         }
 
-        public void ToggleHashtag(string hashtag)
+        public async Task ToggleHashtagAsync(string hashtag)
         {
             _selectedHashtags = _postService.ToggleHashtagSelection(_selectedHashtags, hashtag, ALL_HASHTAGS_FILTER);
             CurrentPage = DEFAULT_PAGE_NUMBER;
             OnPropertyChanged(nameof(SelectedHashtags));
-            LoadPosts();
+            await LoadPostsAsync();
         }
 
-        public void FilterPosts()
+        public async Task FilterPostsAsync()
         {
             CurrentPage = DEFAULT_PAGE_NUMBER;
-            LoadPosts();
+            await LoadPostsAsync();
         }
 
-        public void ClearFilters()
+        public async Task ClearFiltersAsync()
         {
             FilterText = string.Empty;
             _selectedHashtags.Clear();
             _selectedHashtags.Add(ALL_HASHTAGS_FILTER);
             CurrentPage = DEFAULT_PAGE_NUMBER;
-            LoadPosts();
+            await LoadPostsAsync();
             OnPropertyChanged(nameof(SelectedHashtags));
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        // Legacy methods for backward compatibility
+        public void LoadPosts()
+        {
+            _ = LoadPostsAsync();
+        }
+
+        public void ToggleHashtag(string hashtag)
+        {
+            _ = ToggleHashtagAsync(hashtag);
+        }
+
+        public void FilterPosts()
+        {
+            _ = FilterPostsAsync();
+        }
+
+        public void ClearFilters()
+        {
+            _ = ClearFiltersAsync();
+        }
+
+        private void NextPage()
+        {
+            _ = NextPageAsync();
+        }
+
+        private void PreviousPage()
+        {
+            _ = PreviousPageAsync();
         }
     }
 }

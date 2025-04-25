@@ -6,27 +6,29 @@ using Duo.Repositories;
 using Duo.Services.Interfaces;
 using Duo.Repositories.Interfaces;
 using System.Linq;
+using DuolingoClassLibrary.Repositories.Interfaces;
+using System.Threading.Tasks;
 
 namespace Duo.Services
 {
     public class CommentService : ICommentService
     {
-        private readonly ICommentRepository _commentRepository;
-        private readonly IPostRepository _postRepository;
+        private readonly DuolingoClassLibrary.Repositories.Interfaces.ICommentRepository _commentRepository;
+        private readonly IPostService _postService;
         private readonly IUserService _userService;
         private const int MINIMUM_ALLOWED_ID_NUMBER = 0;
         private const int MAXIMUM_COMMENT_COUNT = 1000;
         private const int MAXIMUM_COMMENT_LEVEL = 5;
 
 
-        public CommentService(ICommentRepository commentRepository, IPostRepository postRepository, IUserService userService)
+        public CommentService(DuolingoClassLibrary.Repositories.Interfaces.ICommentRepository commentRepository, IPostRepository postRepository, IUserService userService)
         {
             _commentRepository = commentRepository ?? throw new ArgumentNullException(nameof(commentRepository));
-            _postRepository = postRepository ?? throw new ArgumentNullException(nameof(postRepository));
+            _postService = App._postService ?? throw new ArgumentNullException(nameof(postRepository));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
 
-        public List<Comment> GetCommentsByPostId(int postId)
+        public async Task<List<Comment>> GetCommentsByPostId(int postId)
         {
             if (postId <= MINIMUM_ALLOWED_ID_NUMBER) throw new ArgumentException("Invalid post ID", nameof(postId));
 
@@ -40,7 +42,7 @@ namespace Duo.Services
                     {
                         try
                         {
-                            User user = _userService.GetUserById(comment.UserId);
+                            User user = await _userService.GetUserByIdAsync(comment.UserId);
                             comment.Username = user.UserName;
 
                         }
@@ -63,10 +65,10 @@ namespace Duo.Services
             }
         }
 
-        public (List<Comment> AllComments, List<Comment> TopLevelComments, Dictionary<int, List<Comment>> RepliesByParentId) GetProcessedCommentsByPostId(int postId)
+        public async Task<(List<Comment> AllComments, List<Comment> TopLevelComments, Dictionary<int, List<Comment>> RepliesByParentId)> GetProcessedCommentsByPostId(int postId)
         {
             // Get all comments for the post
-            var allComments = GetCommentsByPostId(postId);
+            var allComments = await GetCommentsByPostId(postId);
             
             if (allComments == null || !allComments.Any())
             {
@@ -102,14 +104,14 @@ namespace Duo.Services
             return (allComments, topLevelComments, repliesByParentId);
         }
 
-        public int CreateComment(string content, int postId, int? parentCommentId = null)
+        public async Task<int> CreateComment(string content, int postId, int? parentCommentId = null)
         {
             if (postId <= MINIMUM_ALLOWED_ID_NUMBER) throw new ArgumentException("Invalid post ID", nameof(postId));
             if (string.IsNullOrWhiteSpace(content)) throw new ArgumentException("Content cannot be empty", nameof(content));
 
             try
             {
-                ValidateCommentCount(postId);
+                await ValidateCommentCount(postId);
 
                 int level = 1;
                 if (parentCommentId.HasValue)
@@ -120,7 +122,7 @@ namespace Duo.Services
                     level = parentComment.Level + 1;
                 }
 
-                User user = _userService.GetCurrentUser();
+                User user = await _userService.GetCurrentUserAsync();
 
                 var comment = new Comment
                 {
@@ -140,14 +142,14 @@ namespace Duo.Services
             }
         }
 
-        public bool DeleteComment(int commentId, int userId)
+        public async Task<bool> DeleteComment(int commentId, int userId)
         {
             if (commentId <= MINIMUM_ALLOWED_ID_NUMBER) throw new ArgumentException("Invalid comment ID", nameof(commentId));
             if (userId <= MINIMUM_ALLOWED_ID_NUMBER) throw new ArgumentException("Invalid user ID", nameof(userId));
 
             try
             {
-                User user = _userService.GetCurrentUser();
+                User user = await _userService.GetCurrentUserAsync();
                 if (user.UserId != userId) throw new Exception("User does not have permission to delete this comment");
 
                 return _commentRepository.DeleteComment(commentId);
@@ -226,23 +228,22 @@ namespace Duo.Services
             return null;
         }
 
-        private void ValidateCommentCount(int postId)
+        private async Task ValidateCommentCount(int postId)
         {
-            var post = _postRepository.GetPostById(postId);
+            var post = await _postService.GetPostById(postId);
             if (post == null) throw new Exception("Post not found");
 
             var commentCount = _commentRepository.GetCommentsCountForPost(postId);
             if (commentCount >= MAXIMUM_COMMENT_COUNT) throw new Exception("Comment limit reached");
         }
 
-        public (bool Success, string ReplySignature) CreateReplyWithDuplicateCheck(
+        public async Task<(bool Success, string ReplySignature)> CreateReplyWithDuplicateCheck(
             string replyText, 
             int postId, 
             int parentCommentId, 
             IEnumerable<Comment> existingComments,
             string lastProcessedReplySignature = null)
         {
-
             // Create a unique signature for this reply
             string replySignature = $"{parentCommentId}_{replyText}";
 
@@ -252,21 +253,8 @@ namespace Duo.Services
                 return (false, replySignature);
             }
 
-            // Check for duplicate comments in the existing comments
-            bool isDuplicate = existingComments != null && existingComments.Any(comment => 
-                comment.ParentCommentId == parentCommentId && 
-                comment.Content.Equals(replyText, StringComparison.OrdinalIgnoreCase));
-
-            if (isDuplicate)
-            {
-                return (false, replySignature);
-            }
-
-            // Create the comment/reply
-            int commentId = CreateComment(replyText, postId, parentCommentId);
-            
+            int commentId = await CreateComment(replyText, postId, parentCommentId);
             return (commentId > 0, replySignature);
         }
-
     }
 }

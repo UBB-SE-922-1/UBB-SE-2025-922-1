@@ -22,14 +22,10 @@ namespace Duo.Views.Pages
         // Constants
         private const int INVALID_ID = 0;
         private const int DEFAULT_MARGIN = 16;
-        
-        private readonly CommentService _commentService;
 
         public PostDetailPage()
         {
             this.InitializeComponent();
-
-            _commentService = new CommentService(_commentRepository, _postRepository, userService);
 
             ViewModel.CommentsPanel = CommentsPanel;
 

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using DuolingoClassLibrary.Data;
 using DuolingoClassLibrary.Repositories.Repos;
+using DuolingoClassLibrary.Repositories.Proxies;
+using DuolingoClassLibrary.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +18,20 @@ builder.Services.AddDbContext<DataContext>(options =>
 // Register repositories
 builder.Services.AddScoped<CategoryRepository>();
 builder.Services.AddScoped<PostRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepositoryProxi>();
+builder.Services.AddScoped<IPostRepository, PostRepositoryProxi>();
+builder.Services.AddScoped<IHashtagRepository, HashtagRepositoryProxi>();
+builder.Services.AddScoped<ICommentRepository, CommentRepositoryProxi>();
+
+// Add CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", 
+        builder => builder
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+});
 
 var app = builder.Build();
 
@@ -25,6 +41,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Use CORS
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 

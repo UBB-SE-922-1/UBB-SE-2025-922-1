@@ -39,8 +39,7 @@ namespace DuolingoClassLibrary.Repositories.Repos
                 {
                     throw new ArgumentNullException(nameof(post), "Post cannot be null.");
                 }
-
-                // Reset ID to 0 to let the database generate it
+            
                 post.Id = 0;
                 
                 _context.Posts.Add(post);

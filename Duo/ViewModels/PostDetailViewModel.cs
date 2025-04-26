@@ -124,7 +124,7 @@ namespace Duo.ViewModels
             }
         }
 
-        public void LoadPostDetails(int postId)
+        public async void LoadPostDetails(int postId)
         {
             IsLoading = true;
             ErrorMessage = string.Empty;
@@ -146,7 +146,7 @@ namespace Duo.ViewModels
                 }
 
                 // Use the service method that encapsulates all the business logic
-                var post = _postService.GetPostDetailsWithMetadata(postId);
+                var post = await _postService.GetPostDetailsWithMetadata(postId);
                 
                 if (post != null)
                 {

@@ -5,6 +5,7 @@ using Duo.Services;
 using Duo.Repositories;
 using Duo.Services.Interfaces;
 using Duo.Repositories.Interfaces;
+using DuolingoClassLibrary.Repositories.Interfaces;
 using System.Linq;
 
 namespace Duo.Services
@@ -228,11 +229,20 @@ namespace Duo.Services
 
         private void ValidateCommentCount(int postId)
         {
-            var post = _postRepository.GetPostById(postId);
-            if (post == null) throw new Exception("Post not found");
+            try
+            {
+                var posts = _postRepository.GetPosts().Result;
+                var post = posts.FirstOrDefault(p => p.Id == postId);
+                
+                if (post == null) throw new Exception("Post not found");
 
-            var commentCount = _commentRepository.GetCommentsCountForPost(postId);
-            if (commentCount >= MAXIMUM_COMMENT_COUNT) throw new Exception("Comment limit reached");
+                var commentCount = _commentRepository.GetCommentsCountForPost(postId);
+                if (commentCount >= MAXIMUM_COMMENT_COUNT) throw new Exception("Comment limit reached");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error validating comment count: {ex.Message}", ex);
+            }
         }
 
         public (bool Success, string ReplySignature) CreateReplyWithDuplicateCheck(

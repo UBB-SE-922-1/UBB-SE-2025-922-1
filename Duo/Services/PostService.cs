@@ -5,10 +5,11 @@ using Microsoft.Data.SqlClient;
 using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Duo.Services.Interfaces;
-using Duo.Repositories;
+using DuolingoClassLibrary.Repositories.Interfaces;
 using Duo.Repositories.Interfaces;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Duo.Services
 {
@@ -29,13 +30,13 @@ namespace Duo.Services
 
         public PostService(IPostRepository postRepository, IHashtagRepository hashtagRepository, IUserService userService, ISearchService searchService)
         {
-            _postRepository = postRepository;
-            _hashtagRepository = hashtagRepository;
-            _userService = userService;
-            _searchService = searchService;
+            _postRepository = postRepository ?? throw new ArgumentNullException(nameof(postRepository));
+            _hashtagRepository = hashtagRepository ?? throw new ArgumentNullException(nameof(hashtagRepository));
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
         }
 
-        public int CreatePost(Post newPost)
+        public async Task<int> CreatePost(Post newPost)
         {
             if (string.IsNullOrWhiteSpace(newPost.Title) || string.IsNullOrWhiteSpace(newPost.Description))
             {
@@ -44,7 +45,7 @@ namespace Duo.Services
 
             try
             {
-                return _postRepository.CreatePost(newPost);
+                return await _postRepository.CreatePost(newPost);
             }
             catch (Exception ex)
             {
@@ -52,7 +53,7 @@ namespace Duo.Services
             }
         }
 
-        public void DeletePost(int postId)
+        public async Task DeletePost(int postId)
         {
             if (postId <= INVALID_ID)
             {
@@ -61,7 +62,7 @@ namespace Duo.Services
 
             try
             {
-                _postRepository.DeletePost(postId);
+                await _postRepository.DeletePost(postId);
             }
             catch (Exception ex)
             {
@@ -69,7 +70,7 @@ namespace Duo.Services
             }
         }
 
-        public void UpdatePost(Post postToUpdate)
+        public async Task UpdatePost(Post postToUpdate)
         {
             if (postToUpdate.Id <= INVALID_ID)
             {
@@ -79,7 +80,7 @@ namespace Duo.Services
             try
             {
                 postToUpdate.UpdatedAt = DateTime.UtcNow;
-                _postRepository.UpdatePost(postToUpdate);
+                await _postRepository.UpdatePost(postToUpdate);
             }
             catch (Exception ex)
             {
@@ -87,7 +88,7 @@ namespace Duo.Services
             }
         }
 
-        public Post? GetPostById(int postId)
+        public async Task<Post?> GetPostById(int postId)
         {
             if (postId <= INVALID_ID)
             {
@@ -96,7 +97,8 @@ namespace Duo.Services
 
             try
             {
-                return _postRepository.GetPostById(postId);
+                var allPosts = await _postRepository.GetPosts();
+                return allPosts.FirstOrDefault(p => p.Id == postId);
             }
             catch (Exception ex)
             {
@@ -104,7 +106,7 @@ namespace Duo.Services
             }
         }
 
-        public Collection<Post> GetPostsByCategory(int categoryId, int pageNumber, int pageSize)
+        public async Task<Collection<Post>> GetPostsByCategory(int categoryId, int pageNumber, int pageSize)
         {
             if (categoryId <= INVALID_ID || pageNumber < MIN_PAGE_NUMBER || pageSize < MIN_PAGE_SIZE)
             {
@@ -113,7 +115,13 @@ namespace Duo.Services
 
             try
             {
-                return _postRepository.GetPostsByCategoryId(categoryId, pageNumber, pageSize);
+                var allPosts = await _postRepository.GetPosts();
+                var filtered = allPosts
+                    .Where(p => p.CategoryID == categoryId)
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+                return new Collection<Post>(filtered);
             }
             catch (Exception ex)
             {
@@ -121,7 +129,7 @@ namespace Duo.Services
             }
         }
 
-        public List<Post> GetPaginatedPosts(int pageNumber, int pageSize)
+        public async Task<List<Post>> GetPaginatedPosts(int pageNumber, int pageSize)
         {
             if (pageNumber < MIN_PAGE_NUMBER || pageSize < MIN_PAGE_SIZE)
             {
@@ -130,7 +138,11 @@ namespace Duo.Services
 
             try
             {
-                return _postRepository.GetPaginatedPosts(pageNumber, pageSize);
+                var allPosts = await _postRepository.GetPosts();
+                return allPosts
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
             }
             catch (Exception ex)
             {
@@ -138,11 +150,12 @@ namespace Duo.Services
             }
         }
 
-        public int GetTotalPostCount()
+        public async Task<int> GetTotalPostCount()
         {
             try
             {
-                return _postRepository.GetTotalPostCount();
+                var allPosts = await _postRepository.GetPosts();
+                return allPosts.Count;
             }
             catch (Exception ex)
             {
@@ -150,7 +163,7 @@ namespace Duo.Services
             }
         }
 
-        public int GetPostCountByCategoryId(int categoryId)
+        public async Task<int> GetPostCountByCategoryId(int categoryId)
         {
             if (categoryId <= INVALID_ID)
             {
@@ -159,7 +172,8 @@ namespace Duo.Services
 
             try
             {
-                return _postRepository.GetPostCountByCategory(categoryId);
+                var allPosts = await _postRepository.GetPosts();
+                return allPosts.Count(p => p.CategoryID == categoryId);
             }
             catch (Exception ex)
             {
@@ -167,22 +181,23 @@ namespace Duo.Services
             }
         }
 
-        public int GetPostCountByHashtags(List<string> hashtagList)
+        public async Task<int> GetPostCountByHashtags(List<string> hashtagList)
         {
             if (hashtagList == null || hashtagList.Count == DEFAULT_COUNT)
             {
-                return GetTotalPostCount();
+                return await GetTotalPostCount();
             }
 
             List<string> filteredHashtags = hashtagList.Where(h => !string.IsNullOrWhiteSpace(h)).ToList();
             if (filteredHashtags.Count == DEFAULT_COUNT)
             {
-                return GetTotalPostCount();
+                return await GetTotalPostCount();
             }
 
             try
             {
-                return _postRepository.GetPostCountByHashtags(filteredHashtags);
+                var allPosts = await _postRepository.GetPosts();
+                return allPosts.Count(p => p.Hashtags != null && p.Hashtags.Any(h => filteredHashtags.Contains(h)));
             }
             catch (Exception ex)
             {
@@ -219,7 +234,7 @@ namespace Duo.Services
             }
         }
 
-        public List<Post> GetPostsByHashtags(List<string> hashtagList, int pageNumber, int pageSize)
+        public async Task<List<Post>> GetPostsByHashtags(List<string> hashtagList, int pageNumber, int pageSize)
         {
             if (pageNumber < MIN_PAGE_NUMBER || pageSize < MIN_PAGE_SIZE)
             {
@@ -228,29 +243,35 @@ namespace Duo.Services
 
             if (hashtagList == null || hashtagList.Count == DEFAULT_COUNT)
             {
-                return GetPaginatedPosts(pageNumber, pageSize);
+                return await GetPaginatedPosts(pageNumber, pageSize);
             }
 
             List<string> filteredHashtags = hashtagList.Where(h => !string.IsNullOrWhiteSpace(h)).ToList();
             if (filteredHashtags.Count == DEFAULT_COUNT)
             {
-                return GetPaginatedPosts(pageNumber, pageSize);
+                return await GetPaginatedPosts(pageNumber, pageSize);
             }
 
             try
             {
-                return _postRepository.GetPostsByHashtags(filteredHashtags, pageNumber, pageSize);
+                var allPosts = await _postRepository.GetPosts();
+                var filtered = allPosts
+                    .Where(p => p.Hashtags != null && p.Hashtags.Any(h => filteredHashtags.Contains(h)))
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+                return filtered;
             }
             catch (Exception ex)
             {
-                return GetPaginatedPosts(pageNumber, pageSize);
+                return await GetPaginatedPosts(pageNumber, pageSize);
             }
         }
 
-        public bool ValidatePostOwnership(int authorUserId, int targetPostId)
+        public async Task<bool> ValidatePostOwnership(int authorUserId, int targetPostId)
         {
-            int? postOwnerId = _postRepository.GetUserIdByPostId(targetPostId);
-            return authorUserId == postOwnerId;
+            var post = await GetPostById(targetPostId);
+            return post != null && authorUserId == post.UserID;
         }
 
         public List<Hashtag> GetHashtagsByPostId(int postId)
@@ -267,18 +288,18 @@ namespace Duo.Services
             }
         }
 
-        public bool LikePost(int postId)
+        public async Task<bool> LikePost(int postId)
         {
             if (postId <= INVALID_ID) throw new ArgumentException("Invalid Post ID.");
 
             try
             {
-                var targetPost = _postRepository.GetPostById(postId);
+                var targetPost = await GetPostById(postId);
                 if (targetPost == null) throw new Exception("Post not found");
 
                 targetPost.LikeCount++;
 
-                _postRepository.UpdatePost(targetPost);
+                await UpdatePost(targetPost);
                 return true;
             }
             catch (Exception ex)
@@ -292,7 +313,7 @@ namespace Duo.Services
         /// </summary>
         /// <param name="postId">The ID of the post to retrieve</param>
         /// <returns>Post with user, date, and hashtag information populated</returns>
-        public Post? GetPostDetailsWithMetadata(int postId)
+        public async Task<Post?> GetPostDetailsWithMetadata(int postId)
         {
             if (postId <= INVALID_ID)
             {
@@ -300,7 +321,7 @@ namespace Duo.Services
             }
 
             // Get the basic post
-            var post = GetPostById(postId);
+            var post = await GetPostById(postId);
             if (post == null)
             {
                 return null;
@@ -330,24 +351,19 @@ namespace Duo.Services
             }
 
             // Format the created date
-            
-                if (string.IsNullOrEmpty(post.Date) && post.CreatedAt != default)
-                {
-                    DateTime localCreatedAt = Helpers.DateTimeHelper.ConvertUtcToLocal(post.CreatedAt);
-                    post.Date = FormatDate(localCreatedAt);
-                }
-            
-           
+            if (string.IsNullOrEmpty(post.Date) && post.CreatedAt != default)
+            {
+                DateTime localCreatedAt = Helpers.DateTimeHelper.ConvertUtcToLocal(post.CreatedAt);
+                post.Date = FormatDate(localCreatedAt);
+            }
 
             // Get hashtags for the post
-                var hashtags = GetHashtagsByPostId(post.Id);
-                if (hashtags != null && hashtags.Any())
-                {
-                    post.Hashtags = hashtags.Select(h => h.Name ?? h.Tag).ToList();
-                }
+            var hashtags = GetHashtagsByPostId(post.Id);
+            if (hashtags != null && hashtags.Any())
+            {
+                post.Hashtags = hashtags.Select(h => h.Name ?? h.Tag).ToList();
+            }
             
-            
-
             return post;
         }
 
@@ -356,7 +372,7 @@ namespace Duo.Services
             return date.ToString("MMM dd, yyyy HH:mm");
         }
 
-        public bool AddHashtagToPost(int postId, string hashtagName, int userId)
+        public async Task<bool> AddHashtagToPost(int postId, string hashtagName, int userId)
         {
             if (postId <= INVALID_ID)
             {
@@ -375,7 +391,7 @@ namespace Duo.Services
 
             try
             {
-                var targetPost = _postRepository.GetPostById(postId);
+                var targetPost = await GetPostById(postId);
                 if (targetPost == null)
                 {
                     throw new Exception($"Post with ID {postId} not found");
@@ -400,7 +416,7 @@ namespace Duo.Services
             }
         }
 
-        public bool RemoveHashtagFromPost(int postId, int hashtagId, int userId)
+        public async Task<bool> RemoveHashtagFromPost(int postId, int hashtagId, int userId)
         {
             if (postId <= INVALID_ID) throw new ArgumentException("Invalid Post ID.");
             if (hashtagId <= INVALID_ID) throw new ArgumentException("Invalid Hashtag ID.");
@@ -419,8 +435,7 @@ namespace Duo.Services
             }
         }
 
-
-        public int CreatePostWithHashtags(Post newPost, List<string> hashtagList, int authorId)
+        public async Task<int> CreatePostWithHashtags(Post newPost, List<string> hashtagList, int authorId)
         {
             if (string.IsNullOrWhiteSpace(newPost.Title) || string.IsNullOrWhiteSpace(newPost.Description))
             {
@@ -429,7 +444,7 @@ namespace Duo.Services
 
             try
             {
-                int createdPostId = _postRepository.CreatePost(newPost);
+                int createdPostId = await CreatePost(newPost);
                 
                 if (createdPostId <= INVALID_ID)
                 {
@@ -438,7 +453,7 @@ namespace Duo.Services
                 
                 try
                 {
-                    var createdPost = _postRepository.GetPostById(createdPostId);
+                    var createdPost = await GetPostById(createdPostId);
                 }
                 catch (Exception ex)
                 {
@@ -477,10 +492,9 @@ namespace Duo.Services
             if(categoryId == null || categoryId <= INVALID_ID)
                     return GetAllHashtags();
             return GetHashtagsByCategory(categoryId.Value);
-
         }
 
-        public (List<Post> Posts, int TotalCount) GetFilteredAndFormattedPosts(
+        public async Task<(List<Post> Posts, int TotalCount)> GetFilteredAndFormattedPosts(
             int? categoryId,
             List<string> selectedHashtags,
             string filterText,
@@ -494,39 +508,25 @@ namespace Duo.Services
 
             try
             {
-                IEnumerable<Post> filteredPosts;
+                var allPosts = await _postRepository.GetPosts();
+                IEnumerable<Post> filteredPosts = allPosts;
                 int totalCount;
 
+                // Filter by hashtags if needed
                 if (selectedHashtags.Count > DEFAULT_COUNT && !selectedHashtags.Contains("All"))
                 {
-                    filteredPosts = GetPostsByHashtags(selectedHashtags, currentPage, itemsPerPage);
-                    totalCount = GetPostCountByHashtags(selectedHashtags);
+                    filteredPosts = filteredPosts.Where(p => 
+                        p.Hashtags != null && 
+                        p.Hashtags.Any(h => selectedHashtags.Contains(h)));
                 }
-                else if (categoryId.HasValue && categoryId.Value > INVALID_ID)
+                
+                // Filter by category if needed
+                if (categoryId.HasValue && categoryId.Value > INVALID_ID)
                 {
-                    if (!string.IsNullOrEmpty(filterText))
-                    {
-                        filteredPosts = GetPostsByCategory(categoryId.Value, DEFAULT_PAGE_NUMBER, int.MaxValue);
-                    }
-                    else
-                    {
-                        filteredPosts = GetPostsByCategory(categoryId.Value, currentPage, itemsPerPage);
-                    }
-                    totalCount = GetPostCountByCategoryId(categoryId.Value);
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(filterText))
-                    {
-                        filteredPosts = GetPaginatedPosts(DEFAULT_PAGE_NUMBER, int.MaxValue);
-                    }
-                    else
-                    {
-                        filteredPosts = GetPaginatedPosts(currentPage, itemsPerPage);
-                    }
-                    totalCount = GetTotalPostCount();
+                    filteredPosts = filteredPosts.Where(p => p.CategoryID == categoryId.Value);
                 }
 
+                // Apply text filtering if needed
                 if (!string.IsNullOrEmpty(filterText))
                 {
                     var searchResults = new List<Post>();
@@ -537,12 +537,15 @@ namespace Duo.Services
                             searchResults.Add(post);
                         }
                     }
-
-                    totalCount = searchResults.Count;
-                    filteredPosts = searchResults
-                        .Skip((currentPage - DEFAULT_PAGE_NUMBER) * itemsPerPage)
-                        .Take(itemsPerPage);
+                    filteredPosts = searchResults;
                 }
+
+                totalCount = filteredPosts.Count();
+
+                // Apply pagination
+                filteredPosts = filteredPosts
+                    .Skip((currentPage - 1) * itemsPerPage)
+                    .Take(itemsPerPage);
 
                 var resultPosts = new List<Post>();
                 foreach (var post in filteredPosts)

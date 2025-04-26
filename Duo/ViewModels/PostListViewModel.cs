@@ -160,14 +160,17 @@ namespace Duo.ViewModels
             }
         }
 
-        public void LoadPosts()
+        public async void LoadPosts()
         {
-            var (posts, totalCount) = _postService.GetFilteredAndFormattedPosts(
-                0,
+            var result = await _postService.GetFilteredAndFormattedPosts(
+                _categoryID,
                 _selectedHashtags.ToList(),
                 _filterText,
                 _currentPage,
                 ItemsPerPage);
+
+            var posts = result.Posts;
+            var totalCount = result.TotalCount;
 
             Posts.Clear();
             foreach (var post in posts)

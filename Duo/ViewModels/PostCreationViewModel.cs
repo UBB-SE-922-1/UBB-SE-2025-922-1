@@ -172,7 +172,7 @@ namespace Duo.ViewModels
             _userService = _userService ?? App.userService;
 
             // Initialize commands
-            CreatePostCommand = new RelayCommand(CreatePost);
+            CreatePostCommand = new RelayCommand(async () => await CreatePostAsync());
             AddHashtagCommand = new RelayCommandWithParameter<string>(AddHashtag);
             RemoveHashtagCommand = new RelayCommandWithParameter<string>(RemoveHashtag);
             SelectCommunityCommand = new RelayCommandWithParameter<int>(SelectCommunity);
@@ -183,7 +183,7 @@ namespace Duo.ViewModels
 
         #region Public Methods
 
-        public void CreatePost()
+        public async Task CreatePostAsync()
         {
             if (string.IsNullOrWhiteSpace(Title) || string.IsNullOrWhiteSpace(Content))
             {
@@ -224,7 +224,7 @@ namespace Duo.ViewModels
                 };
                 
                 // Create post in database using the original CreatePost method
-                int createdPostId = _postService.CreatePost(newPost);
+                int createdPostId = await _postService.CreatePost(newPost);
                 
                 // Add hashtags if any
                 if (Hashtags.Count > DEFAULT_COUNT)
@@ -233,7 +233,7 @@ namespace Duo.ViewModels
                     {
                         try
                         {
-                            _postService.AddHashtagToPost(createdPostId, hashtagText, currentUser.UserId);
+                            await _postService.AddHashtagToPost(createdPostId, hashtagText, currentUser.UserId);
                         }
                         catch (Exception hashtagException)
                         {
@@ -311,7 +311,7 @@ namespace Duo.ViewModels
                 };
                 
                 // Create post and add hashtags in a single operation
-                int createdPostId = _postService.CreatePostWithHashtags(newPost, processedHashtags, currentUser.UserId);
+                int createdPostId = await _postService.CreatePostWithHashtags(newPost, processedHashtags, currentUser.UserId);
                 
                 // Now that we have a valid post ID, update our hashtags collection
                 Hashtags.Clear();

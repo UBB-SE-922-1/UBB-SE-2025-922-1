@@ -2,32 +2,33 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using DuolingoClassLibrary.Entities;
+using System.Threading.Tasks;
 
 namespace Duo.Services.Interfaces
 {
     public interface IPostService
     {
-        int CreatePost(Post newPost);
-        void DeletePost(int postId);
-        void UpdatePost(Post postToUpdate);
-        Post? GetPostById(int postId);
-        Collection<Post> GetPostsByCategory(int categoryId, int pageNumber, int pageSize);
-        List<Post> GetPaginatedPosts(int pageNumber, int pageSize);
-        int GetTotalPostCount();
-        int GetPostCountByCategoryId(int categoryId);
-        int GetPostCountByHashtags(List<string> hashtagList);
+        Task<int> CreatePost(Post newPost);
+        Task DeletePost(int postId);
+        Task UpdatePost(Post postToUpdate);
+        Task<Post?> GetPostById(int postId);
+        Task<Collection<Post>> GetPostsByCategory(int categoryId, int pageNumber, int pageSize);
+        Task<List<Post>> GetPaginatedPosts(int pageNumber, int pageSize);
+        Task<int> GetTotalPostCount();
+        Task<int> GetPostCountByCategoryId(int categoryId);
+        Task<int> GetPostCountByHashtags(List<string> hashtagList);
         List<Hashtag> GetAllHashtags();
         List<Hashtag> GetHashtagsByCategory(int categoryId);
         List<Hashtag> GetHashtags(int? categoryId);
-        List<Post> GetPostsByHashtags(List<string> hashtagList, int pageNumber, int pageSize);
-        bool ValidatePostOwnership(int authorUserId, int targetPostId);
+        Task<List<Post>> GetPostsByHashtags(List<string> hashtagList, int pageNumber, int pageSize);
+        Task<bool> ValidatePostOwnership(int authorUserId, int targetPostId);
         List<Hashtag> GetHashtagsByPostId(int postId);
-        bool LikePost(int postId);
-        Post? GetPostDetailsWithMetadata(int postId);
-        bool AddHashtagToPost(int postId, string hashtagName, int userId);
-        bool RemoveHashtagFromPost(int postId, int hashtagId, int userId);
-        int CreatePostWithHashtags(Post newPost, List<string> hashtagList, int authorId);
-        (List<Post> Posts, int TotalCount) GetFilteredAndFormattedPosts(
+        Task<bool> LikePost(int postId);
+        Task<Post?> GetPostDetailsWithMetadata(int postId);
+        Task<bool> AddHashtagToPost(int postId, string hashtagName, int userId);
+        Task<bool> RemoveHashtagFromPost(int postId, int hashtagId, int userId);
+        Task<int> CreatePostWithHashtags(Post newPost, List<string> hashtagList, int authorId);
+        Task<(List<Post> Posts, int TotalCount)> GetFilteredAndFormattedPosts(
             int? categoryId,
             List<string> selectedHashtags,
             string filterText,

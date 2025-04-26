@@ -376,3 +376,8 @@ coverage_summary
 test_result
 /Duo/Duo.csproj  
 /TestProject1/TestMessi.csproj
+
+**/appsettings.json
+**/appsettings.*.json
+**/duoappsettings.json
+

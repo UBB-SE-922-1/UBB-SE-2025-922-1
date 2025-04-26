@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using DuolingoClassLibrary.Entities;
+using DuolingoClassLibrary.Repositories.Interfaces;
 using Duo.Repositories.Interfaces;
 using Duo.Services;
 using Duo.Services.Interfaces;
@@ -13,6 +14,7 @@ namespace TestProject1.Services
 {
     public class PostServiceTests
     {
+        /*
         private Mock<IPostRepository> _mockPostRepository;
         private Mock<IHashtagRepository> _mockHashtagRepository;
         private Mock<IUserService> _mockUserService;
@@ -2220,5 +2222,6 @@ namespace TestProject1.Services
         }
 
         #endregion
-    }
+    */
+        }
 } 

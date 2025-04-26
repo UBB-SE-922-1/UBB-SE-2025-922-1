@@ -6,6 +6,7 @@ using System.Linq;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System;
+using System.Threading.Tasks;
 using DuolingoClassLibrary.Entities;
 using Duo.ViewModels;
 using Duo.Services;
@@ -44,28 +45,36 @@ namespace Duo.Views.Pages
             SetupHashtagDragScrolling();
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
             if (e.Parameter is string categoryName && !string.IsNullOrEmpty(categoryName))
             {
                 _viewModel.CategoryName = categoryName;
-
                 PageTitle.Text = categoryName;
 
-                if (_viewModel.CategoryID == INVALID_ID && _viewModel.CategoryName != null)
+                try
                 {
-                    var categoryInfo = _categoryService.GetCategoryByName(_viewModel.CategoryName);
+                    var categoryInfo = await _categoryService.GetCategoryByName(categoryName);
                     if (categoryInfo != null)
                     {
-                        _viewModel.CategoryID = categoryInfo.Id;
+                        if (categoryName == "Community")
+                            _viewModel.CategoryID = 0;
+                        else
+                            _viewModel.CategoryID = categoryInfo.Id;
+
+                        // Write CategoryID to the debugger
+                        System.Diagnostics.Debug.WriteLine($"CategoryID: {_viewModel.CategoryID}");
                     }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error getting category: {ex.Message}");
                 }
             }
 
-            _viewModel.LoadPosts();
-
+            await _viewModel.LoadPosts();
             UpdateHashtagsList();
         }
 

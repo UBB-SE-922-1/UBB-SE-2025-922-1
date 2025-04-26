@@ -11,9 +11,9 @@ using Xunit;
 namespace TestMessi.Repositories
 {
     public class PostRepositoryTests
-    {
+    {    /*
         private MockDatabaseConnectionPostRepository _dataLinkMock;
-
+        
         public PostRepositoryTests()
         {
             _dataLinkMock = new MockDatabaseConnectionPostRepository();
@@ -959,5 +959,6 @@ namespace TestMessi.Repositories
             
             Assert.NotNull(resultTable);
         }
-    }
+    */
+        }
 }

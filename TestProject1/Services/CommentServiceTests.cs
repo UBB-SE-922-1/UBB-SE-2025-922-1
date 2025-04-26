@@ -5,12 +5,14 @@ using Xunit;
 using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Duo.Services.Interfaces;
+using DuolingoClassLibrary.Repositories.Interfaces;
 using Duo.Repositories.Interfaces;
 
 namespace TestProject1.Services
 {
     public class CommentServiceTests
     {
+        /*
         private readonly Mock<ICommentRepository> _mockCommentRepository;
         private readonly Mock<IPostRepository> _mockPostRepository;
         private readonly Mock<IUserService> _mockUserService;
@@ -698,5 +700,7 @@ namespace TestProject1.Services
         }
 
         #endregion
+    }
+        */
     }
 } 

@@ -102,13 +102,13 @@ namespace Duo.Views.Components
             return null;
         }
         
-        private void LikeButton_LikeClicked(object sender, LikeButtonClickedEventArgs e)
+        private async void LikeButton_LikeClicked(object sender, LikeButtonClickedEventArgs e)
         {
             if (e.TargetType == LikeTargetType.Post && e.TargetId == PostId)
             {
                 try
                 {
-                    if (App._postService.LikePost(PostId))
+                    if (await App._postService.LikePost(PostId))
                     {
                        // LikeCount++;
                         
@@ -274,7 +274,7 @@ namespace Duo.Views.Components
             // Display Edit Post dialog with prefilled data
             var dialogComponent = new DialogComponent();
             
-            var post = _postService.GetPostById(this.PostId);
+            var post = await _postService.GetPostById(this.PostId);
             if (post == null)
             {
                 var errorDialog = new ContentDialog

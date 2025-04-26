@@ -11,8 +11,8 @@ namespace Duo.Services.Interfaces
     {
         public List<Comment> GetCommentsByPostId(int postId);
         public (List<Comment> AllComments, List<Comment> TopLevelComments, Dictionary<int, List<Comment>> RepliesByParentId) GetProcessedCommentsByPostId(int postId);
-        public int CreateComment(string content, int postId, int? parentCommentId = null);
-        public (bool Success, string ReplySignature) CreateReplyWithDuplicateCheck(
+        public Task<int> CreateComment(string content, int postId, int? parentCommentId = null);
+        public Task<(bool Success, string ReplySignature)> CreateReplyWithDuplicateCheck(
             string replyText, 
             int postId, 
             int parentCommentId, 

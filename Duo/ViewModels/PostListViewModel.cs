@@ -163,7 +163,7 @@ namespace Duo.ViewModels
         public async void LoadPosts()
         {
             var result = await _postService.GetFilteredAndFormattedPosts(
-                _categoryID,
+                0,
                 _selectedHashtags.ToList(),
                 _filterText,
                 _currentPage,

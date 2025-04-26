@@ -218,11 +218,11 @@ namespace Duo.ViewModels
             }
         }
 
-        private void AddComment(string commentText)
+        private async void AddComment(string commentText)
         {
             try
             {
-                _commentService.CreateComment(commentText, Post.Id, null);
+                await _commentService.CreateComment(commentText, Post.Id, null);
                 LoadComments(Post.Id);
             }
             catch (Exception ex)
@@ -240,7 +240,7 @@ namespace Duo.ViewModels
             AddReplyToComment(data.Item1, data.Item2);
         }
 
-        public void DeleteComment(int commentId)
+        public async void DeleteComment(int commentId)
          {
 
              try
@@ -259,18 +259,19 @@ namespace Duo.ViewModels
              }
          }
 
-        public void AddReplyToComment(int parentCommentId, string replyText)
+        public async void AddReplyToComment(int parentCommentId, string replyText)
         {
             try
             {
-                var (success, newReplySignature) = _commentService.CreateReplyWithDuplicateCheck(
+                var result = await _commentService.CreateReplyWithDuplicateCheck(
                     replyText,
                     Post?.Id ?? 0,
                     parentCommentId,
                     Comments,
                     _lastProcessedReply);
-                    _lastProcessedReply = newReplySignature;
-                    LoadComments(Post.Id);
+                    
+                _lastProcessedReply = result.ReplySignature;
+                LoadComments(Post.Id);
             }
             catch (Exception ex)
             {

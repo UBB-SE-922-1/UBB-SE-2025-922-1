@@ -7,6 +7,7 @@ using Duo.Services.Interfaces;
 using Duo.Repositories.Interfaces;
 using DuolingoClassLibrary.Repositories.Interfaces;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Duo.Services
 {
@@ -103,14 +104,14 @@ namespace Duo.Services
             return (allComments, topLevelComments, repliesByParentId);
         }
 
-        public int CreateComment(string content, int postId, int? parentCommentId = null)
+        public async Task<int> CreateComment(string content, int postId, int? parentCommentId = null)
         {
             if (postId <= MINIMUM_ALLOWED_ID_NUMBER) throw new ArgumentException("Invalid post ID", nameof(postId));
             if (string.IsNullOrWhiteSpace(content)) throw new ArgumentException("Content cannot be empty", nameof(content));
 
             try
             {
-                ValidateCommentCount(postId);
+                await ValidateCommentCount(postId);
 
                 int level = 1;
                 if (parentCommentId.HasValue)
@@ -227,11 +228,11 @@ namespace Duo.Services
             return null;
         }
 
-        private void ValidateCommentCount(int postId)
+        private async Task ValidateCommentCount(int postId)
         {
             try
             {
-                var posts = _postRepository.GetPosts().Result;
+                var posts = await _postRepository.GetPosts();
                 var post = posts.FirstOrDefault(p => p.Id == postId);
                 
                 if (post == null) throw new Exception("Post not found");
@@ -245,7 +246,7 @@ namespace Duo.Services
             }
         }
 
-        public (bool Success, string ReplySignature) CreateReplyWithDuplicateCheck(
+        public async Task<(bool Success, string ReplySignature)> CreateReplyWithDuplicateCheck(
             string replyText, 
             int postId, 
             int parentCommentId, 
@@ -273,7 +274,7 @@ namespace Duo.Services
             }
 
             // Create the comment/reply
-            int commentId = CreateComment(replyText, postId, parentCommentId);
+            int commentId = await CreateComment(replyText, postId, parentCommentId);
             
             return (commentId > 0, replySignature);
         }

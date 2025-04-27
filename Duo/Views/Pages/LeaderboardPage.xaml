@@ -43,7 +43,7 @@
                 Background="LightGray" 
                 BorderBrush="DarkGray" 
                 BorderThickness="1"
-                Click="FriendsButton_Click"/>
+                IsEnabled="False"/>
         </StackPanel>
 
         <Button Content="Refresh" 

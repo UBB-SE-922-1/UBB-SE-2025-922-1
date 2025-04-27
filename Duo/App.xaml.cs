@@ -86,8 +86,7 @@ namespace Duo
             // Register repositories
             services.AddSingleton<IUserRepository, UserRepository>();
             services.AddSingleton<UserRepository>();  // Add direct UserRepository registration
-            services.AddSingleton<IFriendsRepository, FriendsRepository>();
-            services.AddSingleton<ListFriendsRepository>();  // Add ListFriendsRepository
+            services.AddSingleton<DuolingoClassLibrary.Repositories.Interfaces.IFriendsRepository, DuolingoClassLibrary.Repositories.Repos.FriendsRepository>();
 
             // Register services
             services.AddTransient<ILoginService, LoginService>();

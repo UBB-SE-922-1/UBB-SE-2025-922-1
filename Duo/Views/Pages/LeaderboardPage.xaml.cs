@@ -20,6 +20,7 @@ using System.Data;
 using DuolingoNou.Views.Pages;
 using Duo.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -54,22 +55,20 @@ public sealed partial class LeaderboardPage : Page
         LeaderboardListView.ItemsSource = _leaderboardViewModel.GetGlobalLeaderboard("Accuracy");
         CurrentUserRank.Text = $"Your Rank: {_leaderboardViewModel.GetCurrentUserGlobalRank(currentUserId, "Accuracy")}";
         RankingCriteriaComboBox.SelectedItem = SortBy;
-
-
     }
 
     // Event handler for Friends button click
-    private void FriendsButton_Click(object sender, RoutedEventArgs e)
+    private async void FriendsButton_Click(object sender, RoutedEventArgs e)
     {
         // Update the Leaderboard to display friends' rankings
         _selectedMode = "Friends";
-        LeaderboardListView.ItemsSource = _leaderboardViewModel.GetFriendsLeaderboard(currentUserId, "Accuracy");
-        CurrentUserRank.Text = $"Your Rank: {_leaderboardViewModel.GetCurrentUserFriendsRank(currentUserId, "Accuracy")}";
+        var friendsLeaderboard = await _leaderboardViewModel.GetFriendsLeaderboard(currentUserId, "Accuracy");
+        LeaderboardListView.ItemsSource = friendsLeaderboard;
+        CurrentUserRank.Text = $"Your Rank: {await _leaderboardViewModel.GetCurrentUserFriendsRank(currentUserId, "Accuracy")}";
         RankingCriteriaComboBox.SelectedItem = SortBy;
-
     }
 
-    private void RefreshButton_Click(object sender, RoutedEventArgs e)
+    private async void RefreshButton_Click(object sender, RoutedEventArgs e)
     {
         // Refresh the Leaderboard
         if (_selectedMode == "Global")
@@ -79,15 +78,15 @@ public sealed partial class LeaderboardPage : Page
         }
         else
         {
-            Leaderboard = new ObservableCollection<LeaderboardEntry>(_leaderboardViewModel.GetFriendsLeaderboard(currentUserId, "Accuracy"));
-            CurrentUserRank.Text = $"Your Rank: {_leaderboardViewModel.GetCurrentUserFriendsRank(currentUserId, "Accuracy")}";
+            var friendsLeaderboard = await _leaderboardViewModel.GetFriendsLeaderboard(currentUserId, "Accuracy");
+            Leaderboard = new ObservableCollection<LeaderboardEntry>(friendsLeaderboard);
+            CurrentUserRank.Text = $"Your Rank: {await _leaderboardViewModel.GetCurrentUserFriendsRank(currentUserId, "Accuracy")}";
         }
         LeaderboardListView.ItemsSource = Leaderboard;
-
         RankingCriteriaComboBox.SelectedItem = SortBy;
     }
 
-    private void RankingCriteriaComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void RankingCriteriaComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         // Get the selected item
         var selectedItem = (ComboBoxItem)RankingCriteriaComboBox.SelectedItem;
@@ -96,8 +95,6 @@ public sealed partial class LeaderboardPage : Page
         {
             string selectedCriteria = selectedItem.Content.ToString();
 
-            // Now, you can filter or change the ranking based on the selected criteria
-            // For example:
             switch (selectedCriteria)
             {
                 case "Accuracy":
@@ -108,12 +105,14 @@ public sealed partial class LeaderboardPage : Page
                     }
                     else
                     {
-                        Leaderboard = new ObservableCollection<LeaderboardEntry>(_leaderboardViewModel.GetFriendsLeaderboard(currentUserId, "Accuracy"));
-                        CurrentUserRank.Text = $"Your Rank: {_leaderboardViewModel.GetCurrentUserFriendsRank(currentUserId, "Accuracy")}";
+                        var friendsLeaderboard = await _leaderboardViewModel.GetFriendsLeaderboard(currentUserId, "Accuracy");
+                        Leaderboard = new ObservableCollection<LeaderboardEntry>(friendsLeaderboard);
+                        CurrentUserRank.Text = $"Your Rank: {await _leaderboardViewModel.GetCurrentUserFriendsRank(currentUserId, "Accuracy")}";
                     }
                     LeaderboardListView.ItemsSource = Leaderboard;
                     break;
-                case "Completed Quizzes":
+                
+                case "CompletedQuizzes":
                     if (_selectedMode == "Global")
                     {
                         Leaderboard = new ObservableCollection<LeaderboardEntry>(_leaderboardViewModel.GetGlobalLeaderboard("CompletedQuizzes"));
@@ -121,8 +120,9 @@ public sealed partial class LeaderboardPage : Page
                     }
                     else
                     {
-                        Leaderboard = new ObservableCollection<LeaderboardEntry>(_leaderboardViewModel.GetFriendsLeaderboard(currentUserId, "CompletedQuizzes"));
-                        CurrentUserRank.Text = $"Your Rank: {_leaderboardViewModel.GetCurrentUserFriendsRank(currentUserId, "CompletedQuizzes")}";
+                        var friendsLeaderboard = await _leaderboardViewModel.GetFriendsLeaderboard(currentUserId, "CompletedQuizzes");
+                        Leaderboard = new ObservableCollection<LeaderboardEntry>(friendsLeaderboard);
+                        CurrentUserRank.Text = $"Your Rank: {await _leaderboardViewModel.GetCurrentUserFriendsRank(currentUserId, "CompletedQuizzes")}";
                     }
                     LeaderboardListView.ItemsSource = Leaderboard;
                     break;

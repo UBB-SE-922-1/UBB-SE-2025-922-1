@@ -13,13 +13,13 @@ namespace TestsDuo2.Services
     public class LeaderboardServiceTests
     {
         private readonly Mock<IUserRepository> _mockUserRepository;
-        private readonly Mock<IFriendsRepository> _mockFriendsRepository;
+        private readonly Mock<IFriendsLeaderboardRepository> _mockFriendsRepository;
         private readonly LeaderboardService _leaderboardService;
         
         public LeaderboardServiceTests()
         {
             _mockUserRepository = new Mock<IUserRepository>();
-            _mockFriendsRepository = new Mock<IFriendsRepository>();
+            _mockFriendsRepository = new Mock<IFriendsLeaderboardRepository>();
             _leaderboardService = new LeaderboardService(_mockUserRepository.Object, _mockFriendsRepository.Object);
         }
         

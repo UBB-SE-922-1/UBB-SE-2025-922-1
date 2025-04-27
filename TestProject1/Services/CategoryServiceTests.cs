@@ -5,54 +5,119 @@ using DuolingoClassLibrary.Entities;
 using DuolingoClassLibrary.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
+using System.Threading.Tasks;
 
 namespace TestProject1.Services
 {
     public class CategoryServiceTests
     {
-        /*
+        private readonly Mock<ICategoryRepository> _mockCategoryRepository;
+        private readonly CategoryService _categoryService;
+        private readonly List<Category> _testCategories;
+
+        public CategoryServiceTests()
+        {
+            _testCategories = new List<Category>
+            {
+                new Category { Id = 1, Name = "Technology" },
+                new Category { Id = 2, Name = "Science" },
+                new Category { Id = 3, Name = "Music" }
+            };
+
+            _mockCategoryRepository = new Mock<ICategoryRepository>();
+            _mockCategoryRepository.Setup(repo => repo.GetCategoriesAsync())
+                .ReturnsAsync(_testCategories);
+
+            _categoryService = new CategoryService(_mockCategoryRepository.Object);
+        }
+
         [Fact]
         public void Constructor_NullRepository_ThrowsArgumentNullException()
         {
-            // Arrange & Act & Assert
             Assert.Throws<ArgumentNullException>(() => new CategoryService(null));
         }
 
         [Fact]
-        public void GetCategoryByName_EmptyName_ThrowsArgumentException()
+        public async Task GetAllCategories_ReturnsCategories()
         {
-            // Arrange
-            var mockRepo = new Mock<ICategoryRepository>();
-            var service = new CategoryService(mockRepo.Object);
+            var result = await _categoryService.GetAllCategories();
 
-            // Act & Assert
-            Assert.Throws<ArgumentException>(() => service.GetCategoryByName(string.Empty));
+            Assert.NotNull(result);
+            Assert.Equal(3, result.Count);
+            Assert.Equal("Technology", result[0].Name);
+            Assert.Equal("Science", result[1].Name);
+            Assert.Equal("Music", result[2].Name);
         }
 
         [Fact]
-        public void GetCategoryNames_ReturnsCorrectList()
+        public async Task GetAllCategories_HandlesException()
         {
-            // Arrange
-            var mockRepo = new Mock<ICategoryRepository>();
-            var list = new List<Category>
-            {
-                new Category(1, "Category1"),
-                new Category(2, "Category2")
-            };
+            _mockCategoryRepository.Setup(repo => repo.GetCategoriesAsync())
+                .ThrowsAsync(new Exception("Database error"));
 
-            mockRepo.Setup(x => x.GetCategories())
-                   .Returns(list);
+            var result = await _categoryService.GetAllCategories();
 
-            var service = new CategoryService(mockRepo.Object);
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
 
-            // Act
-            var result = service.GetCategoryNames();
+        [Fact]
+        public async Task GetCategoryByName_ValidName_ReturnsCategory()
+        {
+            var result = await _categoryService.GetCategoryByName("Technology");
 
-            // Assert
-            Assert.Equal(2, result.Count);
-            Assert.Contains("Category1", result);
-            Assert.Contains("Category2", result);
+            Assert.NotNull(result);
+            Assert.Equal(1, result.Id);
+            Assert.Equal("Technology", result.Name);
+        }
+
+        [Fact]
+        public async Task GetCategoryByName_EmptyName_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => 
+                _categoryService.GetCategoryByName(string.Empty));
+        }
+
+        [Fact]
+        public async Task GetCategoryByName_NonExistentName_ReturnsNull()
+        {
+            var result = await _categoryService.GetCategoryByName("NonExistent");
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetCategoryByName_HandlesException()
+        {
+            _mockCategoryRepository.Setup(repo => repo.GetCategoriesAsync())
+                .ThrowsAsync(new Exception("Database error"));
+
+            var result = await _categoryService.GetCategoryByName("Technology");
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetCategoryNames_ReturnsCorrectList()
+        {
+            var result = await _categoryService.GetCategoryNames();
+
+            Assert.Equal(3, result.Count);
+            Assert.Contains("Technology", result);
+            Assert.Contains("Science", result);
+            Assert.Contains("Music", result);
+        }
+
+        [Fact]
+        public async Task GetCategoryNames_HandlesException()
+        {
+            _mockCategoryRepository.Setup(repo => repo.GetCategoriesAsync())
+                .ThrowsAsync(new Exception("Database error"));
+
+            var result = await _categoryService.GetCategoryNames();
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         [Theory]
@@ -60,56 +125,11 @@ namespace TestProject1.Services
         [InlineData("")]
         public void IsValidCategoryName_NullOrEmpty_ReturnsFalse(string name)
         {
-            // Arrange
-            var mockRepo = new Mock<ICategoryRepository>();
-            var service = new CategoryService(mockRepo.Object);
+            var result = _categoryService.IsValidCategoryName(name);
 
-            // Act
-            var result = service.IsValidCategoryName(name);
-
-            // Assert
             Assert.False(result);
         }
 
-        [Fact]
-        public void GetAllCategories_ReturnsCategories()
-        {
-            // Arrange
-            var mockRepo = new Mock<ICategoryRepository>();
-            var expectedCategories = new List<Category>
-            {
-                new Category(1, "Category1"),
-                new Category(2, "Category2")
-            };
-            mockRepo.Setup(x => x.GetCategories())
-                   .Returns(expectedCategories);
-            var service = new CategoryService(mockRepo.Object);
-
-            // Act
-            var result = service.GetAllCategories();
-
-            // Assert
-            Assert.Equal(expectedCategories.Count, result.Count);
-            Assert.Equal(expectedCategories[0].Name, result[0].Name);
-            Assert.Equal(expectedCategories[1].Name, result[1].Name);
-        }
-
-        [Fact]
-        public void GetAllCategories_HandlesException()
-        {
-            // Arrange
-            var mockRepo = new Mock<ICategoryRepository>();
-            mockRepo.Setup(x => x.GetCategories())
-                   .Throws(new Exception("Database error"));
-            var service = new CategoryService(mockRepo.Object);
-
-            // Act
-            var result = service.GetAllCategories();
-
-            // Assert
-            Assert.Empty(result);
-        }
-    */
-    }
        
+    }
 }

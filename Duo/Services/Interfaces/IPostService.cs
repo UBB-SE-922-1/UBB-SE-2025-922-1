@@ -8,6 +8,7 @@ namespace Duo.Services.Interfaces
 {
     public interface IPostService
     {
+        Task<List<Post>> GetPosts();
         Task<int> CreatePost(Post newPost);
         Task DeletePost(int postId);
         Task UpdatePost(Post postToUpdate);

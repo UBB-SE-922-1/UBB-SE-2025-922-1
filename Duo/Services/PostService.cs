@@ -508,7 +508,7 @@ namespace Duo.Services
 
             try
             {
-                var allPosts = await _postRepository.GetPosts();
+                var allPosts = await this.GetPosts();
                 IEnumerable<Post> filteredPosts = allPosts;
                 int totalCount;
 
@@ -612,6 +612,17 @@ namespace Duo.Services
             }
 
             return updatedHashtags;
+        }
+
+        public async Task<List<Post>> GetPosts()
+        {
+            var posts =await _postRepository.GetPosts();
+            foreach(Post post in posts)
+            {
+                var postHashtags = await _hashtagService.GetHashtagsByPostId(post.Id);
+                post.Hashtags = postHashtags.Select(hashtag => hashtag.Tag).ToList();
+            }
+            return posts;
         }
     }
 }

@@ -361,7 +361,7 @@ namespace Duo.Services
             var hashtags = await GetHashtagsByPostId(post.Id);
             if (hashtags != null && hashtags.Any())
             {
-                post.Hashtags = hashtags.Select(h => h.Name ?? h.Tag).ToList();
+                post.Hashtags = hashtags.Select(h => h.Tag ?? h.Tag).ToList();
             }
             
             return post;
@@ -564,7 +564,7 @@ namespace Duo.Services
                     var postHashtags = await GetHashtagsByPostId(post.Id);
                     foreach (var hashtag in postHashtags)
                     {
-                        post.Hashtags.Add(hashtag.Name);
+                        post.Hashtags.Add(hashtag.Tag);
                     }               
 
                     resultPosts.Add(post);

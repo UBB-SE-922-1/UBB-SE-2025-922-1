@@ -38,6 +38,8 @@ namespace DuolingoClassLibrary.Data
             modelBuilder.Entity<User>()
                 .Property(e => e.Accuracy)
                 .HasPrecision(18, 2);
+            modelBuilder.Entity<PostHashtags>()
+            .HasKey(ph => new { ph.PostId, ph.HashtagId });
         }
     }
 }

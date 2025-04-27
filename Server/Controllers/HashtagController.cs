@@ -10,9 +10,9 @@ namespace Server.Controllers
     [Route("[controller]")]
     public class HashtagController : ControllerBase
     {
-        private readonly IHashtagRepository _hashtagRepository;
+        private readonly HashtagRepository _hashtagRepository;
 
-        public HashtagController(IHashtagRepository hashtagRepository)
+        public HashtagController(HashtagRepository hashtagRepository)
         {
             this._hashtagRepository = hashtagRepository;
         }

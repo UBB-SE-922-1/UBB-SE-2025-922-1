@@ -55,7 +55,7 @@ namespace Duo.Services
             try
             {
                 var hashtags = await _hashtagRepository.GetHashtags();
-                return hashtags.Where(hashtag =>hashtag.Name == hashtagName).ToList().First();
+                return hashtags.Where(hashtag =>hashtag.Tag == hashtagName).ToList().First();
             }
             catch (Exception caughtException)
             {
@@ -68,7 +68,7 @@ namespace Duo.Services
             try
             {
                 var hashtags = await _hashtagRepository.GetHashtags();
-                return hashtags.Where(hashtag => hashtag.Name.Contains(textToSearchBy)).ToList().First();
+                return hashtags.Where(hashtag => hashtag.Tag.Contains(textToSearchBy)).ToList().First();
             }
             catch (Exception caughtException)
             {

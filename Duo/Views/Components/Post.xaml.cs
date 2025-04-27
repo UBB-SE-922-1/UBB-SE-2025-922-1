@@ -462,7 +462,7 @@ namespace Duo.Views.Components
                          var viewModel = postListPage.DataContext as Duo.ViewModels.PostListViewModel;
                          if (viewModel != null)
                          {
-                             viewModel.LoadPosts();
+                             await viewModel.LoadPosts();
                          }
                      }
                      else if (frame.Content is Duo.Views.Pages.CategoryPage categoryPage)

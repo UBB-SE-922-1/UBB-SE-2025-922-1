@@ -10,12 +10,9 @@ namespace DuolingoClassLibrary.Entities
 {
     public class PostHashtags
     {
-        [Key]
-        [Column(Order = 0)]
+        public PostHashtags() { }
         public int PostId { get; set; }
         
-        [Key]
-        [Column(Order = 1)]
         public int HashtagId { get; set; }
     }
 }

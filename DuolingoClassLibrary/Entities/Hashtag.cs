@@ -8,6 +8,7 @@ namespace DuolingoClassLibrary.Entities
     {
         private int _id;
         private string _tag;
+        public Hashtag() { }
 
         public Hashtag(int id, string tag)
         {
@@ -29,12 +30,6 @@ namespace DuolingoClassLibrary.Entities
         }
 
         public string Tag
-        {
-            get { return _tag; }
-            set { _tag = value; }
-        }
-
-        public string Name
         {
             get { return _tag; }
             set { _tag = value; }

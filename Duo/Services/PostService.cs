@@ -508,6 +508,7 @@ namespace Duo.Services
 
             try
             {
+                //Originally _postRepository.GetPosts() for faster load times but doesn't populate the posts' hashtags so it doesn't show anything
                 var allPosts = await this.GetPosts();
                 IEnumerable<Post> filteredPosts = allPosts;
                 int totalCount;

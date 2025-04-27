@@ -154,12 +154,12 @@ namespace Duo.ViewModels
                 _allHashtags.Clear();
                 _allHashtags.Add(ALL_HASHTAGS_FILTER);
 
-                var hashtags = _postService.GetHashtags(_categoryID);
+                var hashtags = await _postService.GetHashtags(_categoryID);
                 foreach (var hashtag in hashtags)
                 {
-                    if (!_allHashtags.Contains(hashtag.Name))
+                    if (!_allHashtags.Contains(hashtag.Tag))
                     {
-                        _allHashtags.Add(hashtag.Name);
+                        _allHashtags.Add(hashtag.Tag);
                     }
                 }
 
@@ -235,7 +235,7 @@ namespace Duo.ViewModels
         }
 
         public async Task FilterPosts()
-        {
+        { 
             CurrentPage = DEFAULT_PAGE_NUMBER;
             await LoadPosts();
         }

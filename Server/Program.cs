@@ -17,6 +17,9 @@ builder.Services.AddDbContext<DataContext>(options =>
 builder.Services.AddScoped<CategoryRepository>();
 builder.Services.AddScoped<PostRepository>();
 builder.Services.AddScoped<DuolingoClassLibrary.Repositories.Interfaces.ICommentRepository, DuolingoClassLibrary.Repositories.Repos.CommentRepository>();
+builder.Services.AddScoped<FriendsRepository>();
+builder.Services.AddScoped<DuolingoClassLibrary.Repositories.Interfaces.IFriendsRepository, DuolingoClassLibrary.Repositories.Proxies.FriendsRepositoryProxy>();
+builder.Services.AddScoped<HashtagRepository>();
 
 var app = builder.Build();
 

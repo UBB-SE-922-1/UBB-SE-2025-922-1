@@ -381,3 +381,7 @@ test_result
 **/appsettings.*.json
 **/duoappsettings.json
 
+/DuolingoClassLibrary/appsettings.Development.json
+/DuolingoClassLibrary/appsettings.json
+/Server/appsettings.json
+/Duo/duoappsettings.json

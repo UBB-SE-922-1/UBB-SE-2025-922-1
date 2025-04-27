@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Duo.ViewModels
 {
@@ -55,9 +56,9 @@ namespace Duo.ViewModels
         /// <param name="userId">The user identifier</param>
         /// <param name="criteria">The sorting criteria</param>
         /// <returns>A list of leaderboard entries</returns>
-        public List<LeaderboardEntry> GetFriendsLeaderboard(int userId, string criteria)
+        public async Task<List<LeaderboardEntry>> GetFriendsLeaderboard(int userId, string criteria)
         {
-            return leaderboardService.GetFriendsLeaderboard(userId, criteria);
+            return await leaderboardService.GetFriendsLeaderboard(userId, criteria);
         }
 
         /// <summary>
@@ -83,9 +84,9 @@ namespace Duo.ViewModels
         /// <param name="userId">The user identifier</param>
         /// <param name="criteria">The sorting criteria</param>
         /// <returns>The user's rank among friends, or -1 if not found</returns>
-        public int GetCurrentUserFriendsRank(int userId, string criteria)
+        public async Task<int> GetCurrentUserFriendsRank(int userId, string criteria)
         {
-            var users = leaderboardService.GetFriendsLeaderboard(userId, criteria);
+            var users = await leaderboardService.GetFriendsLeaderboard(userId, criteria);
             var currentUser = users.FirstOrDefault(user => user.UserId == userId);
             if (currentUser == null)
             {

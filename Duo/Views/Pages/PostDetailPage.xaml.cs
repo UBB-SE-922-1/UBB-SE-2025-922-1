@@ -12,8 +12,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Duo.ViewModels;
-
 using static Duo.App;
+using Duo.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI;
 
 namespace Duo.Views.Pages
 {
@@ -23,13 +25,13 @@ namespace Duo.Views.Pages
         private const int INVALID_ID = 0;
         private const int DEFAULT_MARGIN = 16;
         
-        private readonly CommentService _commentService;
+        private readonly ICommentService _commentService;
 
         public PostDetailPage()
         {
             this.InitializeComponent();
 
-            _commentService = new CommentService(_commentRepository, _postRepository, userService);
+            _commentService = App.ServiceProvider?.GetService<ICommentService>() ?? throw new InvalidOperationException("ICommentService not available");
 
             ViewModel.CommentsPanel = CommentsPanel;
 
@@ -49,7 +51,7 @@ namespace Duo.Views.Pages
                 TextBlock errorText = new TextBlock
                 {
                     Text = "Invalid post data received",
-                    Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red),
+                    Foreground = new SolidColorBrush(Colors.Red),
                     Margin = new Thickness(0, 20, 0, 0)
                 };
                 CommentsPanel.Children.Add(errorText);
@@ -101,7 +103,7 @@ namespace Duo.Views.Pages
                 TextBlock errorText = new TextBlock
                 {
                     Text = ViewModel.ErrorMessage,
-                    Foreground = new SolidColorBrush(Microsoft.UI.Colors.Red),
+                    Foreground = new SolidColorBrush(Colors.Red),
                     Margin = new Thickness(0, DEFAULT_MARGIN, 0, DEFAULT_MARGIN)
                 };
                 CommentsPanel.Children.Add(errorText);
@@ -127,15 +129,15 @@ namespace Duo.Views.Pages
             ViewModel.AddReplyCommand.Execute(parameters);
         }
 
-        private void CommentComponent_CommentLiked(object sender, CommentLikedEventArgs e)
+        private async void CommentComponent_CommentLiked(object sender, CommentLikedEventArgs e)
         {
             // Call the ViewModel method to like the comment and persist it to the database
-            ViewModel.LikeCommentById(e.CommentId);
+            await ViewModel.LikeCommentById(e.CommentId);
         }
 
-        private void CommentComponent_CommentDeleted(object sender, CommentDeletedEventArgs e)
+        private async void CommentComponent_CommentDeleted(object sender, CommentDeletedEventArgs e)
         {
-            ViewModel.DeleteComment(e.CommentId);
+            await ViewModel.DeleteComment(e.CommentId);
             RenderComments();
         }
     }

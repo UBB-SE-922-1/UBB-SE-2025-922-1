@@ -45,7 +45,6 @@ namespace Duo
         public static UserRepository userRepository;
         public static IPostRepository _postRepository;
         public static IHashtagRepository _hashtagRepository;
-        public static CommentRepository _commentRepository;
         public static IPostService _postService;
         public static ICategoryService _categoryService;
         public static SearchService _searchService;
@@ -60,7 +59,6 @@ namespace Duo
 
             userRepository = new UserRepository(_dataLink);
             _hashtagRepository = new HashtagRepository(_dataLink);
-            _commentRepository = new CommentRepository(_dataLink);
             ICategoryRepository categoryRepository = new CategoryRepositoryProxi();
             _postRepository = new PostRepositoryProxi();
 

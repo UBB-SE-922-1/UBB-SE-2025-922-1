@@ -16,6 +16,7 @@ builder.Services.AddDbContext<DataContext>(options =>
 // Register repositories
 builder.Services.AddScoped<CategoryRepository>();
 builder.Services.AddScoped<PostRepository>();
+builder.Services.AddScoped<DuolingoClassLibrary.Repositories.Interfaces.ICommentRepository, DuolingoClassLibrary.Repositories.Repos.CommentRepository>();
 
 var app = builder.Build();
 

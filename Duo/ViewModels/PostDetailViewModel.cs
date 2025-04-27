@@ -14,6 +14,8 @@ using Microsoft.UI.Xaml.Media;
 using static Duo.App;
 using Duo.Services.Interfaces;
 using DuolingoClassLibrary.Entities;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Duo.ViewModels
 {
@@ -43,7 +45,7 @@ namespace Duo.ViewModels
         public PostDetailViewModel()
         {
             _postService = _postService ?? App._postService;
-            _commentService = _commentService ?? new CommentService(_commentRepository, _postRepository, userService);
+            _commentService = _commentService ?? App.ServiceProvider?.GetService<ICommentService>() ?? throw new InvalidOperationException("ICommentService not available");
             _userService = _userService ?? App.userService;
 
             _post = new DuolingoClassLibrary.Entities.Post
@@ -151,7 +153,7 @@ namespace Duo.ViewModels
                 if (post != null)
                 {
                     Post = post;
-                    LoadComments(post.Id);
+                    await LoadComments(post.Id);
                 }
                 else
                 {
@@ -169,7 +171,7 @@ namespace Duo.ViewModels
             }
         }
 
-        public void LoadComments(int postId)
+        public async Task LoadComments(int postId)
         {
             try
             {
@@ -179,7 +181,7 @@ namespace Duo.ViewModels
                 }
 
                 // Use service method to get pre-processed comments
-                var (allComments, topLevelComments, repliesByParentId) = _commentService.GetProcessedCommentsByPostId(postId);
+                var (allComments, topLevelComments, repliesByParentId) = await _commentService.GetProcessedCommentsByPostId(postId);
 
                 Comments.Clear();
                 CommentViewModels.Clear();
@@ -198,8 +200,6 @@ namespace Duo.ViewModels
                     foreach (var comment in topLevelComments)
                     {
                         var commentViewModel = new CommentViewModel(comment, repliesByParentId);
-                       
-                        
                         CommentViewModels.Add(commentViewModel);
                     }
 
@@ -223,7 +223,7 @@ namespace Duo.ViewModels
             try
             {
                 await _commentService.CreateComment(commentText, Post.Id, null);
-                LoadComments(Post.Id);
+                await LoadComments(Post.Id);
             }
             catch (Exception ex)
             {
@@ -240,24 +240,40 @@ namespace Duo.ViewModels
             AddReplyToComment(data.Item1, data.Item2);
         }
 
-        public async void DeleteComment(int commentId)
-         {
-
-             try
-             {
+        public async Task DeleteComment(int commentId)
+        {
+            try
+            {
                 User currentUser = userService.GetCurrentUser();
-
-                bool success = _commentService.DeleteComment(commentId, currentUser.UserId);
+                bool success = await _commentService.DeleteComment(commentId, currentUser.UserId);
                 if (success)
                 {
-                    LoadComments(Post.Id);
-                }                
-             }
-             catch (Exception ex)
-             {
-                 System.Diagnostics.Debug.WriteLine($"Error deleting comment: {ex.Message}");
-             }
-         }
+                    await LoadComments(Post.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error deleting comment: {ex.Message}");
+            }
+        }
+
+        public async Task LikeCommentById(int commentId)
+        {
+            try
+            {
+                // Call the service to persist the like to the database
+                bool success = await _commentService.LikeComment(commentId);
+                if (success)
+                {
+                    // Optionally reload comments or update UI
+                    await LoadComments(Post.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error liking comment: {ex.Message}");
+            }
+        }
 
         public async void AddReplyToComment(int parentCommentId, string replyText)
         {
@@ -271,7 +287,7 @@ namespace Duo.ViewModels
                     _lastProcessedReply);
                     
                 _lastProcessedReply = result.ReplySignature;
-                LoadComments(Post.Id);
+                await LoadComments(Post.Id);
             }
             catch (Exception ex)
             {
@@ -287,29 +303,6 @@ namespace Duo.ViewModels
                 CommentViewModels,
                 c => c.Replies,
                 c => c.Id);
-        }
-
-        public void LikeCommentById(int commentId)
-        {
-            try
-            {
-                // Call the service to persist the like to the database
-                bool success = _commentService.LikeComment(commentId);
-                
-                if (success)
-                {
-                    // Update the UI via the view model
-                    var commentViewModel = FindCommentById(commentId);
-                    if (commentViewModel != null)
-                    {
-                        commentViewModel.LikeComment();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Failed to like comment: {ex.Message}";
-            }
         }
     }
 } 

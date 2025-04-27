@@ -79,7 +79,7 @@ namespace Duo.Views.Components
             HasError = false;
         }
 
-        public void Focus(FocusState focusState)
+        public new void Focus(FocusState focusState)
         {
             CommentTextBox.Focus(focusState);
         }

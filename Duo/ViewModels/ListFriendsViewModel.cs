@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Duo;
+using System.Threading.Tasks;
 
 namespace Duo.UI.ViewModels
 {
@@ -54,12 +55,12 @@ namespace Duo.UI.ViewModels
         /// <summary>
         /// Loads friends from the service
         /// </summary>
-        public void LoadFriends()
+        public async Task LoadFriendsAsync()
         {
             if (App.CurrentUser != null)
             {
                 userId = App.CurrentUser.UserId;
-                var loadedFriends = friendsService.GetFriends(userId);
+                var loadedFriends = await friendsService.GetFriends(userId);
                 Friends = loadedFriends;
             }
         }
@@ -67,28 +68,28 @@ namespace Duo.UI.ViewModels
         /// <summary>
         /// Sorts friends by name
         /// </summary>
-        public void SortByName()
+        public async Task SortByNameAsync()
         {
-            var sortedFriends = friendsService.SortFriendsByName(userId);
-            Friends = sortedFriends;  // Update the list
+            var sortedFriends = await friendsService.SortFriendsByName(userId);
+            Friends = sortedFriends;
         }
 
         /// <summary>
         /// Sorts friends by date added
         /// </summary>
-        public void SortByDateAdded()
+        public async Task SortByDateAddedAsync()
         {
-            var sortedFriends = friendsService.SortFriendsByDateAdded(userId);
-            Friends = sortedFriends;  // Update the list
+            var sortedFriends = await friendsService.SortFriendsByDateAdded(userId);
+            Friends = sortedFriends;
         }
 
         /// <summary>
         /// Sorts friends by online status
         /// </summary>
-        public void SortByOnlineStatus()
+        public async Task SortByOnlineStatusAsync()
         {
-            var sortedFriends = friendsService.SortFriendsByOnlineStatus(userId);
-            Friends = sortedFriends;  // Update the list
+            var sortedFriends = await friendsService.SortFriendsByOnlineStatus(userId);
+            Friends = sortedFriends;
         }
 
         /// <summary>

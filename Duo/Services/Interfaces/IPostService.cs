@@ -17,12 +17,12 @@ namespace Duo.Services.Interfaces
         Task<int> GetTotalPostCount();
         Task<int> GetPostCountByCategoryId(int categoryId);
         Task<int> GetPostCountByHashtags(List<string> hashtagList);
-        List<Hashtag> GetAllHashtags();
-        List<Hashtag> GetHashtagsByCategory(int categoryId);
-        List<Hashtag> GetHashtags(int? categoryId);
+        Task<List<Hashtag>> GetAllHashtags();
+        Task<List<Hashtag>> GetHashtagsByCategory(int categoryId);
+        Task<List<Hashtag>> GetHashtags(int? categoryId);
         Task<List<Post>> GetPostsByHashtags(List<string> hashtagList, int pageNumber, int pageSize);
         Task<bool> ValidatePostOwnership(int authorUserId, int targetPostId);
-        List<Hashtag> GetHashtagsByPostId(int postId);
+        Task<List<Hashtag>> GetHashtagsByPostId(int postId);
         Task<bool> LikePost(int postId);
         Task<Post?> GetPostDetailsWithMetadata(int postId);
         Task<bool> AddHashtagToPost(int postId, string hashtagName, int userId);

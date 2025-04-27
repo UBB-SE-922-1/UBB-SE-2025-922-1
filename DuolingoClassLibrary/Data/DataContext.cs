@@ -19,6 +19,7 @@ namespace DuolingoClassLibrary.Data
         public DbSet<MyCourse> MyCourses { get; set; }
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Post> Posts { get; set; }
+        public DbSet<PostHashtags> PostHashtags { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

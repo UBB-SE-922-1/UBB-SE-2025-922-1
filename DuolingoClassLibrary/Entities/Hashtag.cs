@@ -15,6 +15,12 @@ namespace DuolingoClassLibrary.Entities
             _tag = tag;
         }
 
+        public Hashtag(string tag)
+        {
+            _tag = tag;
+            _id = 0;
+        }
+
         [Key]
         public int Id
         {

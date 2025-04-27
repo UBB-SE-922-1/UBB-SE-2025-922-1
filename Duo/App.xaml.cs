@@ -30,6 +30,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Duo.Services.Interfaces;
 using DuolingoClassLibrary.Repositories;
 using DuolingoClassLibrary.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Duo
 {
@@ -79,14 +80,18 @@ namespace Duo
             // Register configuration
             services.AddSingleton(_configuration!);
 
+            // Register DataContext for EF Core
+            services.AddDbContext<DuolingoClassLibrary.Data.DataContext>(options =>
+                options.UseSqlServer(_configuration.GetConnectionString("DefaultConnection") ?? "Server=(localdb)\\mssqllocaldb;Database=Duo;Trusted_Connection=True;"));
+
             // Register data access
             services.AddSingleton<IDataLink, DataLink>();
-            services.AddSingleton<DataLink>();  // Add direct taLink registration
+            services.AddSingleton<DataLink>();
 
             // Register repositories
             services.AddSingleton<IUserRepository, UserRepository>();
-            services.AddSingleton<UserRepository>();  // Add direct UserRepository registration
-            services.AddSingleton<DuolingoClassLibrary.Repositories.Interfaces.IFriendsRepository, DuolingoClassLibrary.Repositories.Repos.FriendsRepository>();
+            services.AddSingleton<UserRepository>();
+            services.AddScoped<DuolingoClassLibrary.Repositories.Interfaces.IFriendsRepository, DuolingoClassLibrary.Repositories.Repos.FriendsRepository>();
 
             // Register services
             services.AddTransient<ILoginService, LoginService>();

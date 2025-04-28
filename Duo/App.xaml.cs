@@ -49,9 +49,10 @@ namespace Duo
         public static IPostRepository _postRepository;
         public static IHashtagRepository _hashtagRepository;
         public static IHashtagService _hashtagService;
-        public static CommentRepository _commentRepository;
         public static IPostService _postService;
         public static ICategoryService _categoryService;
+        public static ICommentRepository _commentRepository;
+        public static ICommentService _commentService;
         public static SearchService _searchService;
 
         public App()
@@ -64,14 +65,14 @@ namespace Duo
 
             userRepository = new UserRepository(_dataLink);
             _hashtagRepository = new HashtagRepositoryProxi();
-
-            _commentRepository = new CommentRepository(_dataLink);
             ICategoryRepository categoryRepository = new CategoryRepositoryProxi();
             _postRepository = new PostRepositoryProxi();
             _hashtagService = new HashtagService(_hashtagRepository, _postRepository);
             userService = new UserService(userRepository);
             _searchService = new SearchService();
             _postService = new PostService(_postRepository, _hashtagService, userService, _searchService);
+            _commentRepository = new CommentRepositoryProxi();
+            _commentService = new CommentService(_commentRepository, _postRepository, userService);
             _categoryService = new CategoryService(categoryRepository);
 
             var services = new ServiceCollection();
@@ -95,9 +96,13 @@ namespace Duo
             // Register repositories
             services.AddSingleton<IUserRepository, UserRepository>();
             services.AddSingleton<UserRepository>();
-            services.AddScoped<DuolingoClassLibrary.Repositories.Interfaces.IFriendsRepository, DuolingoClassLibrary.Repositories.Repos.FriendsRepository>();
+            services.AddSingleton<IFriendsRepository, FriendsRepository>();
+            services.AddSingleton<FriendsRepository>();
+            services.AddSingleton<IPostRepository, PostRepositoryProxi>();
+            services.AddSingleton<ICommentRepository, CommentRepositoryProxi>();
 
             // Register services
+            services.AddSingleton<ICommentService, CommentService>();
             services.AddTransient<ILoginService, LoginService>();
             services.AddTransient<FriendsService>();
             services.AddTransient<SignUpService>();

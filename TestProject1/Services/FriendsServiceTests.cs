@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
 using DuolingoClassLibrary.Entities;
-using Duo.Repositories;
 using Duo.Services;
 using Moq;
 using Xunit;
 
 namespace TestsDuo2.Services
 {
-    /*
+   
     public class FriendsServiceTests
     {
+        /*
         private readonly Mock<ListFriendsRepository> _mockFriendRepository;
         private readonly FriendsService _friendsService;
         
@@ -19,13 +19,7 @@ namespace TestsDuo2.Services
             _mockFriendRepository = new Mock<ListFriendsRepository>();
             _friendsService = new FriendsService(_mockFriendRepository.Object);
         }
-        
-       }
         */
-      
-       
-       
-        
-       
-    
+    }
+
 } 

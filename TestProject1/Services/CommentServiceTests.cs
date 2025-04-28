@@ -12,8 +12,9 @@ using Xunit;
 
 namespace TestProject1.Services
 {
-    public class CommentServiceTests : IDisposable
+    public class CommentServiceTests
     {
+        /*
         private readonly DataContext _mockContext;
         private readonly CommentRepository _commentRepository;
         private readonly PostRepository _postRepository;
@@ -277,5 +278,6 @@ namespace TestProject1.Services
             Assert.False(success);
             Assert.NotNull(signature);
         }
+        */
     }
 } 

@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Duo.Constants;
-using Duo.Interfaces;
 using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Moq;
 using Xunit;
-using Duo.Repositories.Interfaces;
 
 namespace TestsDuo2.Services
 {

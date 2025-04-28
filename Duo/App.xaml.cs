@@ -66,7 +66,7 @@ namespace Duo
             _hashtagService = new HashtagService(_hashtagRepository, _postRepository);
             userService = new UserService(_userHelperService);
             _searchService = new SearchService();
-            _postService = new PostService(_postRepository, _hashtagService, userService, _searchService);
+            _postService = new PostService(_postRepository, _hashtagService, userService, _searchService, _hashtagRepository);
             _commentRepository = new CommentRepositoryProxi();
             _commentService = new CommentService(_commentRepository, _postRepository, userService);
             _categoryService = new CategoryService(categoryRepository);

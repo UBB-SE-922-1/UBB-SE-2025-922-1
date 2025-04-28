@@ -29,12 +29,6 @@
                 <NavigationViewItem Content="Profile" Icon="Contact" Tag="Profile">
                     <NavigationViewItem.MenuItems>
                         <NavigationViewItem Content="Home Page" Icon="Home" Tag="HomePage" />
-                        <NavigationViewItem Content="Stats" Tag="Stats">
-                            <NavigationViewItem.Icon>
-                                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE9D2;" />
-                            </NavigationViewItem.Icon>
-                        </NavigationViewItem>
-                        <NavigationViewItem Content="Leaderboards" Icon="People" Tag="Leaderboards" />
                         <NavigationViewItem Content="Settings" Icon="Setting" Tag="Settings" />
                     </NavigationViewItem.MenuItems>
                 </NavigationViewItem>

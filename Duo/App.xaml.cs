@@ -20,7 +20,6 @@ using Duo.Views;
 using Microsoft.Extensions.Configuration;
 using Duo.ViewModels;
 using Duo.Services;
-using Duo.Data;
 using DuolingoClassLibrary.Entities;
 using Duo.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,7 +40,7 @@ namespace Duo
         public static Window? MainAppWindow { get; private set; }
         public static UserService userService;
         private static IConfiguration _configuration;
-        public static DataLink _dataLink;
+  
         public static IUserHelperService _userHelperService;
         public static IUserRepository _userRepository;
         public static IPostRepository _postRepository;
@@ -58,8 +57,6 @@ namespace Duo
             this.InitializeComponent();
 
             _configuration = InitializeConfiguration();
-
-            _dataLink = new DataLink(_configuration);
 
             _userRepository = new UserRepositoryProxy();
             _userHelperService = new UserHelperService(_userRepository);
@@ -87,10 +84,6 @@ namespace Duo
             // Register DataContext for EF Core
             services.AddDbContext<DuolingoClassLibrary.Data.DataContext>(options =>
                 options.UseSqlServer(_configuration.GetConnectionString("DefaultConnection") ?? "Server=(localdb)\\mssqllocaldb;Database=Duo;Trusted_Connection=True;"));
-
-            // Register data access
-            services.AddSingleton<IDataLink, DataLink>();
-            services.AddSingleton<DataLink>();
 
             // Register repositories
             services.AddSingleton<IUserRepository, UserRepositoryProxy>();

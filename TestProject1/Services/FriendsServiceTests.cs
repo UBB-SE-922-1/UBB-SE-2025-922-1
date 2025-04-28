@@ -8,6 +8,7 @@ using Xunit;
 
 namespace TestsDuo2.Services
 {
+    /*
     public class FriendsServiceTests
     {
         private readonly Mock<ListFriendsRepository> _mockFriendRepository;
@@ -19,12 +20,12 @@ namespace TestsDuo2.Services
             _friendsService = new FriendsService(_mockFriendRepository.Object);
         }
         
-       
-        
+       }
+        */
       
        
        
         
        
-    }
+    
 } 

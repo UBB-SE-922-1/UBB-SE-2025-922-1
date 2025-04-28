@@ -1,98 +1,149 @@
-using Duo.Data;
+using DuolingoClassLibrary.Data;
 using DuolingoClassLibrary.Entities;
-using Duo.Repositories;
-using Microsoft.Data.SqlClient;
-using Moq;
+using DuolingoClassLibrary.Repositories.Repos;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xunit;
 
-namespace TestMessi.Repositories
+namespace TestProject1.Repositories
 {
-    public class CommentRepositoryTests
+    public class CommentRepositoryTests : IDisposable
     {
-        const int ERROR_CODE = 404;
-        private IDataLink _dataLinkMock;
+        private readonly DataContext _mockContext;
+        private readonly CommentRepository _repository;
         
         public CommentRepositoryTests()
         {
-            // This is executed before each test (like TestInitialize in MSTest)
-            _dataLinkMock = new MockDatabaseConnectionCommentRepository();
+            var options = new DbContextOptionsBuilder<DataContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+            
+            _mockContext = new DataContext(options);
+            _repository = new CommentRepository(_mockContext);
+            
+            // Seed test data
+            SeedTestData();
+        }
+
+        private void SeedTestData()
+        {
+            // Clear existing data
+            _mockContext.Comments.RemoveRange(_mockContext.Comments);
+            _mockContext.SaveChanges();
+
+            // Add test comments
+            var comments = new List<Comment>
+            {
+                new Comment 
+                { 
+                    Id = 1,
+                    Content = "Test comment 1",
+                    UserId = 1,
+                    PostId = 1,
+                    ParentCommentId = null,
+                    CreatedAt = DateTime.Now,
+                    LikeCount = 0,
+                    Level = 1
+                },
+                new Comment 
+                { 
+                    Id = 2,
+                    Content = "Test comment 2",
+                    UserId = 1,
+                    PostId = 1,
+                    ParentCommentId = 1,
+                    CreatedAt = DateTime.Now,
+                    LikeCount = 0,
+                    Level = 2
+                }
+            };
+
+            _mockContext.Comments.AddRange(comments);
+            _mockContext.SaveChanges();
+        }
+
+        public void Dispose()
+        {
+            _mockContext.Dispose();
         }
 
         [Fact]
-        public void GetCommentRepository_CorrectlyInstanciated_ReturnsInstance()
+        public void Constructor_WithValidContext_CreatesInstance()
         {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.NotNull(commentRepository);
+            // Arrange
+            var options = new DbContextOptionsBuilder<DataContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+            
+            var context = new DataContext(options);
+            
+            // Act
+            var repository = new CommentRepository(context);
+            
+            // Assert
+            Assert.NotNull(repository);
         }
+
         [Fact]
-        public void GetCommentRepository_NullInstanciated_ThrowsError()
+        public void Constructor_WithNullContext_ThrowsArgumentNullException()
         {
+            // Act & Assert
             Assert.Throws<ArgumentNullException>(() => new CommentRepository(null));
         }
 
         [Fact]
-        public void GetCommentByPostId_ReturnsComment()
+        public async Task GetCommentById_WithValidId_ReturnsComment()
         {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            var comment = commentRepository.GetCommentById(1);
+            // Act
+            var comment = await _repository.GetCommentById(1);
+
+            // Assert
             Assert.NotNull(comment);
             Assert.Equal(1, comment.Id);
-            Assert.IsType<Comment>(comment);
+            Assert.Equal("Test comment 1", comment.Content);
         }
+
         [Fact]
-        public void void_GetCommentById_ThrowsExceptionAfterSqlFailure()
+        public async Task GetCommentById_WithInvalidId_ReturnsNull()
         {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<Exception>(() => commentRepository.GetCommentById(ERROR_CODE));
+            // Act
+            var comment = await _repository.GetCommentById(999);
+
+            // Assert
+            Assert.Null(comment);
         }
+
         [Fact]
-        public void GetCommentById_ThrowsException()
+        public async Task GetCommentsByPostId_WithValidId_ReturnsComments()
         {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<System.Exception>(() => commentRepository.GetCommentById(40));
-        }
-        [Fact]
-        public void GetCommentByPostId_ThrowsException()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<System.ArgumentException>(() => commentRepository.GetCommentById(0));
-        }
-        [Fact]
-        public void GetCommentsById_ReturnsListComments()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            var comments = commentRepository.GetCommentsByPostId(1);
+            // Act
+            var comments = await _repository.GetCommentsByPostId(1);
+
+            // Assert
             Assert.NotNull(comments);
-            Assert.IsType<List<Comment>>(comments);
-            Assert.Equal(3, comments.Count);
+            Assert.Equal(2, comments.Count);
         }
+
         [Fact]
-        public void GetCommentsById_ThrowsException()
+        public async Task GetCommentsByPostId_WithInvalidId_ReturnsEmptyList()
         {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<System.ArgumentException>(() => commentRepository.GetCommentsByPostId(0));
+            // Act
+            var comments = await _repository.GetCommentsByPostId(999);
+
+            // Assert
+            Assert.NotNull(comments);
+            Assert.Empty(comments);
         }
+
         [Fact]
-        public void GetCommentsById_ThrowsNotFoundException()
+        public async Task CreateComment_WithValidComment_ReturnsId()
         {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<Exception>(() => commentRepository.GetCommentsByPostId(20));
-        }
-        [Fact]
-        public void GetCommentsById_ThrowsExceptionAfterSqlFailure()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<Exception>(() => commentRepository.GetCommentsByPostId(ERROR_CODE));
-        }
-        [Fact]
-        public void CreateComment_ReturnsInt()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
+            // Arrange
             var comment = new Comment
             {
-                Content = "Test comment",
+                Content = "New test comment",
                 UserId = 1,
                 PostId = 1,
                 ParentCommentId = null,
@@ -100,166 +151,87 @@ namespace TestMessi.Repositories
                 LikeCount = 0,
                 Level = 1
             };
-            var result = commentRepository.CreateComment(comment);
-            Assert.IsType<int>(result);
-        }
-        [Fact]
-        public void CreateComment_ThrowsException()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
 
-            var comment = new Comment
-            {
-                Content = "Test comment",
-                UserId = ERROR_CODE,
-                PostId = 1,
-                ParentCommentId = null,
-                CreatedAt = DateTime.Now,
-                LikeCount = 0,
-                Level = 1
-            };
+            // Act
+            var result = await _repository.CreateComment(comment);
 
-            Assert.Throws<Exception>(() => commentRepository.CreateComment(comment));
-        }
-        [Fact]
-        public void DeleteComment_ReturnsBoolean()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            var result = commentRepository.DeleteComment(1);
-            Assert.True(result);
-        }
-        [Fact]
-        public void DeleteComment_ThrowsExceptionAfterSqlFailure()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<Exception>(() => commentRepository.DeleteComment(ERROR_CODE));
-        }
-        [Fact]
-        public void DeleteComment_ThrowsException()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<ArgumentException>(() => commentRepository.DeleteComment(0));
+            // Assert
+            Assert.True(result > 0);
+            var createdComment = await _mockContext.Comments.FindAsync(result);
+            Assert.NotNull(createdComment);
+            Assert.Equal(comment.Content, createdComment.Content);
         }
 
         [Fact]
-        public void GetRepliesByCommentId_ReturnsListComments()
+        public async Task CreateComment_WithNullComment_ThrowsArgumentNullException()
         {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            var replies = commentRepository.GetRepliesByCommentId(1);
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _repository.CreateComment(null));
+        }
+
+        [Fact]
+        public async Task DeleteComment_WithValidId_DeletesComment()
+        {
+            // Act
+            await _repository.DeleteComment(1);
+
+            // Assert
+            var deletedComment = await _mockContext.Comments.FindAsync(1);
+            Assert.Null(deletedComment);
+        }
+
+        [Fact]
+        public async Task GetRepliesByCommentId_WithValidId_ReturnsReplies()
+        {
+            // Act
+            var replies = await _repository.GetRepliesByCommentId(1);
+
+            // Assert
             Assert.NotNull(replies);
-            Assert.IsType<List<Comment>>(replies);
-            Assert.Equal(3, replies.Count);
-        }
-        [Fact]
-        public void GetRepliesByCommentId_ThrowsException()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<System.ArgumentException>(() => commentRepository.GetRepliesByCommentId(0));
-        }
-        [Fact]
-        public void GetRepliesByCommentId_ThrowsExceptionAfterSqlFailure()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<Exception>(() => commentRepository.GetRepliesByCommentId(ERROR_CODE));
+            Assert.Single(replies);
+            Assert.Equal(2, replies[0].Id);
         }
 
         [Fact]
-        public void IncrementLikeCount_ReturnsBoolean()
+        public async Task GetRepliesByCommentId_WithInvalidId_ReturnsEmptyList()
         {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            var result = commentRepository.IncrementLikeCount(1);
-            Assert.True(result);
-        }
-        [Fact]
-        public void IncrementLikeCount_ThrowsExceptionAfterSqlFailure()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<Exception>(() => commentRepository.IncrementLikeCount(ERROR_CODE));
-        }
-        [Fact]
-        public void IncrementLikeCount_ThrowsException()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<System.ArgumentException>(() => commentRepository.IncrementLikeCount(0));
+            // Act
+            var replies = await _repository.GetRepliesByCommentId(999);
+
+            // Assert
+            Assert.NotNull(replies);
+            Assert.Empty(replies);
         }
 
         [Fact]
-        public void GetCommentsCountForPost_ReturnsInt()
+        public async Task IncrementLikeCount_WithValidId_IncrementsCount()
         {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            var result = commentRepository.GetCommentsCountForPost(1);
-            Assert.IsType<int>(result);
-            Assert.Equal(3, result);
-        }
-        [Fact]
-        public void GetCommentsCountForPost_ThrowsExceptionAfterSqlFailure()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<Exception>(() => commentRepository.GetCommentsCountForPost(ERROR_CODE));
-        }
-        [Fact]
-        public void GetCommentsCountForPost_ThrowsException()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<System.ArgumentException>(() => commentRepository.GetCommentsCountForPost(0));
-        }
-        [Fact]
-        public void CreateComment_ThrowsArgumentNullException()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            Assert.Throws<ArgumentNullException>(() => commentRepository.CreateComment(null));
+            // Act
+            await _repository.IncrementLikeCount(1);
+
+            // Assert
+            var updatedComment = await _mockContext.Comments.FindAsync(1);
+            Assert.Equal(1, updatedComment.LikeCount);
         }
 
         [Fact]
-        public void CreateComment_ThrowsArgumentException_WhenContentIsEmpty()
+        public async Task GetCommentsCountForPost_WithValidId_ReturnsCount()
         {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            var comment = new Comment
-            {
-                Content = "",
-                UserId = 1,
-                PostId = 1,
-                ParentCommentId = null,
-                CreatedAt = DateTime.Now,
-                LikeCount = 0,
-                Level = 1
-            };
-            Assert.Throws<ArgumentException>(() => commentRepository.CreateComment(comment));
+            // Act
+            var count = await _repository.GetCommentsCountForPost(1);
+
+            // Assert
+            Assert.Equal(2, count);
         }
 
         [Fact]
-        public void CreateComment_ThrowsArgumentException_WhenUserIdIsInvalid()
+        public async Task GetCommentsCountForPost_WithInvalidId_ReturnsZero()
         {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            var comment = new Comment
-            {
-                Content = "Test comment",
-                UserId = 0,
-                PostId = 1,
-                ParentCommentId = null,
-                CreatedAt = DateTime.Now,
-                LikeCount = 0,
-                Level = 1
-            };
-            Assert.Throws<ArgumentException>(() => commentRepository.CreateComment(comment));
-        }
+            // Act
+            var count = await _repository.GetCommentsCountForPost(999);
 
-        [Fact]
-        public void CreateComment_ThrowsArgumentException_WhenPostIdIsInvalid()
-        {
-            var commentRepository = new CommentRepository(_dataLinkMock);
-            var comment = new Comment
-            {
-                Content = "Test comment",
-                UserId = 1,
-                PostId = 0,
-                ParentCommentId = null,
-                CreatedAt = DateTime.Now,
-                LikeCount = 0,
-                Level = 1
-            };
-            Assert.Throws<ArgumentException>(() => commentRepository.CreateComment(comment));
+            // Assert
+            Assert.Equal(0, count);
         }
-
     }
 } 

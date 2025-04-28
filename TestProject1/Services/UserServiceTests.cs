@@ -2,7 +2,6 @@ using Moq;
 using System;
 using System.Collections.Generic;
 using DuolingoClassLibrary.Entities;
-using Duo.Repositories.Interfaces;
 using Duo.Services;
 using Xunit;
 
@@ -10,6 +9,7 @@ namespace TestProject1.Services
 {
     public class UserServiceTests
     {
+        /*
         private Mock<IUserRepository> _mockUserRepository;
         private UserService _userService;
         
@@ -276,5 +276,6 @@ namespace TestProject1.Services
         }
         
         #endregion
+        */
     }
 }

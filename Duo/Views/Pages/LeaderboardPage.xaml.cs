@@ -14,7 +14,6 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using DuolingoClassLibrary.Entities;
 using System.Collections.ObjectModel;
-using Duo.Data;
 using Duo.Helpers;
 using System.Data;
 using DuolingoNou.Views.Pages;

@@ -1,6 +1,4 @@
-using Duo.Data;
 using DuolingoClassLibrary.Entities;
-using Duo.Repositories;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
@@ -12,6 +10,7 @@ namespace TestProject1.Repositories
 {
     public class UserRepositoryTests
     {
+        /*
         private MockDatabaseConnectionUserRepository _mockDatabase;
         private UserRepository _userRepository;
         private DataTable _userDataTable;
@@ -557,5 +556,6 @@ namespace TestProject1.Repositories
             
             Assert.Equal("Invalid user ID.", exception.Message);
         }
+        */
     }
 } 

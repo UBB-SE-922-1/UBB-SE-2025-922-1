@@ -18,6 +18,7 @@ namespace Duo.Services
         private readonly IHashtagService _hashtagService;
         private readonly IUserService _userService;
         private readonly ISearchService _searchService;
+        private readonly IHashtagRepository _hashtagRepository;
         private const double FUZZY_SEARCH_SCORE_DEFAULT_THRESHOLD = 0.6;
         
         // Constants for validation
@@ -27,12 +28,13 @@ namespace Duo.Services
         private const int DEFAULT_COUNT = 0;
         private const int DEFAULT_PAGE_NUMBER = 1;
 
-        public PostService(IPostRepository postRepository, IHashtagService hashtagService, IUserService userService, ISearchService searchService)
+        public PostService(IPostRepository postRepository, IHashtagService hashtagService, IUserService userService, ISearchService searchService, IHashtagRepository hashtagRepository)
         {
             _postRepository = postRepository ?? throw new ArgumentNullException(nameof(postRepository));
             _hashtagService = hashtagService ?? throw new ArgumentNullException(nameof(hashtagService));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
+            _hashtagRepository = hashtagRepository ?? throw new ArgumentNullException(nameof(hashtagRepository));
         }
 
         public async Task<int> CreatePost(Post newPost)
@@ -507,7 +509,6 @@ namespace Duo.Services
 
             try
             {
-                //Originally _postRepository.GetPosts() for faster load times but doesn't populate the posts' hashtags so it doesn't show anything
                 var allPosts = await this.GetPosts();
                 IEnumerable<Post> filteredPosts = allPosts;
                 int totalCount;
@@ -559,14 +560,6 @@ namespace Duo.Services
                     DateTime localCreatedAt = Helpers.DateTimeHelper.ConvertUtcToLocal(post.CreatedAt);
                     post.Date = Helpers.DateTimeHelper.GetRelativeTime(localCreatedAt);
 
-                    post.Hashtags.Clear();
-                   
-                    var postHashtags = await GetHashtagsByPostId(post.Id);
-                    foreach (var hashtag in postHashtags)
-                    {
-                        post.Hashtags.Add(hashtag.Tag);
-                    }               
-
                     resultPosts.Add(post);
                 }
 
@@ -616,12 +609,34 @@ namespace Duo.Services
 
         public async Task<List<Post>> GetPosts()
         {
-            var posts =await _postRepository.GetPosts();
-            foreach(Post post in posts)
+            var posts = await _postRepository.GetPosts();
+            var allPostHashtags = await _hashtagRepository.GetAllPostHashtags();
+            var allHashtags = await _hashtagRepository.GetHashtags();
+
+            // Create a dictionary for quick hashtag lookup
+            var hashtagDict = allHashtags.ToDictionary(h => h.Id, h => h.Tag);
+
+            // Group post-hashtag relationships by post ID
+            var postHashtagsDict = allPostHashtags
+                .GroupBy(ph => ph.PostId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(ph => hashtagDict[ph.HashtagId]).ToList()
+                );
+
+            // Assign hashtags to posts
+            foreach (var post in posts)
             {
-                var postHashtags = await _hashtagService.GetHashtagsByPostId(post.Id);
-                post.Hashtags = postHashtags.Select(hashtag => hashtag.Tag).ToList();
+                if (postHashtagsDict.TryGetValue(post.Id, out var hashtags))
+                {
+                    post.Hashtags = hashtags;
+                }
+                else
+                {
+                    post.Hashtags = new List<string>();
+                }
             }
+
             return posts;
         }
     }

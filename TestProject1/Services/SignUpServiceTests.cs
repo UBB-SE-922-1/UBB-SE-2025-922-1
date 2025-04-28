@@ -23,7 +23,6 @@ namespace TestsDuo2.Services
         [Fact]
         public void Constructor_WithNullRepository_ThrowsArgumentNullException()
         {
-            // Act & Assert
             Assert.Throws<ArgumentNullException>(() => new SignUpService(null));
         }
         

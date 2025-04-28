@@ -1,296 +1,193 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
-using Duo.Repositories;
-using Microsoft.Data.SqlClient;
-using TestsDuo2.Mocks;
-using TestsDuo2.TestHelpers;
+using System.Threading.Tasks;
+using DuolingoClassLibrary.Data;
+using DuolingoClassLibrary.Entities;
+using DuolingoClassLibrary.Repositories.Repos;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace TestsDuo2.Repositories
+namespace TestProject1.Repositories
 {
-    public class ListFriendsRepositoryTests
+    public class ListFriendsRepositoryTests : IDisposable
     {
-        private readonly MockDataLink mockDataLink;
-        private readonly UserRepository mockUserRepository;
-        private readonly ListFriendsRepository listFriendsRepository;
-        private readonly List<DuolingoClassLibrary.Entities.User> testFriends;
+        private readonly DataContext _mockContext;
+        private readonly FriendsRepository _repository;
 
         public ListFriendsRepositoryTests()
         {
-            mockDataLink = new MockDataLink();
-            mockUserRepository = new UserRepository(mockDataLink);
-            listFriendsRepository = new ListFriendsRepository(mockUserRepository);
+            var options = new DbContextOptionsBuilder<DataContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
 
-            // Set up test friends list
-            testFriends = new List<DuolingoClassLibrary.Entities.User>
-            {
-                UserFactory.CreateUser(
-                    id: 1,
-                    username: "friend1",
-                    dateJoined: new DateTime(2023, 1, 15),
-                    onlineStatus: true,
-                    lastActivityDate: DateTime.Now.AddMinutes(-5)
-                ),
-                UserFactory.CreateUser(
-                    id: 2,
-                    username: "friend2",
-                    dateJoined: new DateTime(2023, 2, 20),
-                    onlineStatus: false,
-                    lastActivityDate: DateTime.Now.AddHours(-2)
-                ),
-                UserFactory.CreateUser(
-                    id: 3,
-                    username: "friend3",
-                    dateJoined: new DateTime(2022, 12, 10),
-                    onlineStatus: false,
-                    lastActivityDate: DateTime.Now.AddDays(-1)
-                )
-            };
-        }
-        
-        [Fact]
-        public void Constructor_WithNullUserRepository_ThrowsArgumentNullException()
-        {
-            // Arrange & Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new ListFriendsRepository(null));
-        }
-        
-        [Fact]
-        public void GetFriends_CallsUserRepositoryGetFriends()
-        {
-            // Arrange
-            int userId = 1;
-            // Setup a mock response when GetFriends is called on the repository
-            var dataTable = new DataTable();
-            dataTable.Columns.Add("UserId", typeof(int));
-            dataTable.Columns.Add("UserName", typeof(string));
-            dataTable.Columns.Add("Email", typeof(string));
-            dataTable.Columns.Add("Password", typeof(string));
-            dataTable.Columns.Add("PrivacyStatus", typeof(bool));
-            dataTable.Columns.Add("OnlineStatus", typeof(bool));
-            dataTable.Columns.Add("DateJoined", typeof(DateTime));
-            dataTable.Columns.Add("ProfileImage", typeof(string));
-            dataTable.Columns.Add("TotalPoints", typeof(int));
-            dataTable.Columns.Add("CoursesCompleted", typeof(int));
-            dataTable.Columns.Add("QuizzesCompleted", typeof(int));
-            dataTable.Columns.Add("Streak", typeof(int));
-            dataTable.Columns.Add("LastActivityDate", typeof(DateTime));
-            dataTable.Columns.Add("Accuracy", typeof(decimal));
-            
-            foreach (var friend in testFriends)
-            {
-                dataTable.Rows.Add(
-                    friend.UserId, 
-                    friend.UserName, 
-                    "test@example.com", 
-                    "password", 
-                    false, 
-                    friend.OnlineStatus, 
-                    friend.DateJoined, 
-                    "profile.jpg", 
-                    100, 
-                    5, 
-                    10, 
-                    3, 
-                    friend.LastActivityDate, 
-                    95.5m
-                );
-            }
-            
-            SqlParameter[] parameters = new SqlParameter[]
-            {
-                new SqlParameter("@UserId", userId)
-            };
-            mockDataLink.SetupExecuteReaderResponse("GetFriends", parameters, dataTable);
+            _mockContext = new DataContext(options);
+            _repository = new FriendsRepository(_mockContext);
 
+            // Seed test data
+            SeedTestData();
+        }
+
+        private void SeedTestData()
+        {
+            // Clear existing data
+            _mockContext.Friends.RemoveRange(_mockContext.Friends);
+            _mockContext.Users.RemoveRange(_mockContext.Users);
+            _mockContext.SaveChanges();
+
+            // Add test users
+            var users = new List<User>
+            {
+                new User 
+                { 
+                    UserId = 1, 
+                    UserName = "friend1", 
+                    DateJoined = new DateTime(2023, 1, 15),
+                    OnlineStatus = true,
+                    LastActivityDate = DateTime.Now.AddMinutes(-5),
+                    QuizzesCompleted = 10,
+                    Accuracy = 95.5m
+                },
+                new User 
+                { 
+                    UserId = 2, 
+                    UserName = "friend2", 
+                    DateJoined = new DateTime(2023, 2, 20),
+                    OnlineStatus = false,
+                    LastActivityDate = DateTime.Now.AddHours(-2),
+                    QuizzesCompleted = 8,
+                    Accuracy = 92.0m
+                },
+                new User 
+                { 
+                    UserId = 3, 
+                    UserName = "friend3", 
+                    DateJoined = new DateTime(2022, 12, 10),
+                    OnlineStatus = false,
+                    LastActivityDate = DateTime.Now.AddDays(-1),
+                    QuizzesCompleted = 5,
+                    Accuracy = 88.5m
+                }
+            };
+
+            _mockContext.Users.AddRange(users);
+            _mockContext.SaveChanges();
+
+            // Add test friendships
+            var friendships = new List<Friend>
+            {
+                new Friend { FriendshipId = 1, UserId1 = 1, UserId2 = 2 },
+                new Friend { FriendshipId = 2, UserId1 = 1, UserId2 = 3 },
+                new Friend { FriendshipId = 3, UserId1 = 2, UserId2 = 3 }
+            };
+
+            _mockContext.Friends.AddRange(friendships);
+            _mockContext.SaveChanges();
+        }
+
+        public void Dispose()
+        {
+            _mockContext.Dispose();
+        }
+
+
+        [Fact]
+        public async Task GetFriends_WithValidUserId_ReturnsFriends()
+        {
             // Act
-            var result = listFriendsRepository.GetFriends(userId);
+            var friends = await _repository.GetFriends(1);
 
             // Assert
-            Assert.Equal(testFriends.Count, result.Count);
-            mockDataLink.VerifyExecuteReader("GetFriends", Times.Once);
+            Assert.NotNull(friends);
+            Assert.Equal(2, friends.Count());
         }
-        
-        [Fact]
-        public void SortFriendsByName_ReturnsFriendsSortedByName()
-        {
-            // Arrange
-            int userId = 1;
-            // Setup a mock response when GetFriends is called on the repository
-            var dataTable = new DataTable();
-            dataTable.Columns.Add("UserId", typeof(int));
-            dataTable.Columns.Add("UserName", typeof(string));
-            dataTable.Columns.Add("Email", typeof(string));
-            dataTable.Columns.Add("Password", typeof(string));
-            dataTable.Columns.Add("PrivacyStatus", typeof(bool));
-            dataTable.Columns.Add("OnlineStatus", typeof(bool));
-            dataTable.Columns.Add("DateJoined", typeof(DateTime));
-            dataTable.Columns.Add("ProfileImage", typeof(string));
-            dataTable.Columns.Add("TotalPoints", typeof(int));
-            dataTable.Columns.Add("CoursesCompleted", typeof(int));
-            dataTable.Columns.Add("QuizzesCompleted", typeof(int));
-            dataTable.Columns.Add("Streak", typeof(int));
-            dataTable.Columns.Add("LastActivityDate", typeof(DateTime));
-            dataTable.Columns.Add("Accuracy", typeof(decimal));
-            
-            foreach (var friend in testFriends)
-            {
-                dataTable.Rows.Add(
-                    friend.UserId, 
-                    friend.UserName, 
-                    "test@example.com", 
-                    "password", 
-                    false, 
-                    friend.OnlineStatus, 
-                    friend.DateJoined, 
-                    "profile.jpg", 
-                    100, 
-                    5, 
-                    10, 
-                    3, 
-                    friend.LastActivityDate, 
-                    95.5m
-                );
-            }
-            
-            SqlParameter[] parameters = new SqlParameter[]
-            {
-                new SqlParameter("@UserId", userId)
-            };
-            mockDataLink.SetupExecuteReaderResponse("GetFriends", parameters, dataTable);
 
+        [Fact]
+        public async Task GetFriends_WithInvalidUserId_ReturnsEmptyList()
+        {
             // Act
-            var result = listFriendsRepository.SortFriendsByName(userId);
+            var friends = await _repository.GetFriends(999);
 
             // Assert
-            Assert.Equal(3, result.Count);
-            Assert.Equal("friend1", result[0].UserName);
-            Assert.Equal("friend2", result[1].UserName);
-            Assert.Equal("friend3", result[2].UserName);
+            Assert.NotNull(friends);
+            Assert.Empty(friends);
         }
-        
-        [Fact]
-        public void SortFriendsByDateAdded_ReturnsFriendsSortedByDateJoined()
-        {
-            // Arrange
-            int userId = 1;
-            // Setup a mock response when GetFriends is called on the repository
-            var dataTable = new DataTable();
-            dataTable.Columns.Add("UserId", typeof(int));
-            dataTable.Columns.Add("UserName", typeof(string));
-            dataTable.Columns.Add("Email", typeof(string));
-            dataTable.Columns.Add("Password", typeof(string));
-            dataTable.Columns.Add("PrivacyStatus", typeof(bool));
-            dataTable.Columns.Add("OnlineStatus", typeof(bool));
-            dataTable.Columns.Add("DateJoined", typeof(DateTime));
-            dataTable.Columns.Add("ProfileImage", typeof(string));
-            dataTable.Columns.Add("TotalPoints", typeof(int));
-            dataTable.Columns.Add("CoursesCompleted", typeof(int));
-            dataTable.Columns.Add("QuizzesCompleted", typeof(int));
-            dataTable.Columns.Add("Streak", typeof(int));
-            dataTable.Columns.Add("LastActivityDate", typeof(DateTime));
-            dataTable.Columns.Add("Accuracy", typeof(decimal));
-            
-            foreach (var friend in testFriends)
-            {
-                dataTable.Rows.Add(
-                    friend.UserId, 
-                    friend.UserName, 
-                    "test@example.com", 
-                    "password", 
-                    false, 
-                    friend.OnlineStatus, 
-                    friend.DateJoined, 
-                    "profile.jpg", 
-                    100, 
-                    5, 
-                    10, 
-                    3, 
-                    friend.LastActivityDate, 
-                    95.5m
-                );
-            }
-            
-            SqlParameter[] parameters = new SqlParameter[]
-            {
-                new SqlParameter("@UserId", userId)
-            };
-            mockDataLink.SetupExecuteReaderResponse("GetFriends", parameters, dataTable);
 
+        [Fact]
+        public async Task AddFriend_WithValidIds_ReturnsTrue()
+        {
             // Act
-            var result = listFriendsRepository.SortFriendsByDateAdded(userId);
+            var result = await _repository.AddFriend(1, 4);
 
             // Assert
-            Assert.Equal(3, result.Count);
-            Assert.Equal(new DateTime(2022, 12, 10), result[0].DateJoined);
-            Assert.Equal(new DateTime(2023, 1, 15), result[1].DateJoined);
-            Assert.Equal(new DateTime(2023, 2, 20), result[2].DateJoined);
+            Assert.True(result);
+            var friendship = await _mockContext.Friends.FirstOrDefaultAsync(f => 
+                (f.UserId1 == 1 && f.UserId2 == 4) || 
+                (f.UserId1 == 4 && f.UserId2 == 1));
+            Assert.NotNull(friendship);
         }
-        
-        [Fact]
-        public void SortFriendsByOnlineStatus_ReturnsFriendsSortedByOnlineStatusAndLastActivity()
-        {
-            // Arrange
-            int userId = 1;
-            // Setup a mock response when GetFriends is called on the repository
-            var dataTable = new DataTable();
-            dataTable.Columns.Add("UserId", typeof(int));
-            dataTable.Columns.Add("UserName", typeof(string));
-            dataTable.Columns.Add("Email", typeof(string));
-            dataTable.Columns.Add("Password", typeof(string));
-            dataTable.Columns.Add("PrivacyStatus", typeof(bool));
-            dataTable.Columns.Add("OnlineStatus", typeof(bool));
-            dataTable.Columns.Add("DateJoined", typeof(DateTime));
-            dataTable.Columns.Add("ProfileImage", typeof(string));
-            dataTable.Columns.Add("TotalPoints", typeof(int));
-            dataTable.Columns.Add("CoursesCompleted", typeof(int));
-            dataTable.Columns.Add("QuizzesCompleted", typeof(int));
-            dataTable.Columns.Add("Streak", typeof(int));
-            dataTable.Columns.Add("LastActivityDate", typeof(DateTime));
-            dataTable.Columns.Add("Accuracy", typeof(decimal));
-            
-            foreach (var friend in testFriends)
-            {
-                dataTable.Rows.Add(
-                    friend.UserId, 
-                    friend.UserName, 
-                    "test@example.com", 
-                    "password", 
-                    false, 
-                    friend.OnlineStatus, 
-                    friend.DateJoined, 
-                    "profile.jpg", 
-                    100, 
-                    5, 
-                    10, 
-                    3, 
-                    friend.LastActivityDate, 
-                    95.5m
-                );
-            }
-            
-            SqlParameter[] parameters = new SqlParameter[]
-            {
-                new SqlParameter("@UserId", userId)
-            };
-            mockDataLink.SetupExecuteReaderResponse("GetFriends", parameters, dataTable);
 
+        [Fact]
+        public async Task AddFriend_WithSameIds_ReturnsFalse()
+        {
             // Act
-            var result = listFriendsRepository.SortFriendsByOnlineStatus(userId);
+            var result = await _repository.AddFriend(1, 1);
 
             // Assert
-            Assert.Equal(3, result.Count);
-            // First should be the online friend
-            Assert.True(result[0].OnlineStatus);
-            Assert.Equal(1, result[0].UserId);
-            
-            // Then offline friends sorted by most recent activity
-            Assert.False(result[1].OnlineStatus);
-            Assert.Equal(2, result[1].UserId); // friend2 was active 2 hours ago
-            
-            Assert.False(result[2].OnlineStatus);
-            Assert.Equal(3, result[2].UserId); // friend3 was active 1 day ago
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task AddFriend_WithExistingFriendship_ReturnsFalse()
+        {
+            // Act
+            var result = await _repository.AddFriend(1, 2);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task RemoveFriend_WithValidIds_ReturnsTrue()
+        {
+            // Act
+            var result = await _repository.RemoveFriend(1, 2);
+
+            // Assert
+            Assert.True(result);
+            var friendship = await _mockContext.Friends.FirstOrDefaultAsync(f => 
+                (f.UserId1 == 1 && f.UserId2 == 2) || 
+                (f.UserId1 == 2 && f.UserId2 == 1));
+            Assert.Null(friendship);
+        }
+
+        [Fact]
+        public async Task RemoveFriend_WithNonExistentFriendship_ReturnsFalse()
+        {
+            // Act
+            var result = await _repository.RemoveFriend(1, 999);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task IsFriend_WithExistingFriendship_ReturnsTrue()
+        {
+            // Act
+            var result = await _repository.IsFriend(1, 2);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task IsFriend_WithNonExistentFriendship_ReturnsFalse()
+        {
+            // Act
+            var result = await _repository.IsFriend(1, 999);
+
+            // Assert
+            Assert.False(result);
         }
     }
 } 

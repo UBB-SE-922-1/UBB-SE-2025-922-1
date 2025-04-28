@@ -6,7 +6,6 @@ using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Duo.Services.Interfaces;
 using DuolingoClassLibrary.Repositories.Interfaces;
-using Duo.Repositories.Interfaces;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -342,7 +341,7 @@ namespace Duo.Services
             // Get and set user information
             try 
             {
-                var user = _userService.GetUserById(post.UserID);
+                var user = await _userService.GetUserById(post.UserID);
                 post.Username = $"{user?.UserName ?? "Unknown User"}";
             }
             catch (Exception)
@@ -553,7 +552,7 @@ namespace Duo.Services
                 {
                     if (string.IsNullOrEmpty(post.Username))
                     {
-                        var postAuthor = _userService.GetUserById(post.UserID);
+                        var postAuthor = await _userService.GetUserById(post.UserID);
                         post.Username = postAuthor?.UserName ?? "Unknown User";
                     }
 

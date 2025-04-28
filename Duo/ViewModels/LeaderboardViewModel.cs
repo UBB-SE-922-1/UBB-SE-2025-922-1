@@ -45,9 +45,9 @@ namespace Duo.ViewModels
         /// </summary>
         /// <param name="criteria">The sorting criteria</param>
         /// <returns>A list of leaderboard entries</returns>
-        public List<LeaderboardEntry> GetGlobalLeaderboard(string criteria)
+        public async Task<List<LeaderboardEntry>> GetGlobalLeaderboard(string criteria)
         {
-            return leaderboardService.GetGlobalLeaderboard(criteria);
+            return await leaderboardService.GetGlobalLeaderboard(criteria);
         }
 
         /// <summary>
@@ -67,9 +67,9 @@ namespace Duo.ViewModels
         /// <param name="userId">The user identifier</param>
         /// <param name="criteria">The sorting criteria</param>
         /// <returns>The user's rank, or -1 if not found</returns>
-        public int GetCurrentUserGlobalRank(int userId, string criteria)
+        public async Task<int> GetCurrentUserGlobalRank(int userId, string criteria)
         {
-            var users = leaderboardService.GetGlobalLeaderboard(criteria);
+            var users = await leaderboardService.GetGlobalLeaderboard(criteria);
             var currentUser = users.FirstOrDefault(user => user.UserId == userId);
             if (currentUser == null)
             {

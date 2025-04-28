@@ -1,8 +1,7 @@
-﻿using DuolingoClassLibrary.Entities;
-using Duo.Repositories;
-using System;
-using Duo.Interfaces;
-using Duo.Repositories.Interfaces;
+﻿using System;
+using System.Threading.Tasks;
+using DuolingoClassLibrary.Entities;
+using Duo.Services.Interfaces;
 
 namespace Duo.Services
 {
@@ -11,15 +10,15 @@ namespace Duo.Services
     /// </summary>
     public class LoginService : ILoginService
     {
-        private readonly IUserRepository userRepository;
+        private readonly IUserHelperService _userHelperService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LoginService"/> class.
         /// </summary>
-        /// <param name="userRepository">The user repository.</param>
-        public LoginService(IUserRepository userRepository)
+        /// <param name="userHelperService">The user helper service.</param>
+        public LoginService(IUserHelperService userHelperService)
         {
-            this.userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _userHelperService = userHelperService ?? throw new ArgumentNullException(nameof(userHelperService));
         }
 
         /// <summary>
@@ -28,9 +27,9 @@ namespace Duo.Services
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
         /// <returns>True if authentication is successful; otherwise, false.</returns>
-        public bool AuthenticateUser(string username, string password)
+        public async Task<bool> AuthenticateUser(string username, string password)
         {
-            return userRepository.ValidateCredentials(username, password);
+            return await _userHelperService.ValidateCredentials(username, password);
         }
 
         /// <summary>
@@ -39,25 +38,22 @@ namespace Duo.Services
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
         /// <returns>The user if credentials are valid; otherwise, null.</returns>
-        public User GetUserByCredentials(string username, string password)
+        public async Task<User> GetUserByCredentials(string username, string password)
         {
-            if (AuthenticateUser(username, password))
+            var user = await _userHelperService.GetUserByCredentials(username, password);
+            if (user != null)
             {
-                var user = userRepository.GetUserByUsername(username);
-                //Console.WriteLine($"User {user.UserName} has logged in.");
                 user.OnlineStatus = true;
-
-                userRepository.UpdateUser(user);
-
+                await _userHelperService.UpdateUser(user);
             }
-            return userRepository.GetUserByCredentials(username, password);
+            return user;
         }
 
         /// <summary>
         /// Updates a user's status to offline when logging out.
         /// </summary>
         /// <param name="user">The user to update.</param>
-        public void UpdateUserStatusOnLogout(User user)
+        public async Task UpdateUserStatusOnLogout(User user)
         {
             if (user == null)
             {
@@ -66,7 +62,7 @@ namespace Duo.Services
 
             user.OnlineStatus = false;
             user.LastActivityDate = DateTime.Now;
-            userRepository.UpdateUser(user);
+            await _userHelperService.UpdateUser(user);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using DuolingoClassLibrary.Entities;
 using Duo.Services;
-using Duo.Interfaces;
+using Duo.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

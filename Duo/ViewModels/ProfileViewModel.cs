@@ -1,6 +1,7 @@
 ﻿using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using System;
+using System.Threading.Tasks;
 
 namespace Duo.ViewModels
 {
@@ -66,14 +67,14 @@ namespace Duo.ViewModels
         /// Gets the user statistics
         /// </summary>
         /// <returns>User with updated statistics</returns>
-        public User GetUserStats()
+        public async Task<User> GetUserStats()
         {
             if (CurrentUser == null)
             {
                 throw new InvalidOperationException("CurrentUser is not set");
             }
             
-            return profileService.GetUserStats(CurrentUser.UserId);
+            return await profileService.GetUserStats(CurrentUser.UserId);
         }
     }
 }

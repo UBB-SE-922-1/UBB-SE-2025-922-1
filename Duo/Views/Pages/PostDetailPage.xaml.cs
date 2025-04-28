@@ -1,7 +1,6 @@
 using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Duo.Views.Components;
-using Duo.Repositories;
 using Duo.Data;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

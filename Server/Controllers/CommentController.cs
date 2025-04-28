@@ -16,18 +16,17 @@ namespace Server.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Comment?>> Get(int id)
+        public async Task<Comment?> Get(int id)
         {
             var comment = await _commentRepository.GetCommentById(id);
-            if (comment == null) return NotFound();
-            return Ok(comment);
+            return comment;
         }
 
         [HttpGet("ByPost/{postId}")]
-        public async Task<ActionResult<List<Comment>>> GetByPost(int postId)
+        public async Task<List<Comment>> GetByPost(int postId)
         {
             var comments = await _commentRepository.GetCommentsByPostId(postId);
-            return Ok(comments);
+            return comments;
         }
 
         [HttpPost]
@@ -52,17 +51,17 @@ namespace Server.Controllers
         }
 
         [HttpGet("Replies/{parentCommentId}")]
-        public async Task<ActionResult<List<Comment>>> GetReplies(int parentCommentId)
+        public async Task<List<Comment>> GetReplies(int parentCommentId)
         {
             var replies = await _commentRepository.GetRepliesByCommentId(parentCommentId);
-            return Ok(replies);
+            return replies;
         }
 
         [HttpGet("Count/{postId}")]
-        public async Task<ActionResult<int>> GetCount(int postId)
+        public async Task<int> GetCount(int postId)
         {
             var count = await _commentRepository.GetCommentsCountForPost(postId);
-            return Ok(count);
+            return count;
         }
     }
 } 

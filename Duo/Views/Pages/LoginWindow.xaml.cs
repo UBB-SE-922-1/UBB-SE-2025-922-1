@@ -1,5 +1,5 @@
 using Duo;
-using Duo.Interfaces;
+using Duo.Services.Interfaces;
 using Duo.Services;
 using Duo.ViewModels;
 using DuolingoNou.Views;
@@ -23,6 +23,8 @@ namespace Duo.Views.Pages
         /// </summary>
         public LoginViewModel ViewModel { get; private set; }
 
+        private readonly IUserService _userService;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LoginPage"/> class.
         /// </summary>
@@ -30,8 +32,9 @@ namespace Duo.Views.Pages
         {
             this.InitializeComponent();
 
-            // Get login service from DI container
+            // Get services from DI container
             var loginService = App.ServiceProvider.GetRequiredService<ILoginService>();
+            _userService = App.ServiceProvider.GetRequiredService<IUserService>();
 
             // Create ViewModel with injected service
             ViewModel = new LoginViewModel(loginService);
@@ -65,20 +68,23 @@ namespace Duo.Views.Pages
         /// </summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
-        private void OnLoginButtonClick(object sender, RoutedEventArgs e)
+        private async void OnLoginButtonClick(object sender, RoutedEventArgs e)
         {
             string username = UsernameTextBox.Text;
             string password = PasswordBoxWithRevealMode.Password;
 
-            ViewModel.AttemptLogin(username, password);
+            bool loginSuccess = await ViewModel.AttemptLogin(username, password);
 
-            if (ViewModel.LoginStatus)
+            if (loginSuccess)
             {
                 App.CurrentUser = ViewModel.LoggedInUser;
                 LoginStatusMessage.Text = "You have successfully logged in!";
                 LoginStatusMessage.Visibility = Visibility.Visible;
-                App.CurrentUser = ViewModel.LoggedInUser;
-                App.userService.setUser(App.CurrentUser.UserName);
+                
+                // Set the current user in the user service
+                await _userService.SetUser(ViewModel.LoggedInUser.UserName);
+                await App.userService.SetUser(ViewModel.LoggedInUser.UserName);
+
                 Frame.Navigate(typeof(CategoryPage));
             }
             else

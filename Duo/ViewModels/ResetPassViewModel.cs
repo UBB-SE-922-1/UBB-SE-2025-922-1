@@ -1,14 +1,11 @@
-﻿using Duo.Interfaces;
-using Duo.Repositories;
-using Duo.Services;
-using Duo.Validators;
-using Duo.Services;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using DuolingoNou.Services;
-using Duo.Repositories.Interfaces;
+using Duo.Services;
+using Duo.Services.Interfaces;
+using Duo.Validators;
+using DuolingoClassLibrary.Entities;
 
 namespace Duo.ViewModels
 {
@@ -17,18 +14,18 @@ namespace Duo.ViewModels
     /// </summary>
     public class ResetPassViewModel : INotifyPropertyChanged
     {
-        private readonly ForgotPassService forgotPassService;
-        private readonly PasswordResetValidator validator;
-        private string email = string.Empty;
-        private string verificationCode = string.Empty;
-        private string newPassword = string.Empty;
-        private string confirmPassword = string.Empty;
-        private string statusMessage = string.Empty;
-        private bool isCodeVerified = false;
-        private bool isProcessing = false;
-        private bool emailPanelVisible = true;
-        private bool codePanelVisible = false;
-        private bool passwordPanelVisible = false;
+        private readonly ForgotPassService _forgotPassService;
+        private readonly PasswordResetValidator _validator;
+        private string _email = string.Empty;
+        private string _verificationCode = string.Empty;
+        private string _newPassword = string.Empty;
+        private string _confirmPassword = string.Empty;
+        private string _statusMessage = string.Empty;
+        private bool _isCodeVerified = false;
+        private bool _isProcessing = false;
+        private bool _emailPanelVisible = true;
+        private bool _codePanelVisible = false;
+        private bool _passwordPanelVisible = false;
 
         /// <summary>
         /// Event that is triggered when a property value changes
@@ -40,10 +37,10 @@ namespace Duo.ViewModels
         /// </summary>
         public string Email
         {
-            get => email;
+            get => _email;
             set
             {
-                email = value;
+                _email = value;
                 OnPropertyChanged();
             }
         }
@@ -53,10 +50,10 @@ namespace Duo.ViewModels
         /// </summary>
         public string VerificationCode
         {
-            get => verificationCode;
+            get => _verificationCode;
             set
             {
-                verificationCode = value;
+                _verificationCode = value;
                 OnPropertyChanged();
             }
         }
@@ -66,10 +63,10 @@ namespace Duo.ViewModels
         /// </summary>
         public string NewPassword
         {
-            get => newPassword;
+            get => _newPassword;
             set
             {
-                newPassword = value;
+                _newPassword = value;
                 OnPropertyChanged();
             }
         }
@@ -79,10 +76,10 @@ namespace Duo.ViewModels
         /// </summary>
         public string ConfirmPassword
         {
-            get => confirmPassword;
+            get => _confirmPassword;
             set
             {
-                confirmPassword = value;
+                _confirmPassword = value;
                 OnPropertyChanged();
             }
         }
@@ -92,10 +89,10 @@ namespace Duo.ViewModels
         /// </summary>
         public string StatusMessage
         {
-            get => statusMessage;
+            get => _statusMessage;
             set
             {
-                statusMessage = value;
+                _statusMessage = value;
                 OnPropertyChanged();
             }
         }
@@ -105,10 +102,10 @@ namespace Duo.ViewModels
         /// </summary>
         public bool IsCodeVerified
         {
-            get => isCodeVerified;
+            get => _isCodeVerified;
             private set
             {
-                isCodeVerified = value;
+                _isCodeVerified = value;
                 OnPropertyChanged();
             }
         }
@@ -118,10 +115,10 @@ namespace Duo.ViewModels
         /// </summary>
         public bool IsProcessing
         {
-            get => isProcessing;
+            get => _isProcessing;
             set
             {
-                isProcessing = value;
+                _isProcessing = value;
                 OnPropertyChanged();
             }
         }
@@ -131,10 +128,10 @@ namespace Duo.ViewModels
         /// </summary>
         public bool EmailPanelVisible
         {
-            get => emailPanelVisible;
+            get => _emailPanelVisible;
             set
             {
-                emailPanelVisible = value;
+                _emailPanelVisible = value;
                 OnPropertyChanged();
             }
         }
@@ -144,10 +141,10 @@ namespace Duo.ViewModels
         /// </summary>
         public bool CodePanelVisible
         {
-            get => codePanelVisible;
+            get => _codePanelVisible;
             set
             {
-                codePanelVisible = value;
+                _codePanelVisible = value;
                 OnPropertyChanged();
             }
         }
@@ -157,10 +154,10 @@ namespace Duo.ViewModels
         /// </summary>
         public bool PasswordPanelVisible
         {
-            get => passwordPanelVisible;
+            get => _passwordPanelVisible;
             set
             {
-                passwordPanelVisible = value;
+                _passwordPanelVisible = value;
                 OnPropertyChanged();
             }
         }
@@ -168,16 +165,16 @@ namespace Duo.ViewModels
         /// <summary>
         /// Initializes a new instance of the <see cref="ResetPassViewModel"/> class.
         /// </summary>
-        /// <param name="userRepository">The user repository.</param>
-        public ResetPassViewModel(IUserRepository userRepository)
+        /// <param name="userHelperService">The user helper service.</param>
+        public ResetPassViewModel(IUserHelperService userHelperService)
         {
-            if (userRepository == null)
+            if (userHelperService == null)
             {
-                throw new ArgumentNullException(nameof(userRepository));
+                throw new ArgumentNullException(nameof(userHelperService));
             }
             
-            forgotPassService = new ForgotPassService(userRepository);
-            validator = new PasswordResetValidator();
+            _forgotPassService = new ForgotPassService(userHelperService);
+            _validator = new PasswordResetValidator();
         }
 
         /// <summary>
@@ -187,7 +184,7 @@ namespace Duo.ViewModels
         /// <returns>True if the email is valid; otherwise, false.</returns>
         public bool ValidateEmail(string email)
         {
-            bool isValid = validator.IsValidEmail(email);
+            bool isValid = _validator.IsValidEmail(email);
             if (!isValid)
             {
                 StatusMessage = "Please enter a valid email address.";
@@ -211,21 +208,32 @@ namespace Duo.ViewModels
             IsProcessing = true;
             StatusMessage = "Sending verification code...";
 
-            bool isCodeSent = await forgotPassService.SendVerificationCode(email);
-
-            if (isCodeSent)
+            try
             {
-                StatusMessage = "Verification code sent. Please check your email.";
-                EmailPanelVisible = false;
-                CodePanelVisible = true;
-            }
-            else
-            {
-                StatusMessage = "Failed to send verification code. Please try again.";
-            }
+                bool isCodeSent = await _forgotPassService.SendVerificationCode(email);
 
-            IsProcessing = false;
-            return isCodeSent;
+                if (isCodeSent)
+                {
+                    StatusMessage = "Verification code sent. Please check your email.";
+                    EmailPanelVisible = false;
+                    CodePanelVisible = true;
+                }
+                else
+                {
+                    StatusMessage = "Failed to send verification code. Please try again.";
+                }
+
+                return isCodeSent;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"An error occurred: {ex.Message}";
+                return false;
+            }
+            finally
+            {
+                IsProcessing = false;
+            }
         }
 
         /// <summary>
@@ -235,7 +243,7 @@ namespace Duo.ViewModels
         /// <returns>True if the code is valid; otherwise, false.</returns>
         public bool ValidateCodeFormat(string code)
         {
-            bool isValid = validator.IsValidVerificationCode(code);
+            bool isValid = _validator.IsValidVerificationCode(code);
             if (!isValid)
             {
                 StatusMessage = "Please enter the verification code.";
@@ -248,7 +256,7 @@ namespace Duo.ViewModels
         /// </summary>
         /// <param name="code">The verification code.</param>
         /// <returns>True if the code is valid; otherwise, false.</returns>
-        public bool VerifyCode(string code)
+        public async Task<bool> VerifyCode(string code)
         {
             if (!ValidateCodeFormat(code))
             {
@@ -256,7 +264,7 @@ namespace Duo.ViewModels
             }
 
             VerificationCode = code;
-            IsCodeVerified = forgotPassService.VerifyCode(code);
+            IsCodeVerified = _forgotPassService.VerifyCode(code);
 
             if (IsCodeVerified)
             {
@@ -278,7 +286,7 @@ namespace Duo.ViewModels
         /// <returns>True if the passwords match; otherwise, false.</returns>
         public bool ValidatePasswordsMatch()
         {
-            bool match = validator.DoPasswordsMatch(NewPassword, ConfirmPassword);
+            bool match = _validator.DoPasswordsMatch(NewPassword, ConfirmPassword);
             if (!match)
             {
                 StatusMessage = "Passwords don't match!";
@@ -293,7 +301,7 @@ namespace Duo.ViewModels
         /// <returns>True if the password is valid; otherwise, false.</returns>
         public bool ValidateNewPassword(string password)
         {
-            bool isValid = validator.IsValidNewPassword(password);
+            bool isValid = _validator.IsValidNewPassword(password);
             if (!isValid)
             {
                 StatusMessage = "Please enter a valid password.";
@@ -306,7 +314,7 @@ namespace Duo.ViewModels
         /// </summary>
         /// <param name="newPassword">The new password.</param>
         /// <returns>True if the password was reset successfully; otherwise, false.</returns>
-        public bool ResetPassword(string newPassword)
+        public async Task<bool> ResetPassword(string newPassword)
         {
             if (!ValidateNewPassword(newPassword))
             {
@@ -318,18 +326,26 @@ namespace Duo.ViewModels
                 return false;
             }
 
-            bool isReset = forgotPassService.ResetPassword(Email, newPassword);
-
-            if (isReset)
+            try
             {
-                StatusMessage = "Password reset successfully!";
-            }
-            else
-            {
-                StatusMessage = "Failed to reset password. Please try again.";
-            }
+                bool isReset = await _forgotPassService.ResetPassword(Email, newPassword);
 
-            return isReset;
+                if (isReset)
+                {
+                    StatusMessage = "Password reset successfully!";
+                }
+                else
+                {
+                    StatusMessage = "Failed to reset password. Please try again.";
+                }
+
+                return isReset;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"An error occurred: {ex.Message}";
+                return false;
+            }
         }
 
         /// <summary>

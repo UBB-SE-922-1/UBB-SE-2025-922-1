@@ -1,35 +1,33 @@
-﻿using DuolingoClassLibrary.Entities;
-using Duo.Repositories;
-using Duo.Interfaces;
-using Duo.Constants;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Duo.Repositories.Interfaces;
 using System.Threading.Tasks;
+using DuolingoClassLibrary.Entities;
+using Duo.Services.Interfaces;
+using Duo.Constants;
 
 namespace Duo.Services;
 
 public class LeaderboardService
 {
-    private readonly IUserRepository userRepository;
-    private readonly FriendsService friendsService;
+    private readonly IUserHelperService _userHelperService;
+    private readonly FriendsService _friendsService;
 
-    public LeaderboardService(IUserRepository userRepository, FriendsService friendsService)
+    public LeaderboardService(IUserHelperService userHelperService, FriendsService friendsService)
     {
-        this.userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-        this.friendsService = friendsService ?? throw new ArgumentNullException(nameof(friendsService));
+        _userHelperService = userHelperService ?? throw new ArgumentNullException(nameof(userHelperService));
+        _friendsService = friendsService ?? throw new ArgumentNullException(nameof(friendsService));
     }
 
-    public List<LeaderboardEntry> GetGlobalLeaderboard(string criteria)
+    public async Task<List<LeaderboardEntry>> GetGlobalLeaderboard(string criteria)
     {
         // Return the top users in the repository sorted by the specified criteria
         if (criteria == LeaderboardConstants.CompletedQuizzesCriteria)
         {
-            return userRepository.GetTopUsersByCompletedQuizzes();
+            return await _userHelperService.GetTopUsersByCompletedQuizzes();
         }
         else if (criteria == LeaderboardConstants.AccuracyCriteria)
         {
-            return userRepository.GetTopUsersByAccuracy();
+            return await _userHelperService.GetTopUsersByAccuracy();
         }
         else
         {
@@ -42,11 +40,11 @@ public class LeaderboardService
         // Return the top friends of the user sorted by the specified criteria
         if (criteria == LeaderboardConstants.CompletedQuizzesCriteria)
         {
-            return await friendsService.GetTopFriendsByCompletedQuizzes(userId);
+            return await _friendsService.GetTopFriendsByCompletedQuizzes(userId);
         }
         else if (criteria == LeaderboardConstants.AccuracyCriteria)
         {
-            return await friendsService.GetTopFriendsByAccuracy(userId);
+            return await _friendsService.GetTopFriendsByAccuracy(userId);
         }
         else
         {
@@ -59,9 +57,14 @@ public class LeaderboardService
     /// </summary>
     /// <param name="userId">The user identifier.</param>
     /// <param name="points">The points to add.</param>
-    public void UpdateUserScore(int userId, int points)
+    public async Task UpdateUserScore(int userId, int points)
     {
-        // TODO: Implement this method
+        var user = await _userHelperService.GetUserById(userId);
+        if (user != null)
+        {
+            //user.Score += points;
+            await _userHelperService.UpdateUser(user);
+        }
     }
 
     /// <summary>
@@ -69,9 +72,10 @@ public class LeaderboardService
     /// </summary>
     /// <param name="userId">The user identifier.</param>
     /// <param name="timeFrame">The time frame to calculate rank change for.</param>
-    public void CalculateRankChange(int userId, string timeFrame)
+    public async Task CalculateRankChange(int userId, string timeFrame)
     {
         // TODO: Implement this method
+        await Task.CompletedTask;
     }
 }
 

@@ -1,10 +1,9 @@
-﻿using DuolingoClassLibrary.Entities;
-using Duo.Repositories;
-using Duo.Interfaces;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System;
-using Duo.Repositories.Interfaces;
+using System.Threading.Tasks;
+using DuolingoClassLibrary.Entities;
+using Duo.Services.Interfaces;
 
 namespace Duo.Services
 {
@@ -18,32 +17,32 @@ namespace Duo.Services
         private const int PLATINUM_ACHIEVEMENT_THRESHOLD = 500;
         private const int DIAMOND_ACHIEVEMENT_THRESHOLD = 1000;
 
-        private readonly IUserRepository _userRepositoryService;
+        private readonly IUserHelperService _userHelperService;
 
-        public ProfileService(IUserRepository userRepository)
+        public ProfileService(IUserHelperService userHelperService)
         {
-            _userRepositoryService = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _userHelperService = userHelperService ?? throw new ArgumentNullException(nameof(userHelperService));
         }
 
-        public void CreateUser(User userToCreate)
+        public async Task CreateUser(User userToCreate)
         {
-            _userRepositoryService.CreateUser(userToCreate);
+            await _userHelperService.CreateUser(userToCreate);
         }
 
-        public void UpdateUser(User userToUpdate)
+        public async Task UpdateUser(User userToUpdate)
         {
-            _userRepositoryService.UpdateUser(userToUpdate);
+            await _userHelperService.UpdateUser(userToUpdate);
         }
 
-        public User GetUserStats(int userIdentifier)
+        public async Task<User> GetUserStats(int userIdentifier)
         {
-            return _userRepositoryService.GetUserStats(userIdentifier);
+            return await _userHelperService.GetUserStats(userIdentifier);
         }
 
-        public void AwardAchievements(User userToAward)
+        public async Task AwardAchievements(User userToAward)
         {
-            List<Achievement> availableAchievements = _userRepositoryService.GetAllAchievements();
-            List<Achievement> userCurrentAchievements = _userRepositoryService.GetUserAchievements(userToAward.UserId);
+            List<Achievement> availableAchievements = await _userHelperService.GetAllAchievements();
+            List<Achievement> userCurrentAchievements = await _userHelperService.GetUserAchievements(userToAward.UserId);
 
             foreach (var achievementToCheck in availableAchievements)
             {
@@ -54,19 +53,19 @@ namespace Duo.Services
                     if (achievementToCheck.Name.Contains("Streak") && 
                         userToAward.Streak >= CalculateAchievementThreshold(achievementToCheck.Name))
                     {
-                        _userRepositoryService.AwardAchievement(userToAward.UserId, achievementToCheck.Id);
+                        await _userHelperService.AwardAchievement(userToAward.UserId, achievementToCheck.Id);
                         System.Diagnostics.Debug.WriteLine($"Awarded achievement: {achievementToCheck.Name}");
                     }
                     else if (achievementToCheck.Name.Contains("Quizzes Completed") && 
                              userToAward.QuizzesCompleted >= CalculateAchievementThreshold(achievementToCheck.Name))
                     {
-                        _userRepositoryService.AwardAchievement(userToAward.UserId, achievementToCheck.Id);
+                        await _userHelperService.AwardAchievement(userToAward.UserId, achievementToCheck.Id);
                         System.Diagnostics.Debug.WriteLine($"Awarded achievement: {achievementToCheck.Name}");
                     }
                     else if (achievementToCheck.Name.Contains("Courses Completed") && 
                              userToAward.CoursesCompleted >= CalculateAchievementThreshold(achievementToCheck.Name))
                     {
-                        _userRepositoryService.AwardAchievement(userToAward.UserId, achievementToCheck.Id);
+                        await _userHelperService.AwardAchievement(userToAward.UserId, achievementToCheck.Id);
                         System.Diagnostics.Debug.WriteLine($"Awarded achievement: {achievementToCheck.Name}");
                     }
                 }
@@ -84,9 +83,9 @@ namespace Duo.Services
             return 0;
         }
 
-        public List<Achievement> GetUserAchievements(int userIdentifier)
+        public async Task<List<Achievement>> GetUserAchievements(int userIdentifier)
         {
-            return _userRepositoryService.GetUserAchievements(userIdentifier);
+            return await _userHelperService.GetUserAchievements(userIdentifier);
         }
     }
 }

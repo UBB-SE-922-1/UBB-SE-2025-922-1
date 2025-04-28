@@ -1,22 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using DuolingoClassLibrary.Entities;
-using Duo.Repositories.Interfaces;
 using Duo.Services.Interfaces;
 
 namespace Duo.Services
 {
     public class UserService : IUserService
     {
-        private readonly IUserRepository _userRepository;
+        private readonly IUserHelperService _userHelperService;
         private User _currentUser;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserHelperService userHelperService)
         {
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _userHelperService = userHelperService ?? throw new ArgumentNullException(nameof(userHelperService));
         }
 
-        public void setUser(string username)
+        public async Task SetUser(string username)
         {
             if (string.IsNullOrWhiteSpace(username))
             {
@@ -25,25 +25,30 @@ namespace Duo.Services
 
             try 
             {
-                var existingUser = GetUserByUsername(username);
+                System.Diagnostics.Debug.WriteLine($"Setting user for username: {username}");
+                var existingUser = await _userHelperService.GetUserByUsername(username);
+                System.Diagnostics.Debug.WriteLine($"Found existing user: {existingUser != null}");
 
                 if (existingUser != null)
                 {
-
                     _currentUser = existingUser;
+                    System.Diagnostics.Debug.WriteLine($"Current user set to: {_currentUser.UserName}");
                     return;
                 }
 
-                var newUser = new User();
-                int userId = _userRepository.CreateUser(newUser);
+                var newUser = new User(username);
+                int userId = await _userHelperService.CreateUser(newUser);
                 _currentUser = new User(userId, username);
+                System.Diagnostics.Debug.WriteLine($"Created new user: {_currentUser.UserName}");
             }
             catch (Exception ex)
             {
-                var lastAttemptUser = GetUserByUsername(username);
+                System.Diagnostics.Debug.WriteLine($"Error in SetUser: {ex.Message}");
+                var lastAttemptUser = await _userHelperService.GetUserByUsername(username);
                 if (lastAttemptUser != null)
                 {
                     _currentUser = lastAttemptUser;
+                    System.Diagnostics.Debug.WriteLine($"Recovered user from last attempt: {_currentUser.UserName}");
                     return;
                 }
 
@@ -53,18 +58,19 @@ namespace Duo.Services
 
         public User GetCurrentUser()
         {
+            System.Diagnostics.Debug.WriteLine($"Getting current user: {_currentUser?.UserName ?? "null"}");
             if (_currentUser == null)
             {
-                throw new InvalidOperationException("No user is currently logged in.");
+                //throw new InvalidOperationException("No user is currently logged in.");
             }
             return _currentUser;
         }
 
-        public User GetUserById(int id)
+        public async Task<User> GetUserById(int id)
         {
             try
             {
-                return _userRepository.GetUserById(id);
+                return await _userHelperService.GetUserById(id);
             }
             catch (Exception ex)
             {
@@ -72,11 +78,11 @@ namespace Duo.Services
             }
         }
 
-        public User GetUserByUsername(string username)
+        public async Task<User> GetUserByUsername(string username)
         {
             try
             {
-                return _userRepository.GetUserByUsername(username);
+                return await _userHelperService.GetUserByUsername(username);
             }
             catch (Exception)
             {

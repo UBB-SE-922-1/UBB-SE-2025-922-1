@@ -1,30 +1,29 @@
-﻿using Duo.Interfaces;
-using Duo.Repositories;
-using Duo.Constants;
-using System;
+﻿using System;
 using System.Threading.Tasks;
-using Duo.Repositories.Interfaces;
+using DuolingoClassLibrary.Entities;
+using Duo.Services.Interfaces;
+using Duo.Constants;
 
-namespace DuolingoNou.Services
+namespace Duo.Services
 {
     /// <summary>
     /// Service for handling password reset functionality.
     /// </summary>
     public class ForgotPassService
     {
-        private readonly IUserRepository userRepository;
-        private string verificationCode;
-        private string userEmail;
+        private readonly IUserHelperService _userHelperService;
+        private string _verificationCode;
+        private string _userEmail;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ForgotPassService"/> class.
         /// </summary>
-        /// <param name="userRepository">The user repository.</param>
-        public ForgotPassService(IUserRepository userRepository)
+        /// <param name="userHelperService">The user helper service.</param>
+        public ForgotPassService(IUserHelperService userHelperService)
         {
-            this.userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-            this.verificationCode = string.Empty;
-            this.userEmail = string.Empty;
+            _userHelperService = userHelperService ?? throw new ArgumentNullException(nameof(userHelperService));
+            _verificationCode = string.Empty;
+            _userEmail = string.Empty;
         }
 
         /// <summary>
@@ -34,17 +33,17 @@ namespace DuolingoNou.Services
         /// <returns>True if the email was sent successfully; otherwise, false.</returns>
         public async Task<bool> SendVerificationCode(string email)
         {
-            var user = userRepository.GetUserByEmail(email);
+            var user = await _userHelperService.GetUserByEmail(email);
             if (user == null)
             {
                 return false;
             }
 
-            userEmail = email;
+            _userEmail = email;
             
             // Generate a random 6-digit code
             Random randomNumberGenerator = new Random();
-            verificationCode = randomNumberGenerator.Next(
+            _verificationCode = randomNumberGenerator.Next(
                 VerificationConstants.MinimumVerificationCodeValue, 
                 VerificationConstants.MaximumVerificationCodeValue
             ).ToString();
@@ -63,7 +62,7 @@ namespace DuolingoNou.Services
         /// <returns>True if the code is valid; otherwise, false.</returns>
         public bool VerifyCode(string code)
         {
-            return code == verificationCode;
+            return code == _verificationCode;
         }
 
         /// <summary>
@@ -72,16 +71,16 @@ namespace DuolingoNou.Services
         /// <param name="email">The user's email.</param>
         /// <param name="newPassword">The new password.</param>
         /// <returns>True if the password was reset successfully; otherwise, false.</returns>
-        public bool ResetPassword(string email, string newPassword)
+        public async Task<bool> ResetPassword(string email, string newPassword)
         {
-            var user = userRepository.GetUserByEmail(email);
+            var user = await _userHelperService.GetUserByEmail(email);
             if (user == null)
             {
                 return false;
             }
 
             user.Password = newPassword;
-            userRepository.UpdateUser(user);
+            await _userHelperService.UpdateUser(user);
             return true;
         }
     }

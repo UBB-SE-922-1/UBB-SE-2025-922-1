@@ -1,26 +1,24 @@
-﻿using Duo.Interfaces;
-using DuolingoClassLibrary.Entities;
-using Duo.Repositories;
-using System;
+﻿using System;
 using System.Threading.Tasks;
-using Duo.Repositories.Interfaces;
+using DuolingoClassLibrary.Entities;
+using Duo.Services.Interfaces;
 
 namespace Duo.Services
 {
     public class SignUpService
     {
-        private readonly IUserRepository _userRepository;
+        private readonly IUserHelperService _userHelperService;
 
-        public SignUpService(IUserRepository userRepository)
+        public SignUpService(IUserHelperService userHelperService)
         {
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _userHelperService = userHelperService ?? throw new ArgumentNullException(nameof(userHelperService));
         }
 
         public async Task<bool> IsUsernameTaken(string username)
         {
             try
             {
-                var user = await Task.Run(() => _userRepository.GetUserByUsername(username));
+                var user = await _userHelperService.GetUserByUsername(username);
                 return user != null;
             }
             catch (Exception checkingException)
@@ -33,7 +31,7 @@ namespace Duo.Services
         public async Task<bool> RegisterUser(User user)
         {
             // Check if email exists
-            if (await Task.Run(() => _userRepository.GetUserByEmail(user.Email)) != null)
+            if (await _userHelperService.GetUserByEmail(user.Email) != null)
                 return false;
 
             // Check if username exists
@@ -41,7 +39,7 @@ namespace Duo.Services
                 return false;
 
             user.OnlineStatus = true;
-            user.UserId = _userRepository.CreateUser(user);
+            user.UserId = await _userHelperService.CreateUser(user);
             return true;
         }
     }

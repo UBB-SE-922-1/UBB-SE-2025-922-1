@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using DuolingoClassLibrary.Entities;
 using Duo.Services;
-using Duo.Repositories;
 using Duo.Services.Interfaces;
-using Duo.Repositories.Interfaces;
 using DuolingoClassLibrary.Repositories.Interfaces;
 using System.Linq;
 using System.Threading.Tasks;
@@ -42,7 +40,7 @@ namespace Duo.Services
                     {
                         try
                         {
-                            User user = _userService.GetUserById(comment.UserId);
+                            User user = await _userService.GetUserById(comment.UserId);
                             comment.Username = user.UserName;
                         }
                         catch (Exception ex)

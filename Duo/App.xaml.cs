@@ -79,15 +79,18 @@ namespace Duo
 
             // Register data access
             services.AddSingleton<IDataLink, DataLink>();
-            services.AddSingleton<DataLink>();  // Add direct taLink registration
+            services.AddSingleton<DataLink>();
 
             // Register repositories
             services.AddSingleton<IUserRepository, UserRepository>();
-            services.AddSingleton<UserRepository>();  // Add direct UserRepository registration
+            services.AddSingleton<UserRepository>();
             services.AddSingleton<IFriendsRepository, FriendsRepository>();
-            services.AddSingleton<ListFriendsRepository>();  // Add ListFriendsRepository
+            services.AddSingleton<ListFriendsRepository>();
+            services.AddSingleton<IPostRepository, PostRepositoryProxi>();
+            services.AddSingleton<ICommentRepository, CommentRepositoryProxi>();
 
             // Register services
+            services.AddSingleton<ICommentService, CommentService>();
             services.AddTransient<ILoginService, LoginService>();
             services.AddTransient<FriendsService>();
             services.AddTransient<SignUpService>();

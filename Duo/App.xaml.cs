@@ -51,6 +51,8 @@ namespace Duo
         public static IHashtagService _hashtagService;
         public static IPostService _postService;
         public static ICategoryService _categoryService;
+        public static ICommentRepository _commentRepository;
+        public static ICommentService _commentService;
         public static SearchService _searchService;
 
         public App()
@@ -69,6 +71,8 @@ namespace Duo
             userService = new UserService(userRepository);
             _searchService = new SearchService();
             _postService = new PostService(_postRepository, _hashtagService, userService, _searchService);
+            _commentRepository = new CommentRepositoryProxi();
+            _commentService = new CommentService(_commentRepository, _postRepository, userService);
             _categoryService = new CategoryService(categoryRepository);
 
             var services = new ServiceCollection();
@@ -93,7 +97,7 @@ namespace Duo
             services.AddSingleton<IUserRepository, UserRepository>();
             services.AddSingleton<UserRepository>();
             services.AddSingleton<IFriendsRepository, FriendsRepository>();
-            services.AddSingleton<ListFriendsRepository>();
+            services.AddSingleton<FriendsRepository>();
             services.AddSingleton<IPostRepository, PostRepositoryProxi>();
             services.AddSingleton<ICommentRepository, CommentRepositoryProxi>();
 

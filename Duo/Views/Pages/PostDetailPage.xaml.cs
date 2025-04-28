@@ -31,7 +31,7 @@ namespace Duo.Views.Pages
         {
             this.InitializeComponent();
 
-            _commentService = App.ServiceProvider?.GetService<ICommentService>() ?? throw new InvalidOperationException("ICommentService not available");
+            _commentService = App._commentService;
 
             ViewModel.CommentsPanel = CommentsPanel;
 

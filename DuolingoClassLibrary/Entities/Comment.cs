@@ -91,6 +91,7 @@ namespace DuolingoClassLibrary.Entities
             set { _level = value; }
         }
 
+        [NotMapped]
         public string Username
         {
             get { return _username; }

@@ -45,7 +45,7 @@ namespace Duo.ViewModels
         public PostDetailViewModel()
         {
             _postService = _postService ?? App._postService;
-            _commentService = _commentService ?? App.ServiceProvider?.GetService<ICommentService>() ?? throw new InvalidOperationException("ICommentService not available");
+            _commentService = _commentService ?? App._commentService;
             _userService = _userService ?? App.userService;
 
             _post = new DuolingoClassLibrary.Entities.Post

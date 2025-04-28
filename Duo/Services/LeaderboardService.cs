@@ -5,18 +5,19 @@ using Duo.Constants;
 using System;
 using System.Collections.Generic;
 using Duo.Repositories.Interfaces;
+using System.Threading.Tasks;
 
 namespace Duo.Services;
 
 public class LeaderboardService
 {
     private readonly IUserRepository userRepository;
-    private readonly IFriendsRepository friendsRepository;
+    private readonly FriendsService friendsService;
 
-    public LeaderboardService(IUserRepository userRepository, IFriendsRepository friendsRepository)
+    public LeaderboardService(IUserRepository userRepository, FriendsService friendsService)
     {
         this.userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-        this.friendsRepository = friendsRepository ?? throw new ArgumentNullException(nameof(friendsRepository));
+        this.friendsService = friendsService ?? throw new ArgumentNullException(nameof(friendsService));
     }
 
     public List<LeaderboardEntry> GetGlobalLeaderboard(string criteria)
@@ -36,16 +37,16 @@ public class LeaderboardService
         }
     }
 
-    public List<LeaderboardEntry> GetFriendsLeaderboard(int userId, string criteria)
+    public async Task<List<LeaderboardEntry>> GetFriendsLeaderboard(int userId, string criteria)
     {
         // Return the top friends of the user sorted by the specified criteria
         if (criteria == LeaderboardConstants.CompletedQuizzesCriteria)
         {
-            return friendsRepository.GetTopFriendsByCompletedQuizzes(userId);
+            return await friendsService.GetTopFriendsByCompletedQuizzes(userId);
         }
         else if (criteria == LeaderboardConstants.AccuracyCriteria)
         {
-            return friendsRepository.GetTopFriendsByAccuracy(userId);
+            return await friendsService.GetTopFriendsByAccuracy(userId);
         }
         else
         {

@@ -321,15 +321,15 @@ namespace Duo.Views.Components
                     post.UpdatedAt = DateTime.UtcNow;
                     
                     // Call the service to update the post
-                    _postService.UpdatePost(post);
+                    await _postService.UpdatePost(post);
                     
                     // Update hashtags
                     try {
                         // First clear existing hashtags and then add new ones
-                        var existingHashtags = _postService.GetHashtagsByPostId(this.PostId);
+                        var existingHashtags = await _postService.GetHashtagsByPostId(this.PostId);
                         foreach (var hashtag in existingHashtags)
                         {
-                            _postService.RemoveHashtagFromPost(this.PostId, hashtag.Id, userService.GetCurrentUser().UserId);
+                            await _postService.RemoveHashtagFromPost(this.PostId, hashtag.Id, userService.GetCurrentUser().UserId);
                         }
 
                         // Add new hashtags
@@ -337,19 +337,19 @@ namespace Duo.Views.Components
                         {
                             try
                             {
-                                var hashtagRepo = App._hashtagRepository;
+                                var hashtagService = App._hashtagService;
                                 var userId = userService.GetCurrentUser().UserId;
                                 
-                                var existingHashtag = hashtagRepo.GetHashtagByName(hashtag);
+                                var existingHashtag = await hashtagService.GetHashtagByName(hashtag);
                                 
                                 if (existingHashtag == null)
                                 {
-                                    var newHashtag = hashtagRepo.CreateHashtag(hashtag);
-                                    hashtagRepo.AddHashtagToPost(this.PostId, newHashtag.Id);
+                                    var newHashtag = hashtagService.CreateHashtag(hashtag);
+                                    await hashtagService.AddHashtagToPost(this.PostId, newHashtag.Id);
                                 }
                                 else
                                 {
-                                    hashtagRepo.AddHashtagToPost(this.PostId, existingHashtag.Id);
+                                    await hashtagService.AddHashtagToPost(this.PostId, existingHashtag.Id);
                                 }
                             }
                             catch (Exception tagEx)
@@ -423,7 +423,7 @@ namespace Duo.Views.Components
             if (isConfirmed)
             {
                 try {
-                _postService.DeletePost(this.PostId);
+                await _postService.DeletePost(this.PostId);
                 }
                 catch (Exception ex)
                 {
@@ -462,7 +462,7 @@ namespace Duo.Views.Components
                          var viewModel = postListPage.DataContext as Duo.ViewModels.PostListViewModel;
                          if (viewModel != null)
                          {
-                             viewModel.LoadPosts();
+                             await viewModel.LoadPosts();
                          }
                      }
                      else if (frame.Content is Duo.Views.Pages.CategoryPage categoryPage)

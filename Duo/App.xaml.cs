@@ -30,6 +30,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Duo.Services.Interfaces;
 using DuolingoClassLibrary.Repositories;
 using DuolingoClassLibrary.Repositories.Interfaces;
+using DuolingoClassLibrary.Repositories.Repos;
+using DuolingoClassLibrary.Repositories.Proxies;
+using Microsoft.EntityFrameworkCore;
 
 namespace Duo
 {
@@ -45,6 +48,7 @@ namespace Duo
         public static UserRepository userRepository;
         public static IPostRepository _postRepository;
         public static IHashtagRepository _hashtagRepository;
+        public static IHashtagService _hashtagService;
         public static IPostService _postService;
         public static ICategoryService _categoryService;
         public static SearchService _searchService;
@@ -58,13 +62,13 @@ namespace Duo
             _dataLink = new DataLink(_configuration);
 
             userRepository = new UserRepository(_dataLink);
-            _hashtagRepository = new HashtagRepository(_dataLink);
+            _hashtagRepository = new HashtagRepositoryProxi();
             ICategoryRepository categoryRepository = new CategoryRepositoryProxi();
             _postRepository = new PostRepositoryProxi();
-
+            _hashtagService = new HashtagService(_hashtagRepository, _postRepository);
             userService = new UserService(userRepository);
             _searchService = new SearchService();
-            _postService = new PostService(_postRepository, _hashtagRepository, userService, _searchService);
+            _postService = new PostService(_postRepository, _hashtagService, userService, _searchService);
             _categoryService = new CategoryService(categoryRepository);
 
             var services = new ServiceCollection();
@@ -76,6 +80,10 @@ namespace Duo
         {
             // Register configuration
             services.AddSingleton(_configuration!);
+
+            // Register DataContext for EF Core
+            services.AddDbContext<DuolingoClassLibrary.Data.DataContext>(options =>
+                options.UseSqlServer(_configuration.GetConnectionString("DefaultConnection") ?? "Server=(localdb)\\mssqllocaldb;Database=Duo;Trusted_Connection=True;"));
 
             // Register data access
             services.AddSingleton<IDataLink, DataLink>();

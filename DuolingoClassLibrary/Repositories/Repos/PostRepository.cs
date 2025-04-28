@@ -39,26 +39,6 @@ namespace DuolingoClassLibrary.Repositories.Repos
                 {
                     throw new ArgumentNullException(nameof(post), "Post cannot be null.");
                 }
-
-                if (string.IsNullOrWhiteSpace(post.Title))
-                {
-                    throw new ArgumentException("Post title cannot be empty.", nameof(post));
-                }
-
-                if (string.IsNullOrWhiteSpace(post.Description))
-                {
-                    throw new ArgumentException("Post description cannot be empty.", nameof(post));
-                }
-
-                if (post.UserID <= 0)
-                {
-                    throw new ArgumentException("Invalid User ID.", nameof(post));
-                }
-
-                if (post.CategoryID <= 0)
-                {
-                    throw new ArgumentException("Invalid Category ID.", nameof(post));
-                }
             
                 post.Id = 0;
                 

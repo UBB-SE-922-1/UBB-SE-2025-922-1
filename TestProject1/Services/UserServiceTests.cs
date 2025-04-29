@@ -1,281 +1,131 @@
-using Moq;
 using System;
-using System.Collections.Generic;
-using DuolingoClassLibrary.Entities;
+using System.Threading.Tasks;
 using Duo.Services;
+using Duo.Services.Interfaces;
+using DuolingoClassLibrary.Entities;
+using Moq;
 using Xunit;
 
 namespace TestProject1.Services
 {
     public class UserServiceTests
     {
-        /*
-        private Mock<IUserRepository> _mockUserRepository;
-        private UserService _userService;
-        
-        // Test data
-        private const int VALID_USER_ID = 1;
-        private const int INVALID_USER_ID = -1;
-        private const string VALID_USERNAME = "validUsername";
-        private const string INVALID_USERNAME = "";
-        
+        private readonly Mock<IUserHelperService> _mockUserHelperService;
+        private readonly UserService _userService;
+
         public UserServiceTests()
         {
-            _mockUserRepository = new Mock<IUserRepository>();
-            _userService = new UserService(_mockUserRepository.Object);
+            _mockUserHelperService = new Mock<IUserHelperService>();
+            _userService = new UserService(_mockUserHelperService.Object);
         }
-        
-        #region Constructor Tests
-        
+
         [Fact]
-        public void Constructor_WithNullRepository_ThrowsArgumentNullException()
-        {
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new UserService(null));
-        }
-        
-        #endregion
-        
-        #region SetUser Tests
-        
-        [Fact]
-        public void SetUser_WithExistingUser_SetsCurrentUser()
+        public async Task SetUser_WithExistingUser_SetsCurrentUser()
         {
             // Arrange
-            var existingUser = new User(VALID_USER_ID, VALID_USERNAME);
-            
-            _mockUserRepository.Setup(repo => repo.GetUserByUsername(VALID_USERNAME))
-                .Returns(existingUser);
-            
+            var username = "testuser";
+            var existingUser = new User(1, username);
+            _mockUserHelperService.Setup(x => x.GetUserByUsername(username))
+                .ReturnsAsync(existingUser);
+
             // Act
-            _userService.setUser(VALID_USERNAME);
-            
+            await _userService.SetUser(username);
+
             // Assert
             var currentUser = _userService.GetCurrentUser();
-            Assert.NotNull(currentUser);
-            Assert.Equal(VALID_USER_ID, currentUser.UserId);
-            Assert.Equal(VALID_USERNAME, currentUser.UserName);
-            _mockUserRepository.Verify(repo => repo.GetUserByUsername(VALID_USERNAME), Times.Once);
-            _mockUserRepository.Verify(repo => repo.CreateUser(It.IsAny<User>()), Times.Never);
+            Assert.Equal(existingUser.UserId, currentUser.UserId);
+            Assert.Equal(existingUser.UserName, currentUser.UserName);
         }
-        
+
         [Fact]
-        public void SetUser_WithNewUser_CreatesAndSetsCurrentUser()
+        public async Task SetUser_WithNewUser_CreatesAndSetsCurrentUser()
         {
             // Arrange
-            var newUsername = "newUser";
-            
-            _mockUserRepository.Setup(repo => repo.GetUserByUsername(newUsername))
-                .Returns((User)null);
-            
-            _mockUserRepository.Setup(repo => repo.CreateUser(It.Is<User>(u => u.UserName == newUsername)))
-                .Returns(VALID_USER_ID);
-            
-            // Second call after user creation should return the new user
-            _mockUserRepository.SetupSequence(repo => repo.GetUserByUsername(newUsername))
-                .Returns((User)null)
-                .Returns(new User(VALID_USER_ID, newUsername));
-            
+            var username = "newuser";
+            var newUserId = 1;
+            _mockUserHelperService.Setup(x => x.GetUserByUsername(username))
+                .ReturnsAsync((User)null);
+            _mockUserHelperService.Setup(x => x.CreateUser(It.IsAny<User>()))
+                .ReturnsAsync(newUserId);
+
             // Act
-            _userService.setUser(newUsername);
-            
+            await _userService.SetUser(username);
+
             // Assert
             var currentUser = _userService.GetCurrentUser();
-            Assert.NotNull(currentUser);
-            Assert.Equal(VALID_USER_ID, currentUser.UserId);
-            Assert.Equal(newUsername, currentUser.UserName);
-            _mockUserRepository.Verify(repo => repo.GetUserByUsername(newUsername), Times.AtLeastOnce);
-            _mockUserRepository.Verify(repo => repo.CreateUser(It.Is<User>(u => u.UserName == newUsername)), Times.Once);
-        }
-        
-        [Fact]
-        public void SetUser_WithNullOrEmptyUsername_ThrowsArgumentException()
-        {
-            // Arrange & Act & Assert
-            Assert.Throws<ArgumentException>(() => _userService.setUser(null));
-            Assert.Throws<ArgumentException>(() => _userService.setUser(""));
-            Assert.Throws<ArgumentException>(() => _userService.setUser("   "));
-        }
-        
-        [Fact]
-        public void SetUser_CreateUserThrowsException_FallsBackToGetUser()
-        {
-            // Arrange
-            var username = "failedCreateUser";
-            
-            // First call returns null (user doesn't exist)
-            // Second call returns a user (after fallback)
-            _mockUserRepository.SetupSequence(repo => repo.GetUserByUsername(username))
-                .Returns((User)null)
-                .Returns(new User(VALID_USER_ID, username));
-            
-            // CreateUser throws an exception
-            _mockUserRepository.Setup(repo => repo.CreateUser(It.IsAny<User>()))
-                .Throws(new Exception("Database error"));
-            
-            // Act
-            _userService.setUser(username);
-            
-            // Assert
-            var currentUser = _userService.GetCurrentUser();
-            Assert.NotNull(currentUser);
-            Assert.Equal(VALID_USER_ID, currentUser.UserId);
+            Assert.Equal(newUserId, currentUser.UserId);
             Assert.Equal(username, currentUser.UserName);
         }
-        
+
         [Fact]
-        public void SetUser_BothCreateAndGetUserFail_ThrowsException()
+        public async Task SetUser_WithEmptyUsername_ThrowsArgumentException()
         {
             // Arrange
-            var username = "totalFailure";
-            
-            // GetUserByUsername always returns null
-            _mockUserRepository.Setup(repo => repo.GetUserByUsername(username))
-                .Returns((User)null);
-            
-            // CreateUser throws an exception
-            _mockUserRepository.Setup(repo => repo.CreateUser(It.IsAny<User>()))
-                .Throws(new Exception("Database error"));
-            
+            var username = "";
+
             // Act & Assert
-            Assert.Throws<Exception>(() => _userService.setUser(username));
+            await Assert.ThrowsAsync<ArgumentException>(() => _userService.SetUser(username));
         }
-        
-        #endregion
-        
-        #region GetCurrentUser Tests
-        
+
         [Fact]
-        public void GetCurrentUser_WhenUserIsSet_ReturnsCurrentUser()
+        public async Task GetUserById_WithValidId_ReturnsUser()
         {
             // Arrange
-            var user = new User(VALID_USER_ID, VALID_USERNAME);
-            
-            _mockUserRepository.Setup(repo => repo.GetUserByUsername(VALID_USERNAME))
-                .Returns(user);
-            
-            _userService.setUser(VALID_USERNAME);
-            
+            var userId = 1;
+            var expectedUser = new User(userId, "testuser");
+            _mockUserHelperService.Setup(x => x.GetUserById(userId))
+                .ReturnsAsync(expectedUser);
+
             // Act
-            var result = _userService.GetCurrentUser();
-            
+            var result = await _userService.GetUserById(userId);
+
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal(VALID_USER_ID, result.UserId);
-            Assert.Equal(VALID_USERNAME, result.UserName);
+            Assert.Equal(expectedUser.UserId, result.UserId);
+            Assert.Equal(expectedUser.UserName, result.UserName);
         }
-        
+
         [Fact]
-        public void GetCurrentUser_WhenNoUserIsSet_ThrowsInvalidOperationException()
+        public async Task GetUserById_WithInvalidId_ThrowsException()
         {
+            // Arrange
+            var userId = 1;
+            _mockUserHelperService.Setup(x => x.GetUserById(userId))
+                .ThrowsAsync(new Exception("User not found"));
+
             // Act & Assert
-            Assert.Throws<InvalidOperationException>(() => _userService.GetCurrentUser());
+            await Assert.ThrowsAsync<Exception>(() => _userService.GetUserById(userId));
         }
-        
-        #endregion
-        
-        #region GetUserById Tests
-        
+
         [Fact]
-        public void GetUserById_WithValidId_ReturnsUser()
+        public async Task GetUserByUsername_WithValidUsername_ReturnsUser()
         {
             // Arrange
-            var expectedUser = new User(VALID_USER_ID, VALID_USERNAME);
-            
-            _mockUserRepository.Setup(repo => repo.GetUserById(VALID_USER_ID))
-                .Returns(expectedUser);
-            
+            var username = "testuser";
+            var expectedUser = new User(1, username);
+            _mockUserHelperService.Setup(x => x.GetUserByUsername(username))
+                .ReturnsAsync(expectedUser);
+
             // Act
-            var result = _userService.GetUserById(VALID_USER_ID);
-            
+            var result = await _userService.GetUserByUsername(username);
+
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal(VALID_USER_ID, result.UserId);
-            Assert.Equal(VALID_USERNAME, result.UserName);
-            _mockUserRepository.Verify(repo => repo.GetUserById(VALID_USER_ID), Times.Once);
+            Assert.Equal(expectedUser.UserId, result.UserId);
+            Assert.Equal(expectedUser.UserName, result.UserName);
         }
-        
+
         [Fact]
-        public void GetUserById_UserDoesNotExist_ReturnsNull()
+        public async Task GetUserByUsername_WithInvalidUsername_ReturnsNull()
         {
             // Arrange
-            _mockUserRepository.Setup(repo => repo.GetUserById(INVALID_USER_ID))
-                .Returns((User)null);
-            
+            var username = "nonexistent";
+            _mockUserHelperService.Setup(x => x.GetUserByUsername(username))
+                .ReturnsAsync((User)null);
+
             // Act
-            var result = _userService.GetUserById(INVALID_USER_ID);
-            
+            var result = await _userService.GetUserByUsername(username);
+
             // Assert
             Assert.Null(result);
-            _mockUserRepository.Verify(repo => repo.GetUserById(INVALID_USER_ID), Times.Once);
         }
-        
-        [Fact]
-        public void GetUserById_RepositoryThrowsException_ThrowsException()
-        {
-            // Arrange
-            _mockUserRepository.Setup(repo => repo.GetUserById(VALID_USER_ID))
-                .Throws(new Exception("Database error"));
-            
-            // Act & Assert
-            Assert.Throws<Exception>(() => _userService.GetUserById(VALID_USER_ID));
-            _mockUserRepository.Verify(repo => repo.GetUserById(VALID_USER_ID), Times.Once);
-        }
-        
-        #endregion
-        
-        #region GetUserByUsername Tests
-        
-        [Fact]
-        public void GetUserByUsername_WithValidUsername_ReturnsUser()
-        {
-            // Arrange
-            var expectedUser = new User(VALID_USER_ID, VALID_USERNAME);
-            
-            _mockUserRepository.Setup(repo => repo.GetUserByUsername(VALID_USERNAME))
-                .Returns(expectedUser);
-            
-            // Act
-            var result = _userService.GetUserByUsername(VALID_USERNAME);
-            
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(VALID_USER_ID, result.UserId);
-            Assert.Equal(VALID_USERNAME, result.UserName);
-            _mockUserRepository.Verify(repo => repo.GetUserByUsername(VALID_USERNAME), Times.Once);
-        }
-        
-        [Fact]
-        public void GetUserByUsername_UserDoesNotExist_ReturnsNull()
-        {
-            // Arrange
-            _mockUserRepository.Setup(repo => repo.GetUserByUsername("nonexistent"))
-                .Returns((User)null);
-            
-            // Act
-            var result = _userService.GetUserByUsername("nonexistent");
-            
-            // Assert
-            Assert.Null(result);
-            _mockUserRepository.Verify(repo => repo.GetUserByUsername("nonexistent"), Times.Once);
-        }
-        
-        [Fact]
-        public void GetUserByUsername_RepositoryThrowsException_ReturnsNull()
-        {
-            // Arrange
-            _mockUserRepository.Setup(repo => repo.GetUserByUsername(VALID_USERNAME))
-                .Throws(new Exception("Database error"));
-            
-            // Act
-            var result = _userService.GetUserByUsername(VALID_USERNAME);
-            
-            // Assert
-            Assert.Null(result);
-            _mockUserRepository.Verify(repo => repo.GetUserByUsername(VALID_USERNAME), Times.Once);
-        }
-        
-        #endregion
-        */
     }
 }

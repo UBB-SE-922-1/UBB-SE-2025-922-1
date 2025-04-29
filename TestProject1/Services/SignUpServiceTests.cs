@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using DuolingoClassLibrary.Entities;
 using Duo.Services;
+using Duo.Services.Interfaces;
 using Moq;
 using Xunit;
 
@@ -9,18 +10,17 @@ namespace TestsDuo2.Services
 {
     public class SignUpServiceTests
     {
-        /*
-        private readonly Mock<IUserRepository> _mockUserRepository;
+        private readonly Mock<IUserHelperService> _mockUserHelperService;
         private readonly SignUpService _signUpService;
         
         public SignUpServiceTests()
         {
-            _mockUserRepository = new Mock<IUserRepository>();
-            _signUpService = new SignUpService(_mockUserRepository.Object);
+            _mockUserHelperService = new Mock<IUserHelperService>();
+            _signUpService = new SignUpService(_mockUserHelperService.Object);
         }
         
         [Fact]
-        public void Constructor_WithNullRepository_ThrowsArgumentNullException()
+        public void Constructor_WithNullUserHelperService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new SignUpService(null));
         }
@@ -31,14 +31,14 @@ namespace TestsDuo2.Services
             // Arrange
             string username = "existinguser";
             var existingUser = new User { UserId = 1, UserName = username };
-            _mockUserRepository.Setup(r => r.GetUserByUsername(username)).Returns(existingUser);
+            _mockUserHelperService.Setup(s => s.GetUserByUsername(username)).ReturnsAsync(existingUser);
             
             // Act
             bool result = await _signUpService.IsUsernameTaken(username);
             
             // Assert
             Assert.True(result);
-            _mockUserRepository.Verify(r => r.GetUserByUsername(username), Times.Once);
+            _mockUserHelperService.Verify(s => s.GetUserByUsername(username), Times.Once);
         }
         
         [Fact]
@@ -46,15 +46,14 @@ namespace TestsDuo2.Services
         {
             // Arrange
             string username = "newuser";
-            User nullUser = null;
-            _mockUserRepository.Setup(r => r.GetUserByUsername(username)).Returns(nullUser);
+            _mockUserHelperService.Setup(s => s.GetUserByUsername(username)).ReturnsAsync((User)null);
             
             // Act
             bool result = await _signUpService.IsUsernameTaken(username);
             
             // Assert
             Assert.False(result);
-            _mockUserRepository.Verify(r => r.GetUserByUsername(username), Times.Once);
+            _mockUserHelperService.Verify(s => s.GetUserByUsername(username), Times.Once);
         }
         
         [Fact]
@@ -62,14 +61,14 @@ namespace TestsDuo2.Services
         {
             // Arrange
             string username = "erroruser";
-            _mockUserRepository.Setup(r => r.GetUserByUsername(username)).Throws(new Exception("Database error"));
+            _mockUserHelperService.Setup(s => s.GetUserByUsername(username)).ThrowsAsync(new Exception("Database error"));
             
             // Act
             bool result = await _signUpService.IsUsernameTaken(username);
             
             // Assert
-            Assert.True(result); // Should return true (fail-safe) on exception
-            _mockUserRepository.Verify(r => r.GetUserByUsername(username), Times.Once);
+            Assert.True(result);
+            _mockUserHelperService.Verify(s => s.GetUserByUsername(username), Times.Once);
         }
         
         [Fact]
@@ -78,17 +77,16 @@ namespace TestsDuo2.Services
             // Arrange
             var user = new User { UserId = 0, UserName = "newuser", Email = "existing@example.com" };
             var existingUser = new User { UserId = 1, UserName = "existinguser", Email = user.Email };
-            
-            _mockUserRepository.Setup(r => r.GetUserByEmail(user.Email)).Returns(existingUser);
+            _mockUserHelperService.Setup(s => s.GetUserByEmail(user.Email)).ReturnsAsync(existingUser);
             
             // Act
             bool result = await _signUpService.RegisterUser(user);
             
             // Assert
             Assert.False(result);
-            _mockUserRepository.Verify(r => r.GetUserByEmail(user.Email), Times.Once);
-            _mockUserRepository.Verify(r => r.GetUserByUsername(It.IsAny<string>()), Times.Never);
-            _mockUserRepository.Verify(r => r.CreateUser(It.IsAny<User>()), Times.Never);
+            _mockUserHelperService.Verify(s => s.GetUserByEmail(user.Email), Times.Once);
+            _mockUserHelperService.Verify(s => s.GetUserByUsername(It.IsAny<string>()), Times.Never);
+            _mockUserHelperService.Verify(s => s.CreateUser(It.IsAny<User>()), Times.Never);
         }
         
         [Fact]
@@ -98,18 +96,17 @@ namespace TestsDuo2.Services
             var user = new User { UserId = 0, UserName = "existinguser", Email = "new@example.com" };
             var existingUser = new User { UserId = 1, UserName = user.UserName, Email = "existing@example.com" };
             
-            User nullUser = null;
-            _mockUserRepository.Setup(r => r.GetUserByEmail(user.Email)).Returns(nullUser);
-            _mockUserRepository.Setup(r => r.GetUserByUsername(user.UserName)).Returns(existingUser);
+            _mockUserHelperService.Setup(s => s.GetUserByEmail(user.Email)).ReturnsAsync((User)null);
+            _mockUserHelperService.Setup(s => s.GetUserByUsername(user.UserName)).ReturnsAsync(existingUser);
             
             // Act
             bool result = await _signUpService.RegisterUser(user);
             
             // Assert
             Assert.False(result);
-            _mockUserRepository.Verify(r => r.GetUserByEmail(user.Email), Times.Once);
-            _mockUserRepository.Verify(r => r.GetUserByUsername(user.UserName), Times.Once);
-            _mockUserRepository.Verify(r => r.CreateUser(It.IsAny<User>()), Times.Never);
+            _mockUserHelperService.Verify(s => s.GetUserByEmail(user.Email), Times.Once);
+            _mockUserHelperService.Verify(s => s.GetUserByUsername(user.UserName), Times.Once);
+            _mockUserHelperService.Verify(s => s.CreateUser(It.IsAny<User>()), Times.Never);
         }
         
         [Fact]
@@ -119,10 +116,9 @@ namespace TestsDuo2.Services
             var user = new User { UserId = 0, UserName = "newuser", Email = "new@example.com" };
             int newUserId = 1;
             
-            User nullUser = null;
-            _mockUserRepository.Setup(r => r.GetUserByEmail(user.Email)).Returns(nullUser);
-            _mockUserRepository.Setup(r => r.GetUserByUsername(user.UserName)).Returns(nullUser);
-            _mockUserRepository.Setup(r => r.CreateUser(It.IsAny<User>())).Returns(newUserId);
+            _mockUserHelperService.Setup(s => s.GetUserByEmail(user.Email)).ReturnsAsync((User)null);
+            _mockUserHelperService.Setup(s => s.GetUserByUsername(user.UserName)).ReturnsAsync((User)null);
+            _mockUserHelperService.Setup(s => s.CreateUser(It.IsAny<User>())).ReturnsAsync(newUserId);
             
             // Act
             bool result = await _signUpService.RegisterUser(user);
@@ -131,10 +127,9 @@ namespace TestsDuo2.Services
             Assert.True(result);
             Assert.True(user.OnlineStatus);
             Assert.Equal(newUserId, user.UserId);
-            _mockUserRepository.Verify(r => r.GetUserByEmail(user.Email), Times.Once);
-            _mockUserRepository.Verify(r => r.GetUserByUsername(user.UserName), Times.Once);
-            _mockUserRepository.Verify(r => r.CreateUser(user), Times.Once);
+            _mockUserHelperService.Verify(s => s.GetUserByEmail(user.Email), Times.Once);
+            _mockUserHelperService.Verify(s => s.GetUserByUsername(user.UserName), Times.Once);
+            _mockUserHelperService.Verify(s => s.CreateUser(user), Times.Once);
         }
-        */
     }
 } 

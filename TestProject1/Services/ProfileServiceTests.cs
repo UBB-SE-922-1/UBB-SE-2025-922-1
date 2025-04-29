@@ -7,273 +7,137 @@ using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Moq;
 using Xunit;
+using System.Threading.Tasks;
+using Duo.Services.Interfaces;
 
-namespace TestsDuo2.Services
+namespace TestProject1.Services
 {
     public class ProfileServiceTests
     {
-        /*
-        private readonly Mock<IUserRepository> _mockUserRepository;
+        private readonly Mock<IUserHelperService> _mockUserHelperService;
         private readonly ProfileService _profileService;
-        
+        private readonly User _testUser;
+        private readonly List<Achievement> _testAchievements;
+
         public ProfileServiceTests()
         {
-            _mockUserRepository = new Mock<IUserRepository>();
-            _profileService = new ProfileService(_mockUserRepository.Object);
+            _testUser = new User 
+            { 
+                UserId = 1, 
+                UserName = "testuser",
+                Streak = 15,
+                QuizzesCompleted = 75,
+                CoursesCompleted = 30
+            };
+
+            _testAchievements = new List<Achievement>
+            {
+                new Achievement { Id = 1, Name = "10 Day Streak" },
+                new Achievement { Id = 2, Name = "50 Quizzes Completed" },
+                new Achievement { Id = 3, Name = "100 Courses Completed" }
+            };
+
+            _mockUserHelperService = new Mock<IUserHelperService>();
+            _mockUserHelperService.Setup(service => service.GetUserStats(It.IsAny<int>()))
+                .ReturnsAsync(_testUser);
+            _mockUserHelperService.Setup(service => service.GetAllAchievements())
+                .ReturnsAsync(_testAchievements);
+            _mockUserHelperService.Setup(service => service.GetUserAchievements(It.IsAny<int>()))
+                .ReturnsAsync(new List<Achievement>());
+
+            _profileService = new ProfileService(_mockUserHelperService.Object);
         }
-        
+
         [Fact]
-        public void Constructor_WithNullRepository_ThrowsArgumentNullException()
+        public void Constructor_NullRepository_ThrowsArgumentNullException()
         {
-            // Act & Assert
             Assert.Throws<ArgumentNullException>(() => new ProfileService(null));
         }
-        
+
         [Fact]
-        public void CreateUser_CallsRepositoryMethod()
+        public async Task CreateUser_CallsUserHelperService()
         {
-            // Arrange
-            var user = new User { UserId = 1, UserName = "testuser" };
-            
-            // Act
-            _profileService.CreateUser(user);
-            
-            // Assert
-            _mockUserRepository.Verify(r => r.CreateUser(user), Times.Once);
+            await _profileService.CreateUser(_testUser);
+
+            _mockUserHelperService.Verify(service => service.CreateUser(_testUser), Times.Once);
         }
-        
+
         [Fact]
-        public void UpdateUser_CallsRepositoryMethod()
+        public async Task UpdateUser_CallsUserHelperService()
         {
-            // Arrange
-            var user = new User { UserId = 1, UserName = "testuser" };
-            
-            // Act
-            _profileService.UpdateUser(user);
-            
-            // Assert
-            _mockUserRepository.Verify(r => r.UpdateUser(user), Times.Once);
+            await _profileService.UpdateUser(_testUser);
+
+            _mockUserHelperService.Verify(service => service.UpdateUser(_testUser), Times.Once);
         }
-        
+
         [Fact]
-        public void GetUserStats_CallsRepositoryMethod()
+        public async Task GetUserStats_ReturnsUserStats()
         {
-            // Arrange
-            int userId = 1;
-            var expectedUser = new User { UserId = userId, UserName = "testuser" };
-            _mockUserRepository.Setup(r => r.GetUserStats(userId)).Returns(expectedUser);
-            
-            // Act
-            var result = _profileService.GetUserStats(userId);
-            
-            // Assert
-            Assert.Same(expectedUser, result);
-            _mockUserRepository.Verify(r => r.GetUserStats(userId), Times.Once);
+            var result = await _profileService.GetUserStats(1);
+
+            Assert.NotNull(result);
+            Assert.Equal(_testUser.UserId, result.UserId);
+            Assert.Equal(_testUser.UserName, result.UserName);
         }
-        
+
         [Fact]
-        public void GetUserAchievements_CallsRepositoryMethod()
+        public async Task GetUserAchievements_ReturnsAchievements()
         {
-            // Arrange
-            int userId = 1;
-            var expectedAchievements = new List<Achievement> 
+            var result = await _profileService.GetUserAchievements(1);
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task AwardAchievements_WhenUserQualifies_AwardsAchievement()
+        {
+            var user = new User 
             { 
-                new Achievement { Id = 1, Name = "First Achievement" },
-                new Achievement { Id = 2, Name = "Second Achievement" }
+                UserId = 1,
+                Streak = 15,
+                QuizzesCompleted = 75,
+                CoursesCompleted = 30
             };
-            _mockUserRepository.Setup(r => r.GetUserAchievements(userId)).Returns(expectedAchievements);
-            
-            // Act
-            var result = _profileService.GetUserAchievements(userId);
-            
-            // Assert
-            Assert.Same(expectedAchievements, result);
-            _mockUserRepository.Verify(r => r.GetUserAchievements(userId), Times.Once);
+
+            await _profileService.AwardAchievements(user);
+
+            _mockUserHelperService.Verify(service => service.AwardAchievement(It.IsAny<int>(), It.IsAny<int>()), Times.AtLeastOnce);
         }
-        
+
         [Fact]
-        public void AwardAchievements_NoQualifyingAchievements_DoesNotAwardAnyAchievements()
+        public async Task AwardAchievements_WhenUserDoesNotQualify_DoesNotAwardAchievement()
         {
-            // Arrange
-            var user = new User { UserId = 1, UserName = "testuser", Streak = 5, QuizzesCompleted = 5, CoursesCompleted = 5 };
-            var allAchievements = new List<Achievement> 
+            var user = new User 
             { 
-                new Achievement { Id = 1, Name = "10 Day Streak" },
-                new Achievement { Id = 2, Name = "10 Quizzes Completed" },
-                new Achievement { Id = 3, Name = "10 Courses Completed" }
+                UserId = 1,
+                Streak = 5,
+                QuizzesCompleted = 5,
+                CoursesCompleted = 5
             };
-            var userAchievements = new List<Achievement>();
-            
-            _mockUserRepository.Setup(r => r.GetAllAchievements()).Returns(allAchievements);
-            _mockUserRepository.Setup(r => r.GetUserAchievements(user.UserId)).Returns(userAchievements);
-            
-            // Act
-            _profileService.AwardAchievements(user);
-            
-            // Assert
-            _mockUserRepository.Verify(r => r.AwardAchievement(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+
+            await _profileService.AwardAchievements(user);
+
+            _mockUserHelperService.Verify(service => service.AwardAchievement(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
         }
-        
+
         [Fact]
-        public void AwardAchievements_StreakAchievement_AwardsCorrectAchievement()
+        public async Task AwardAchievements_WhenUserAlreadyHasAchievement_DoesNotAwardAgain()
         {
-            // Arrange
-            var user = new User { UserId = 1, UserName = "testuser", Streak = 15, QuizzesCompleted = 5, CoursesCompleted = 5 };
-            var allAchievements = new List<Achievement> 
+            var user = new User 
             { 
-                new Achievement { Id = 1, Name = "10 Day Streak" },
-                new Achievement { Id = 2, Name = "10 Quizzes Completed" },
-                new Achievement { Id = 3, Name = "10 Courses Completed" }
+                UserId = 1,
+                Streak = 15,
+                QuizzesCompleted = 75,
+                CoursesCompleted = 30
             };
-            var userAchievements = new List<Achievement>();
-            
-            _mockUserRepository.Setup(r => r.GetAllAchievements()).Returns(allAchievements);
-            _mockUserRepository.Setup(r => r.GetUserAchievements(user.UserId)).Returns(userAchievements);
-            
-            // Act
-            _profileService.AwardAchievements(user);
-            
-            // Assert
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 1), Times.Once);
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 2), Times.Never);
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 3), Times.Never);
+
+            _mockUserHelperService.Setup(service => service.GetUserAchievements(It.IsAny<int>()))
+                .ReturnsAsync(_testAchievements);
+
+            await _profileService.AwardAchievements(user);
+
+            _mockUserHelperService.Verify(service => service.AwardAchievement(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
         }
-        
-        [Fact]
-        public void AwardAchievements_QuizzesAchievement_AwardsCorrectAchievement()
-        {
-            // Arrange
-            var user = new User { UserId = 1, UserName = "testuser", Streak = 5, QuizzesCompleted = 15, CoursesCompleted = 5 };
-            var allAchievements = new List<Achievement> 
-            { 
-                new Achievement { Id = 1, Name = "10 Day Streak" },
-                new Achievement { Id = 2, Name = "10 Quizzes Completed" },
-                new Achievement { Id = 3, Name = "10 Courses Completed" }
-            };
-            var userAchievements = new List<Achievement>();
-            
-            _mockUserRepository.Setup(r => r.GetAllAchievements()).Returns(allAchievements);
-            _mockUserRepository.Setup(r => r.GetUserAchievements(user.UserId)).Returns(userAchievements);
-            
-            // Act
-            _profileService.AwardAchievements(user);
-            
-            // Assert
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 1), Times.Never);
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 2), Times.Once);
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 3), Times.Never);
-        }
-        
-        [Fact]
-        public void AwardAchievements_CoursesAchievement_AwardsCorrectAchievement()
-        {
-            // Arrange
-            var user = new User { UserId = 1, UserName = "testuser", Streak = 5, QuizzesCompleted = 5, CoursesCompleted = 15 };
-            var allAchievements = new List<Achievement> 
-            { 
-                new Achievement { Id = 1, Name = "10 Day Streak" },
-                new Achievement { Id = 2, Name = "10 Quizzes Completed" },
-                new Achievement { Id = 3, Name = "10 Courses Completed" }
-            };
-            var userAchievements = new List<Achievement>();
-            
-            _mockUserRepository.Setup(r => r.GetAllAchievements()).Returns(allAchievements);
-            _mockUserRepository.Setup(r => r.GetUserAchievements(user.UserId)).Returns(userAchievements);
-            
-            // Act
-            _profileService.AwardAchievements(user);
-            
-            // Assert
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 1), Times.Never);
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 2), Times.Never);
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 3), Times.Once);
-        }
-        
-        [Fact]
-        public void AwardAchievements_MultipleQualifyingAchievements_AwardsAllQualifyingAchievements()
-        {
-            // Arrange
-            var user = new User { UserId = 1, UserName = "testuser", Streak = 15, QuizzesCompleted = 15, CoursesCompleted = 15 };
-            var allAchievements = new List<Achievement> 
-            { 
-                new Achievement { Id = 1, Name = "10 Day Streak" },
-                new Achievement { Id = 2, Name = "10 Quizzes Completed" },
-                new Achievement { Id = 3, Name = "10 Courses Completed" }
-            };
-            var userAchievements = new List<Achievement>();
-            
-            _mockUserRepository.Setup(r => r.GetAllAchievements()).Returns(allAchievements);
-            _mockUserRepository.Setup(r => r.GetUserAchievements(user.UserId)).Returns(userAchievements);
-            
-            // Act
-            _profileService.AwardAchievements(user);
-            
-            // Assert
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 1), Times.Once);
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 2), Times.Once);
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 3), Times.Once);
-        }
-        
-        [Fact]
-        public void AwardAchievements_AlreadyAwardedAchievements_DoesNotAwardAgain()
-        {
-            // Arrange
-            var user = new User { UserId = 1, UserName = "testuser", Streak = 15, QuizzesCompleted = 15, CoursesCompleted = 15 };
-            var allAchievements = new List<Achievement> 
-            { 
-                new Achievement { Id = 1, Name = "10 Day Streak" },
-                new Achievement { Id = 2, Name = "10 Quizzes Completed" },
-                new Achievement { Id = 3, Name = "10 Courses Completed" }
-            };
-            var userAchievements = new List<Achievement>
-            {
-                new Achievement { Id = 1, Name = "10 Day Streak" }
-            };
-            
-            _mockUserRepository.Setup(r => r.GetAllAchievements()).Returns(allAchievements);
-            _mockUserRepository.Setup(r => r.GetUserAchievements(user.UserId)).Returns(userAchievements);
-            
-            // Act
-            _profileService.AwardAchievements(user);
-            
-            // Assert
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 1), Times.Never);
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 2), Times.Once);
-            _mockUserRepository.Verify(r => r.AwardAchievement(user.UserId, 3), Times.Once);
-        }
-    }
-    
-    // Separate test class just for achievement threshold logic
-    public class AchievementThresholdTests
-    {
-        [Theory]
-        [InlineData("10 Day Streak", 10)]
-        [InlineData("50 Day Streak", 50)]
-        [InlineData("100 Day Streak", 100)]
-        [InlineData("250 Day Streak", 250)]
-        [InlineData("500 Day Streak", 500)]
-        [InlineData("1000 Day Streak", 1000)]
-        [InlineData("Unknown Achievement", 0)]
-        public void AchievementThreshold_ReturnsCorrectThreshold(string achievementName, int expectedThreshold)
-        {
-            // This test purely validates the threshold calculation logic
-            // without needing to access the actual private method
-            
-            // Arrange & Act - implement the logic directly
-            int result;
-            
-            // Apply the same logic as the CalculateAchievementThreshold method
-            if (achievementName.Contains("1000")) result = 1000;
-            else if (achievementName.Contains("500")) result = 500;
-            else if (achievementName.Contains("250")) result = 250;
-            else if (achievementName.Contains("100")) result = 100;
-            else if (achievementName.Contains("50")) result = 50;
-            else if (achievementName.Contains("10")) result = 10;
-            else result = 0;
-            
-            // Assert
-            Assert.Equal(expectedThreshold, result);
-        }
-        */
     }
 }

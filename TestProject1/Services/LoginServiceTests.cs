@@ -2,129 +2,122 @@ using System;
 using DuolingoClassLibrary.Entities;
 using DuolingoClassLibrary.Repositories.Interfaces;
 using Duo.Services;
+using Duo.Services.Interfaces;
 using Moq;
 using Xunit;
 
-namespace TestsDuo2.Services
+namespace TestProject1.Services
 {
     public class LoginServiceTests
     {
-        /*
-        private readonly Mock<IUserRepository> _mockUserRepository;
+        private readonly Mock<IUserHelperService> _userHelperServiceMock;
         private readonly LoginService _loginService;
-        
+
         public LoginServiceTests()
         {
-            _mockUserRepository = new Mock<IUserRepository>();
-            _loginService = new LoginService(_mockUserRepository.Object);
+            _userHelperServiceMock = new Mock<IUserHelperService>();
+            _loginService = new LoginService(_userHelperServiceMock.Object);
         }
-        
+
         [Fact]
-        public void Constructor_WithNullRepository_ThrowsArgumentNullException()
-        {
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new LoginService(null));
-        }
-        
-        [Fact]
-        public void AuthenticateUser_ValidCredentials_ReturnsTrue()
+        public async Task AuthenticateUser_ValidCredentials_ReturnsTrue()
         {
             // Arrange
-            string username = "testuser";
-            string password = "testpassword";
-            _mockUserRepository.Setup(r => r.ValidateCredentials(username, password)).Returns(true);
-            
+            const string username = "testUser";
+            const string password = "testPass";
+            _userHelperServiceMock.Setup(x => x.ValidateCredentials(username, password))
+                .ReturnsAsync(true);
+
             // Act
-            bool result = _loginService.AuthenticateUser(username, password);
-            
+            var result = await _loginService.AuthenticateUser(username, password);
+
             // Assert
             Assert.True(result);
-            _mockUserRepository.Verify(r => r.ValidateCredentials(username, password), Times.Once);
         }
-        
+
         [Fact]
-        public void AuthenticateUser_InvalidCredentials_ReturnsFalse()
+        public async Task AuthenticateUser_InvalidCredentials_ReturnsFalse()
         {
             // Arrange
-            string username = "testuser";
-            string password = "wrongpassword";
-            _mockUserRepository.Setup(r => r.ValidateCredentials(username, password)).Returns(false);
-            
+            const string username = "testUser";
+            const string password = "wrongPass";
+            _userHelperServiceMock.Setup(x => x.ValidateCredentials(username, password))
+                .ReturnsAsync(false);
+
             // Act
-            bool result = _loginService.AuthenticateUser(username, password);
-            
+            var result = await _loginService.AuthenticateUser(username, password);
+
             // Assert
             Assert.False(result);
-            _mockUserRepository.Verify(r => r.ValidateCredentials(username, password), Times.Once);
         }
-        
+
         [Fact]
-        public void GetUserByCredentials_ValidCredentials_UpdatesUserStatusAndReturnsUser()
+        public async Task GetUserByCredentials_ValidCredentials_ReturnsUserAndUpdatesStatus()
         {
             // Arrange
-            string username = "testuser";
-            string password = "testpassword";
+            const string username = "testUser";
+            const string password = "testPass";
             var user = new User { UserId = 1, UserName = username };
-            
-            _mockUserRepository.Setup(r => r.ValidateCredentials(username, password)).Returns(true);
-            _mockUserRepository.Setup(r => r.GetUserByUsername(username)).Returns(user);
-            _mockUserRepository.Setup(r => r.GetUserByCredentials(username, password)).Returns(user);
-            
+            _userHelperServiceMock.Setup(x => x.GetUserByCredentials(username, password))
+                .ReturnsAsync(user);
+
             // Act
-            var result = _loginService.GetUserByCredentials(username, password);
-            
+            var result = await _loginService.GetUserByCredentials(username, password);
+
             // Assert
-            Assert.Same(user, result);
-            _mockUserRepository.Verify(r => r.ValidateCredentials(username, password), Times.Once);
-            _mockUserRepository.Verify(r => r.GetUserByUsername(username), Times.Once);
-            _mockUserRepository.Verify(r => r.UpdateUser(It.Is<User>(u => u.OnlineStatus == true)), Times.Once);
-            _mockUserRepository.Verify(r => r.GetUserByCredentials(username, password), Times.Once);
+            Assert.True(result.OnlineStatus);
         }
-        
+
         [Fact]
-        public void GetUserByCredentials_InvalidCredentials_ReturnsUserFromRepository()
+        public async Task GetUserByCredentials_InvalidCredentials_ReturnsNull()
         {
             // Arrange
-            string username = "testuser";
-            string password = "wrongpassword";
-            User nullUser = null;
-            
-            _mockUserRepository.Setup(r => r.ValidateCredentials(username, password)).Returns(false);
-            _mockUserRepository.Setup(r => r.GetUserByCredentials(username, password)).Returns(nullUser);
-            
+            const string username = "testUser";
+            const string password = "wrongPass";
+            _userHelperServiceMock.Setup(x => x.GetUserByCredentials(username, password))
+                .ReturnsAsync((User)null);
+
             // Act
-            var result = _loginService.GetUserByCredentials(username, password);
-            
+            var result = await _loginService.GetUserByCredentials(username, password);
+
             // Assert
             Assert.Null(result);
-            _mockUserRepository.Verify(r => r.ValidateCredentials(username, password), Times.Once);
-            _mockUserRepository.Verify(r => r.GetUserByUsername(username), Times.Never);
-            _mockUserRepository.Verify(r => r.UpdateUser(It.IsAny<User>()), Times.Never);
-            _mockUserRepository.Verify(r => r.GetUserByCredentials(username, password), Times.Once);
         }
-        
+
         [Fact]
-        public void UpdateUserStatusOnLogout_ValidUser_UpdatesUserStatus()
+        public async Task UpdateUserStatusOnLogout_ValidUser_UpdatesStatusAndLastActivity()
         {
             // Arrange
-            var user = new User { UserId = 1, UserName = "testuser", OnlineStatus = true };
-            
+            var user = new User { UserId = 1, UserName = "testUser", OnlineStatus = true };
+
             // Act
-            _loginService.UpdateUserStatusOnLogout(user);
-            
+            await _loginService.UpdateUserStatusOnLogout(user);
+
             // Assert
             Assert.False(user.OnlineStatus);
-            Assert.NotNull(user.LastActivityDate);
-            _mockUserRepository.Verify(r => r.UpdateUser(user), Times.Once);
         }
-        
+
         [Fact]
-        public void UpdateUserStatusOnLogout_NullUser_ThrowsArgumentNullException()
+        public async Task UpdateUserStatusOnLogout_NullUser_ThrowsArgumentNullException()
         {
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => _loginService.UpdateUserStatusOnLogout(null));
-            _mockUserRepository.Verify(r => r.UpdateUser(It.IsAny<User>()), Times.Never);
+            await Assert.ThrowsAsync<ArgumentNullException>(() => 
+                _loginService.UpdateUserStatusOnLogout(null));
         }
-    */
+
+        [Fact]
+        public async Task UpdateUserStatusOnLogout_ValidUser_UpdatesLastActivityDate()
+        {
+            // Arrange
+            var user = new User { UserId = 1, UserName = "testUser" };
+            var beforeUpdate = DateTime.Now;
+
+            // Act
+            await _loginService.UpdateUserStatusOnLogout(user);
+
+            // Assert
+            Assert.NotNull(user.LastActivityDate);
+            Assert.True(user.LastActivityDate >= beforeUpdate);
+        }
     }
 } 

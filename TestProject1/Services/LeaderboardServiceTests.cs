@@ -5,204 +5,144 @@ using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Moq;
 using Xunit;
+using Duo.Services.Interfaces;
 
-namespace TestsDuo2.Services
+namespace TestProject1.Services
 {
-    /*
     public class LeaderboardServiceTests
     {
-        private readonly Mock<IUserRepository> _mockUserRepository;
-        private readonly Mock<IFriendsLeaderboardRepository> _mockFriendsRepository;
+        private readonly Mock<IUserHelperService> _userHelperServiceMock;
+        private readonly Mock<IFriendsService> _friendsServiceMock;
         private readonly LeaderboardService _leaderboardService;
-        
+
         public LeaderboardServiceTests()
         {
-            _mockUserRepository = new Mock<IUserRepository>();
-            _mockFriendsRepository = new Mock<IFriendsLeaderboardRepository>();
-            _leaderboardService = new LeaderboardService(_mockUserRepository.Object, _mockFriendsRepository.Object);
+            _userHelperServiceMock = new Mock<IUserHelperService>();
+            _friendsServiceMock = new Mock<IFriendsService>();
+            _leaderboardService = new LeaderboardService(_userHelperServiceMock.Object, _friendsServiceMock.Object);
         }
-        
+
         [Fact]
-        public void Constructor_WithNullUserRepository_ThrowsArgumentNullException()
+        public async Task GetGlobalLeaderboard_CompletedQuizzesCriteria_CallsCorrectMethod()
+        {
+            // Arrange
+            var expectedLeaderboard = new List<LeaderboardEntry>();
+            _userHelperServiceMock.Setup(x => x.GetTopUsersByCompletedQuizzes())
+                .ReturnsAsync(expectedLeaderboard);
+
+            // Act
+            await _leaderboardService.GetGlobalLeaderboard(LeaderboardConstants.CompletedQuizzesCriteria);
+
+            // Assert
+            _userHelperServiceMock.Verify(x => x.GetTopUsersByCompletedQuizzes(), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetGlobalLeaderboard_AccuracyCriteria_CallsCorrectMethod()
+        {
+            // Arrange
+            var expectedLeaderboard = new List<LeaderboardEntry>();
+            _userHelperServiceMock.Setup(x => x.GetTopUsersByAccuracy())
+                .ReturnsAsync(expectedLeaderboard);
+
+            // Act
+            await _leaderboardService.GetGlobalLeaderboard(LeaderboardConstants.AccuracyCriteria);
+
+            // Assert
+            _userHelperServiceMock.Verify(x => x.GetTopUsersByAccuracy(), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetGlobalLeaderboard_InvalidCriteria_ThrowsArgumentException()
         {
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new LeaderboardService(null, _mockFriendsRepository.Object));
+            await Assert.ThrowsAsync<ArgumentException>(() => 
+                _leaderboardService.GetGlobalLeaderboard("InvalidCriteria"));
         }
-        
+
         [Fact]
-        public void Constructor_WithNullFriendsRepository_ThrowsArgumentNullException()
+        public async Task GetFriendsLeaderboard_CompletedQuizzesCriteria_CallsCorrectMethod()
+        {
+            // Arrange
+            const int userId = 1;
+            var expectedLeaderboard = new List<LeaderboardEntry>();
+            _friendsServiceMock.Setup(x => x.GetTopFriendsByCompletedQuizzes(userId))
+                .ReturnsAsync(expectedLeaderboard);
+
+            // Act
+            await _leaderboardService.GetFriendsLeaderboard(userId, LeaderboardConstants.CompletedQuizzesCriteria);
+
+            // Assert
+            _friendsServiceMock.Verify(x => x.GetTopFriendsByCompletedQuizzes(userId), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetFriendsLeaderboard_AccuracyCriteria_CallsCorrectMethod()
+        {
+            // Arrange
+            const int userId = 1;
+            var expectedLeaderboard = new List<LeaderboardEntry>();
+            _friendsServiceMock.Setup(x => x.GetTopFriendsByAccuracy(userId))
+                .ReturnsAsync(expectedLeaderboard);
+
+            // Act
+            await _leaderboardService.GetFriendsLeaderboard(userId, LeaderboardConstants.AccuracyCriteria);
+
+            // Assert
+            _friendsServiceMock.Verify(x => x.GetTopFriendsByAccuracy(userId), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetFriendsLeaderboard_InvalidCriteria_ThrowsArgumentException()
         {
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new LeaderboardService(_mockUserRepository.Object, null));
+            await Assert.ThrowsAsync<ArgumentException>(() => 
+                _leaderboardService.GetFriendsLeaderboard(1, "InvalidCriteria"));
         }
-        
+
         [Fact]
-        public void GetGlobalLeaderboard_WithCompletedQuizzesCriteria_ReturnsTopUsers()
+        public async Task UpdateUserScore_UserExists_UpdatesUser()
         {
             // Arrange
-            var expectedEntries = new List<LeaderboardEntry>
-            {
-                new LeaderboardEntry { UserId = 1, Username = "User1", ScoreValue = 100 },
-                new LeaderboardEntry { UserId = 2, Username = "User2", ScoreValue = 90 }
-            };
-            _mockUserRepository.Setup(r => r.GetTopUsersByCompletedQuizzes()).Returns(expectedEntries);
+            const int userId = 1;
+            const int points = 10;
+            var user = new User { UserId = userId };
             
+            _userHelperServiceMock.Setup(x => x.GetUserById(userId))
+                .ReturnsAsync(user);
+
             // Act
-            var result = _leaderboardService.GetGlobalLeaderboard(LeaderboardConstants.CompletedQuizzesCriteria);
-            
+            await _leaderboardService.UpdateUserScore(userId, points);
+
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal(expectedEntries.Count, result.Count);
-            Assert.Equal(expectedEntries, result);
-            _mockUserRepository.Verify(r => r.GetTopUsersByCompletedQuizzes(), Times.Once);
+            _userHelperServiceMock.Verify(x => x.UpdateUser(user), Times.Once);
         }
-        
+
         [Fact]
-        public void GetGlobalLeaderboard_WithAccuracyCriteria_ReturnsTopUsers()
+        public async Task UpdateUserScore_UserDoesNotExist_DoesNotUpdateUser()
         {
             // Arrange
-            var expectedEntries = new List<LeaderboardEntry>
-            {
-                new LeaderboardEntry { UserId = 1, Username = "User1", ScoreValue = (decimal) 0.95 },
-                new LeaderboardEntry { UserId = 2, Username = "User2", ScoreValue = (decimal) 0.90 }
-            };
-            _mockUserRepository.Setup(r => r.GetTopUsersByAccuracy()).Returns(expectedEntries);
+            const int userId = 1;
+            const int points = 10;
             
+            _userHelperServiceMock.Setup(x => x.GetUserById(userId))
+                .ReturnsAsync((User)null);
+
             // Act
-            var result = _leaderboardService.GetGlobalLeaderboard(LeaderboardConstants.AccuracyCriteria);
-            
+            await _leaderboardService.UpdateUserScore(userId, points);
+
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal(expectedEntries.Count, result.Count);
-            Assert.Equal(expectedEntries, result);
-            _mockUserRepository.Verify(r => r.GetTopUsersByAccuracy(), Times.Once);
+            _userHelperServiceMock.Verify(x => x.UpdateUser(It.IsAny<User>()), Times.Never);
         }
-        
+
         [Fact]
-        public void GetGlobalLeaderboard_WithInvalidCriteria_ThrowsArgumentException()
+        public async Task CalculateRankChange_Called_CompletesSuccessfully()
         {
-            // Arrange
-            string invalidCriteria = "InvalidCriteria";
-            
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => _leaderboardService.GetGlobalLeaderboard(invalidCriteria));
-            Assert.Contains("Invalid criteria", exception.Message);
-            Assert.Equal("criteria", exception.ParamName);
-        }
-        
-        [Fact]
-        public void GetFriendsLeaderboard_WithCompletedQuizzesCriteria_ReturnsTopFriends()
-        {
-            // Arrange
-            int userId = 1;
-            var expectedEntries = new List<LeaderboardEntry>
-            {
-                new LeaderboardEntry { UserId = 2, Username = "Friend1", ScoreValue = 100 },
-                new LeaderboardEntry { UserId = 3, Username = "Friend2", ScoreValue = 90 }
-            };
-            _mockFriendsRepository.Setup(r => r.GetTopFriendsByCompletedQuizzes(userId)).Returns(expectedEntries);
-            
             // Act
-            var result = _leaderboardService.GetFriendsLeaderboard(userId, LeaderboardConstants.CompletedQuizzesCriteria);
-            
+            await _leaderboardService.CalculateRankChange(1, "weekly");
+
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal(expectedEntries.Count, result.Count);
-            Assert.Equal(expectedEntries, result);
-            _mockFriendsRepository.Verify(r => r.GetTopFriendsByCompletedQuizzes(userId), Times.Once);
-        }
-        
-        [Fact]
-        public void GetFriendsLeaderboard_WithAccuracyCriteria_ReturnsTopFriends()
-        {
-            // Arrange
-            int userId = 1;
-            var expectedEntries = new List<LeaderboardEntry>
-            {
-                new LeaderboardEntry { UserId = 2, Username = "Friend1", ScoreValue = (decimal) 0.95 },
-                new LeaderboardEntry { UserId = 3, Username = "Friend2", ScoreValue = (decimal) 0.90 }
-            };
-            _mockFriendsRepository.Setup(r => r.GetTopFriendsByAccuracy(userId)).Returns(expectedEntries);
-            
-            // Act
-            var result = _leaderboardService.GetFriendsLeaderboard(userId, LeaderboardConstants.AccuracyCriteria);
-            
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(expectedEntries.Count, result.Count);
-            Assert.Equal(expectedEntries, result);
-            _mockFriendsRepository.Verify(r => r.GetTopFriendsByAccuracy(userId), Times.Once);
-        }
-        
-        [Fact]
-        public void GetFriendsLeaderboard_WithInvalidCriteria_ThrowsArgumentException()
-        {
-            // Arrange
-            int userId = 1;
-            string invalidCriteria = "InvalidCriteria";
-            
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => _leaderboardService.GetFriendsLeaderboard(userId, invalidCriteria));
-            Assert.Contains("Invalid criteria", exception.Message);
-            Assert.Equal("criteria", exception.ParamName);
-        }
-        
-        [Fact]
-        public void GetFriendsLeaderboard_WithInvalidUserId_ReturnsEmptyList()
-        {
-            // Arrange
-            int invalidUserId = -1;
-            _mockFriendsRepository.Setup(r => r.GetTopFriendsByCompletedQuizzes(invalidUserId)).Returns(new List<LeaderboardEntry>());
-            
-            // Act
-            var result = _leaderboardService.GetFriendsLeaderboard(invalidUserId, LeaderboardConstants.CompletedQuizzesCriteria);
-            
-            // Assert
-            Assert.NotNull(result);
-            Assert.Empty(result);
-            _mockFriendsRepository.Verify(r => r.GetTopFriendsByCompletedQuizzes(invalidUserId), Times.Once);
-        }
-        
-        [Fact]
-        public void GetGlobalLeaderboard_WithEmptyResults_ReturnsEmptyList()
-        {
-            // Arrange
-            _mockUserRepository.Setup(r => r.GetTopUsersByCompletedQuizzes()).Returns(new List<LeaderboardEntry>());
-            
-            // Act
-            var result = _leaderboardService.GetGlobalLeaderboard(LeaderboardConstants.CompletedQuizzesCriteria);
-            
-            // Assert
-            Assert.NotNull(result);
-            Assert.Empty(result);
-            _mockUserRepository.Verify(r => r.GetTopUsersByCompletedQuizzes(), Times.Once);
-        }
-        
-        [Fact]
-        public void UpdateUserScore_ExecutesSuccessfully()
-        {
-            // Arrange
-            int userId = 1;
-            int points = 10;
-            
-            // Act - Should not throw
-            _leaderboardService.UpdateUserScore(userId, points);
-            
-            // Assert - Currently this is a TODO method, so nothing to verify
-        }
-        
-        [Fact]
-        public void CalculateRankChange_ExecutesSuccessfully()
-        {
-            // Arrange
-            int userId = 1;
-            string timeFrame = "weekly";
-            
-            // Act - Should not throw
-            _leaderboardService.CalculateRankChange(userId, timeFrame);
-            
-            // Assert - Currently this is a TODO method, so nothing to verify
+            Assert.True(true); // Just verifying it completes without throwing
         }
     }
-    */
 } 

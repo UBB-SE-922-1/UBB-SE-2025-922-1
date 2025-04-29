@@ -79,7 +79,7 @@ namespace Duo.Views.Pages
                 await ShowDialog("Account Created", "Your account has been successfully created!");
                 await App.userService.SetUser(App.CurrentUser.UserName);
 
-                Frame.Navigate(typeof(ShellPage));
+                Frame.Navigate(typeof(CategoryPage));
             }
             else
             {

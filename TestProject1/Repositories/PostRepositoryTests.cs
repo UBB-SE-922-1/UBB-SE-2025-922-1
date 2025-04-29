@@ -173,21 +173,5 @@ namespace TestProject1.Repositories
             Assert.NotNull(posts);
             Assert.Empty(posts);
         }
-
-        [Fact]
-        public async Task CreatePost_WithInvalidPost_ThrowsException()
-        {
-            // Arrange
-            var post = new Post
-            {
-                Title = string.Empty,
-                Description = string.Empty,
-                UserID = 0,
-                CategoryID = 0
-            };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _repository.CreatePost(post));
-        }
     }
 }

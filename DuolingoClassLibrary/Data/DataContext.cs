@@ -20,6 +20,7 @@ namespace DuolingoClassLibrary.Data
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Post> Posts { get; set; }
         public DbSet<Friend> Friends { get; set; }
+        public DbSet<PostHashtags> PostHashtags { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -42,6 +43,8 @@ namespace DuolingoClassLibrary.Data
             // Configure Friend primary key
             modelBuilder.Entity<Friend>()
                 .HasKey(f => f.FriendshipId);
+            modelBuilder.Entity<PostHashtags>()
+            .HasKey(ph => new { ph.PostId, ph.HashtagId });
         }
     }
 }

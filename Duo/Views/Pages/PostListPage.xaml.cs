@@ -10,8 +10,6 @@ using System.Threading.Tasks;
 using DuolingoClassLibrary.Entities;
 using Duo.ViewModels;
 using Duo.Services;
-using Duo.Repositories;
-using Duo.Data;
 using static Duo.App;
 
 namespace Duo.Views.Pages
@@ -103,10 +101,10 @@ namespace Duo.Views.Pages
             }
         }
 
-        private void PostsPager_SelectedIndexChanged(PipsPager sender, PipsPagerSelectedIndexChangedEventArgs args)
+        private async void PostsPager_SelectedIndexChanged(PipsPager sender, PipsPagerSelectedIndexChangedEventArgs args)
         {
             _viewModel.CurrentPage = sender.SelectedPageIndex + DEFAULT_PAGE_NUMBER;
-            _viewModel.LoadPosts();
+            await _viewModel.LoadPosts();
         }
 
         private void OnFilterChanged(object sender, TextChangedEventArgs args)
@@ -114,11 +112,11 @@ namespace Duo.Views.Pages
             _viewModel.FilterText = FilterByTitle.Text;
         }
 
-        private void Hashtag_Click(object sender, RoutedEventArgs e)
+        private async void Hashtag_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.Tag is string hashtag)
             {
-                _viewModel.ToggleHashtag(hashtag);
+                await _viewModel.ToggleHashtag(hashtag);
 
                 UpdateHashtagButtonStyles();
 
@@ -140,9 +138,9 @@ namespace Duo.Views.Pages
             }
         }
 
-        private void ClearHashtags_Click(object sender, RoutedEventArgs e)
+        private async void ClearHashtags_Click(object sender, RoutedEventArgs e)
         {
-            _viewModel.ClearFilters();
+            await _viewModel.ClearFilters();
             UpdateHashtagButtonStyles();
 
             PostsPager.NumberOfPages = _viewModel.TotalPages;

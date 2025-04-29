@@ -6,7 +6,6 @@ using DuolingoClassLibrary.Entities;
 using Duo.Services;
 using Duo.Services.Interfaces;
 using DuolingoClassLibrary.Repositories.Interfaces;
-using Duo.Repositories.Interfaces;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,9 +15,10 @@ namespace Duo.Services
     public class PostService : IPostService
     {
         private readonly IPostRepository _postRepository;
-        private readonly IHashtagRepository _hashtagRepository;
+        private readonly IHashtagService _hashtagService;
         private readonly IUserService _userService;
         private readonly ISearchService _searchService;
+        private readonly IHashtagRepository _hashtagRepository;
         private const double FUZZY_SEARCH_SCORE_DEFAULT_THRESHOLD = 0.6;
         
         // Constants for validation
@@ -28,12 +28,13 @@ namespace Duo.Services
         private const int DEFAULT_COUNT = 0;
         private const int DEFAULT_PAGE_NUMBER = 1;
 
-        public PostService(IPostRepository postRepository, IHashtagRepository hashtagRepository, IUserService userService, ISearchService searchService)
+        public PostService(IPostRepository postRepository, IHashtagService hashtagService, IUserService userService, ISearchService searchService, IHashtagRepository hashtagRepository)
         {
             _postRepository = postRepository ?? throw new ArgumentNullException(nameof(postRepository));
-            _hashtagRepository = hashtagRepository ?? throw new ArgumentNullException(nameof(hashtagRepository));
+            _hashtagService = hashtagService ?? throw new ArgumentNullException(nameof(hashtagService));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
+            _hashtagRepository = hashtagRepository ?? throw new ArgumentNullException(nameof(hashtagRepository));
         }
 
         public async Task<int> CreatePost(Post newPost)
@@ -205,11 +206,11 @@ namespace Duo.Services
             }
         }
 
-        public List<Hashtag> GetAllHashtags()
+        public async Task<List<Hashtag>> GetAllHashtags()
         {
             try
             {
-                return _hashtagRepository.GetAllHashtags();
+                return await _hashtagService.GetAllHashtags();
             }
             catch (Exception ex)
             {
@@ -217,7 +218,7 @@ namespace Duo.Services
             }
         }
 
-        public List<Hashtag> GetHashtagsByCategory(int categoryId)
+        public async Task<List<Hashtag>> GetHashtagsByCategory(int categoryId)
         {
             if (categoryId <= INVALID_ID)
             {
@@ -226,7 +227,7 @@ namespace Duo.Services
 
             try
             {
-                return _hashtagRepository.GetHashtagsByCategory(categoryId);
+                return await _hashtagService.GetHashtagsByCategory(categoryId);
             }
             catch (Exception ex)
             {
@@ -274,13 +275,13 @@ namespace Duo.Services
             return post != null && authorUserId == post.UserID;
         }
 
-        public List<Hashtag> GetHashtagsByPostId(int postId)
+        public async Task<List<Hashtag>> GetHashtagsByPostId(int postId)
         {
             if (postId <= INVALID_ID) throw new ArgumentException("Invalid Post ID.");
 
             try
             {
-                return _hashtagRepository.GetHashtagsByPostId(postId);
+                return await _hashtagService.GetHashtagsByPostId(postId);
             }
             catch (Exception ex)
             {
@@ -342,7 +343,7 @@ namespace Duo.Services
             // Get and set user information
             try 
             {
-                var user = _userService.GetUserById(post.UserID);
+                var user = await _userService.GetUserById(post.UserID);
                 post.Username = $"{user?.UserName ?? "Unknown User"}";
             }
             catch (Exception)
@@ -358,10 +359,10 @@ namespace Duo.Services
             }
 
             // Get hashtags for the post
-            var hashtags = GetHashtagsByPostId(post.Id);
+            var hashtags = await GetHashtagsByPostId(post.Id);
             if (hashtags != null && hashtags.Any())
             {
-                post.Hashtags = hashtags.Select(h => h.Name ?? h.Tag).ToList();
+                post.Hashtags = hashtags.Select(h => h.Tag ?? h.Tag).ToList();
             }
             
             return post;
@@ -403,11 +404,11 @@ namespace Duo.Services
                 }
 
                 Hashtag? existingHashtag = null;
-                existingHashtag = _hashtagRepository.GetHashtagByText(hashtagName);
+                existingHashtag = await _hashtagService.GetHashtagByText(hashtagName);
 
-                Hashtag hashtag = _hashtagRepository.CreateHashtag(hashtagName);
+                Hashtag hashtag = await _hashtagService.CreateHashtag(hashtagName);
 
-                bool addResult = _hashtagRepository.AddHashtagToPost(postId, hashtag.Id);
+                bool addResult = await _hashtagService.AddHashtagToPost(postId, hashtag.Id);
                 return addResult;
             }
             catch (Exception ex)
@@ -427,7 +428,7 @@ namespace Duo.Services
                 if (_userService.GetCurrentUser().UserId != userId)
                     throw new Exception("User does not have permission to remove hashtags from this post.");
 
-                return _hashtagRepository.RemoveHashtagFromPost(postId, hashtagId);
+                return await _hashtagService.RemoveHashtagFromPost(postId, hashtagId);
             }
             catch (Exception ex)
             {
@@ -465,10 +466,10 @@ namespace Duo.Services
                     {
                         try
                         {
-                            Hashtag? existingHashtag = _hashtagRepository.GetHashtagByText(hashtagName);
-                            Hashtag hashtag = _hashtagRepository.CreateHashtag(hashtagName);
+                            Hashtag? existingHashtag = await _hashtagService.GetHashtagByText(hashtagName);
+                            Hashtag hashtag = await _hashtagService.CreateHashtag(hashtagName);
                             
-                            bool addSuccess = _hashtagRepository.AddHashtagToPost(createdPostId, hashtag.Id);
+                            bool addSuccess = await _hashtagService.AddHashtagToPost(createdPostId, hashtag.Id);
                         }
                         catch (Exception ex)
                         {
@@ -487,11 +488,11 @@ namespace Duo.Services
             }
         }
 
-        public List<Hashtag> GetHashtags(int? categoryId)
+        public async Task<List<Hashtag>> GetHashtags(int? categoryId)
         {
             if(categoryId == null || categoryId <= INVALID_ID)
-                    return GetAllHashtags();
-            return GetHashtagsByCategory(categoryId.Value);
+                    return await GetAllHashtags();
+            return await GetHashtagsByCategory(categoryId.Value);
         }
 
         public async Task<(List<Post> Posts, int TotalCount)> GetFilteredAndFormattedPosts(
@@ -508,7 +509,7 @@ namespace Duo.Services
 
             try
             {
-                var allPosts = await _postRepository.GetPosts();
+                var allPosts = await this.GetPosts();
                 IEnumerable<Post> filteredPosts = allPosts;
                 int totalCount;
 
@@ -552,20 +553,12 @@ namespace Duo.Services
                 {
                     if (string.IsNullOrEmpty(post.Username))
                     {
-                        var postAuthor = _userService.GetUserById(post.UserID);
+                        var postAuthor = await _userService.GetUserById(post.UserID);
                         post.Username = postAuthor?.UserName ?? "Unknown User";
                     }
 
                     DateTime localCreatedAt = Helpers.DateTimeHelper.ConvertUtcToLocal(post.CreatedAt);
                     post.Date = Helpers.DateTimeHelper.GetRelativeTime(localCreatedAt);
-
-                    post.Hashtags.Clear();
-                   
-                    var postHashtags = GetHashtagsByPostId(post.Id);
-                    foreach (var hashtag in postHashtags)
-                    {
-                        post.Hashtags.Add(hashtag.Name);
-                    }               
 
                     resultPosts.Add(post);
                 }
@@ -612,6 +605,39 @@ namespace Duo.Services
             }
 
             return updatedHashtags;
+        }
+
+        public async Task<List<Post>> GetPosts()
+        {
+            var posts = await _postRepository.GetPosts();
+            var allPostHashtags = await _hashtagRepository.GetAllPostHashtags();
+            var allHashtags = await _hashtagRepository.GetHashtags();
+
+            // Create a dictionary for quick hashtag lookup
+            var hashtagDict = allHashtags.ToDictionary(h => h.Id, h => h.Tag);
+
+            // Group post-hashtag relationships by post ID
+            var postHashtagsDict = allPostHashtags
+                .GroupBy(ph => ph.PostId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(ph => hashtagDict[ph.HashtagId]).ToList()
+                );
+
+            // Assign hashtags to posts
+            foreach (var post in posts)
+            {
+                if (postHashtagsDict.TryGetValue(post.Id, out var hashtags))
+                {
+                    post.Hashtags = hashtags;
+                }
+                else
+                {
+                    post.Hashtags = new List<string>();
+                }
+            }
+
+            return posts;
         }
     }
 }

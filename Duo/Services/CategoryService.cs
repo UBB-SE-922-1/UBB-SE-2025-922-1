@@ -7,8 +7,6 @@ namespace Duo.Services
     using System;
     using System.Collections.Generic;
     using DuolingoClassLibrary.Entities;
-    using Duo.Repositories;
-    using Duo.Repositories.Interfaces;
     using Duo.Services.Interfaces;
     using DuolingoClassLibrary.Repositories.Interfaces;
     using System.Linq;

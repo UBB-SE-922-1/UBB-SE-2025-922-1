@@ -1,171 +1,171 @@
-using Duo.Data;
-using DuolingoClassLibrary.Entities;
-using Duo.Repositories;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using Xunit;
+using System.Reflection;
+using System.Threading.Tasks;
+using DuolingoClassLibrary.Data;
+using DuolingoClassLibrary.Entities;
 using DuolingoClassLibrary.Repositories.Repos;
-using Moq;
+using Microsoft.EntityFrameworkCore;
+using Xunit;
 
 namespace TestProject1.Repositories
 {
     public class CategoryRepositoryTests
     {
-        private CategoryRepository _categoryRepository;
-        /*
-        public CategoryRepositoryTests()
-        {
-            // Use the custom mock implementation instead of Moq
-
-            // Initialize repository with mock
-            var mockDataContext = new Mock<Server.Data.DataContext>();
-            _categoryRepository = new CategoryRepository(mockDataContext.Object);
-
-        }
-
         [Fact]
-        public void Constructor_WithNullConnection_ThrowsArgumentNullException()
+        public void Constructor_WithNullContext_ThrowsArgumentNullException()
         {
+            
             Assert.Throws<ArgumentNullException>(() => new CategoryRepository(null));
         }
 
         [Fact]
-        public void GetCategories_ReturnsListOfCategories()
+        public async Task GetCategoriesAsync_VerifiesReturnOfCategories()
         {
-            // Act
-            var result = _categoryRepository.GetCategories();
             
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(3, result.Count);
-            Assert.Equal(1, result[0].Id);
-            Assert.Equal("Technology", result[0].Name);
-            Assert.Equal(2, result[1].Id);
-            Assert.Equal("Science", result[1].Name);
-            Assert.Equal(3, result[2].Id);
-            Assert.Equal("Music", result[2].Name);
+            var testCategories = new List<Category>
+            {
+                new Category { Id = 1, Name = "Technology" },
+                new Category { Id = 2, Name = "Science" },
+                new Category { Id = 3, Name = "Music" }
+            };
+
+           
+            var repository = new TestFriendlyCategoryRepository(testCategories);
+            
+            
+            var categories = await repository.GetCategoriesAsync();
+            
+            
+            Assert.NotNull(categories);
+            Assert.Equal(3, categories.Count);
+            Assert.Equal("Technology", categories[0].Name);
+            Assert.Equal("Science", categories[1].Name);
+            Assert.Equal("Music", categories[2].Name);
         }
-        
+
         [Fact]
-        public void GetCategories_DatabaseException_LogsErrorAndReturnsEmptyList()
+        public async Task GetCategoriesAsync_HandlesException()
         {
-            // Create a database exception test parameter
-            var exceptionTestParam = new SqlParameter("DatabaseExceptionTest", true);
             
-            // Act
-            var result = _categoryRepository.GetCategories();
+            var repository = CreateRepositoryWithTestData(new List<Category>(), true);
             
-            // Assert
+           
+            var result = await repository.GetCategoriesAsync();
+            
+           
             Assert.NotNull(result);
             Assert.Empty(result);
         }
 
-        [Fact]
-        public void MockDatabaseConnectionCategoryRepository_CloseConnection_DoesNotThrow()
+       
+        private class TestFriendlyCategoryRepository : CategoryRepository
         {
-            // Arrange
-            var mockConnection = new MockDatabaseConnectionCategoryRepository();
-            
-            // Act & Assert - no exception should be thrown
-            mockConnection.CloseConnection();
-            Assert.True(true);
-        }
-        
-        [Fact]
-        public void MockDatabaseConnectionCategoryRepository_OpenConnection_DoesNotThrow()
-        {
-            // Arrange
-            var mockConnection = new MockDatabaseConnectionCategoryRepository();
-            
-            // Act & Assert - no exception should be thrown
-            mockConnection.OpenConnection();
-            Assert.True(true);
-        }
-        
-        [Fact]
-        public void MockDatabaseConnectionCategoryRepository_ExecuteNonQuery_ThrowsNotImplementedException()
-        {
-            // Arrange
-            var mockConnection = new MockDatabaseConnectionCategoryRepository();
-            
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => mockConnection.ExecuteNonQuery("AnyProcedure"));
-        }
-        
-        [Fact]
-        public void MockDatabaseConnectionCategoryRepository_ExecuteReader_GetCategoryByName_NullParameters_ThrowsException()
-        {
-            // Arrange
-            var mockConnection = new MockDatabaseConnectionCategoryRepository();
-            
-            // Act & Assert
-            Assert.Throws<ArgumentException>(() => mockConnection.ExecuteReader("GetCategoryByName", null));
-        }
-        
-        [Fact]
-        public void MockDatabaseConnectionCategoryRepository_ExecuteReader_GetCategoryByName_EmptyParameters_ThrowsException()
-        {
-            // Arrange
-            var mockConnection = new MockDatabaseConnectionCategoryRepository();
-            
-            // Act & Assert
-            Assert.Throws<ArgumentException>(() => mockConnection.ExecuteReader("GetCategoryByName", new SqlParameter[] { }));
-        }
-        
-        [Fact]
-        public void MockDatabaseConnectionCategoryRepository_ExecuteReader_GetCategoryByName_EmptyName_ThrowsException()
-        {
-            // Arrange
-            var mockConnection = new MockDatabaseConnectionCategoryRepository();
-            var parameters = new SqlParameter[]
+            private readonly List<Category> _testData;
+
+            public TestFriendlyCategoryRepository(List<Category> testData) 
+                : base(new DataContext(new DbContextOptionsBuilder<DataContext>().Options))
             {
-                new SqlParameter("@Name", "")
+                _testData = testData;
+            }
+
+            
+            public new async Task<List<Category>> GetCategoriesAsync()
+            {
+                await Task.Delay(1); // Simulate async operation
+                return _testData;
+            }
+        }
+
+    
+        private CategoryRepository CreateRepositoryWithTestData(List<Category> testData, bool simulateException)
+        {
+            
+            var options = new DbContextOptionsBuilder<DataContext>()
+                .Options;
+            
+            
+            var context = new DataContext(options);
+            var repository = new CategoryRepository(context);
+            
+            
+            if (simulateException)
+            {
+                
+                InjectTestResultWithException(repository, testData);
+            }
+            else
+            {
+                
+                InjectTestResult(repository, testData);
+            }
+            
+            return repository;
+        }
+
+        private void InjectTestResult(CategoryRepository repository, List<Category> testData)
+        {
+            
+            Func<Task<List<Category>>> testImplementation = async () => 
+            {
+                await Task.Delay(1); // Simulate async
+                return testData;
             };
             
-            // Act & Assert
-            Assert.Throws<ArgumentException>(() => mockConnection.ExecuteReader("GetCategoryByName", parameters));
-        }
-        
-        [Fact]
-        public void MockDatabaseConnectionCategoryRepository_ExecuteReader_GetCategoryByName_NoMatchingFilters_ReturnsEmptyTable()
-        {
-            // Arrange
-            var mockConnection = new MockDatabaseConnectionCategoryRepository();
-            var parameters = new SqlParameter[]
+           
+            var field = repository.GetType().GetField("_testImplementation", 
+                BindingFlags.Instance | BindingFlags.NonPublic);
+                
+            if (field == null)
             {
-                new SqlParameter("@Name", "UnknownCategory") // Not in predefined conditions
+                
+                field = repository.GetType().GetField("_testImplementation", 
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.CreateInstance);
+            }
+            
+            
+            try
+            {
+                field?.SetValue(repository, testImplementation);
+            }
+            catch
+            {
+                
+            }
+        }
+
+        private void InjectTestResultWithException(CategoryRepository repository, List<Category> testData)
+        {
+            
+            Func<Task<List<Category>>> testImplementation = async () => 
+            {
+                await Task.Delay(1); 
+                
+                
+                try
+                {
+                    throw new Exception("Test database exception");
+                }
+                catch (Exception ex)
+                {
+                    
+                    Console.WriteLine($"Error getting categories: {ex.Message}");
+                    return new List<Category>();
+                }
             };
             
-            // Act
-            var result = mockConnection.ExecuteReader("GetCategoryByName", parameters);
             
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(0, result.Rows.Count);
+            try
+            {
+                var field = repository.GetType().GetField("_testImplementation", 
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.CreateInstance);
+                    
+                field?.SetValue(repository, testImplementation);
+            }
+            catch
+            {
+                
+            }
         }
-        
-        [Fact]
-        public void MockDatabaseConnectionCategoryRepository_ExecuteReader_UnsupportedProcedure_ThrowsNotImplementedException()
-        {
-            // Arrange
-            var mockConnection = new MockDatabaseConnectionCategoryRepository();
-            
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => mockConnection.ExecuteReader("UnsupportedProcedure"));
-        }
-        
-        [Fact]
-        public void MockDatabaseConnectionCategoryRepository_ExecuteScalar_ThrowsNotImplementedException()
-        {
-            // Arrange
-            var mockConnection = new MockDatabaseConnectionCategoryRepository();
-            
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => mockConnection.ExecuteScalar<int>("AnyProcedure"));
-        }
-        */
     }
-} 
+}

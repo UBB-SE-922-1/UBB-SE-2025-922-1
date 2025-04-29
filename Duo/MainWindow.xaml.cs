@@ -2,9 +2,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Duo.Views.Pages;
 using Duo.ViewModels;
-using Duo.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using Duo.Services.Interfaces;
 
 namespace Duo
 {

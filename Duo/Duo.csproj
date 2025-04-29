@@ -67,6 +67,7 @@
 		<Folder Include="Data\Queries\PostHashtag\AddHashtagToPost\" />
 		<Folder Include="Data\Queries\PostHashtag\DeleteHashtagFromPost\" />
 		<Folder Include="Data\Queries\PostHashtag\GetHashtagsForPost\" />
+		<Folder Include="Repositories\Interfaces\" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\DuolingoClassLibrary\DuolingoClassLibrary.csproj" />

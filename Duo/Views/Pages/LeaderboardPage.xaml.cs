@@ -14,7 +14,6 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using DuolingoClassLibrary.Entities;
 using System.Collections.ObjectModel;
-using Duo.Data;
 using Duo.Helpers;
 using System.Data;
 using DuolingoNou.Views.Pages;
@@ -42,18 +41,18 @@ public sealed partial class LeaderboardPage : Page
     {
         this.InitializeComponent();
         _leaderboardViewModel = App.ServiceProvider.GetRequiredService<LeaderboardViewModel>();
-        Leaderboard = new ObservableCollection<LeaderboardEntry>(_leaderboardViewModel.GetGlobalLeaderboard("Accuracy"));
+        Leaderboard = new ObservableCollection<LeaderboardEntry>();//check here later 
         LeaderboardListView.ItemsSource = Leaderboard;
         CurrentUserRank.Text = $"Your Rank: {_leaderboardViewModel.GetCurrentUserGlobalRank(currentUserId, "Accuracy")}";
     }
 
     // Event handler for Global button click
-    private void GlobalButton_Click(object sender, RoutedEventArgs e)
+    private async void GlobalButton_Click(object sender, RoutedEventArgs e)
     {
         // Update the Leaderboard to display global rankings
         _selectedMode = "Global";
-        LeaderboardListView.ItemsSource = _leaderboardViewModel.GetGlobalLeaderboard("Accuracy");
-        CurrentUserRank.Text = $"Your Rank: {_leaderboardViewModel.GetCurrentUserGlobalRank(currentUserId, "Accuracy")}";
+        LeaderboardListView.ItemsSource = await _leaderboardViewModel.GetGlobalLeaderboard("Accuracy");
+        CurrentUserRank.Text = $"Your Rank: {await _leaderboardViewModel.GetCurrentUserGlobalRank(currentUserId, "Accuracy")}";
         RankingCriteriaComboBox.SelectedItem = SortBy;
     }
 
@@ -73,7 +72,7 @@ public sealed partial class LeaderboardPage : Page
         // Refresh the Leaderboard
         if (_selectedMode == "Global")
         {
-            Leaderboard = new ObservableCollection<LeaderboardEntry>(_leaderboardViewModel.GetGlobalLeaderboard("Accuracy"));
+            Leaderboard = new ObservableCollection<LeaderboardEntry>(await _leaderboardViewModel.GetGlobalLeaderboard("Accuracy"));
             CurrentUserRank.Text = $"Your Rank: {_leaderboardViewModel.GetCurrentUserGlobalRank(currentUserId, "Accuracy")}";
         }
         else
@@ -100,7 +99,7 @@ public sealed partial class LeaderboardPage : Page
                 case "Accuracy":
                     if (_selectedMode == "Global")
                     {
-                        Leaderboard = new ObservableCollection<LeaderboardEntry>(_leaderboardViewModel.GetGlobalLeaderboard("Accuracy"));
+                        Leaderboard = new ObservableCollection<LeaderboardEntry>(await _leaderboardViewModel.GetGlobalLeaderboard("Accuracy"));
                         CurrentUserRank.Text = $"Your Rank: {_leaderboardViewModel.GetCurrentUserGlobalRank(currentUserId, "Accuracy")}";
                     }
                     else
@@ -115,7 +114,7 @@ public sealed partial class LeaderboardPage : Page
                 case "CompletedQuizzes":
                     if (_selectedMode == "Global")
                     {
-                        Leaderboard = new ObservableCollection<LeaderboardEntry>(_leaderboardViewModel.GetGlobalLeaderboard("CompletedQuizzes"));
+                        Leaderboard = new ObservableCollection<LeaderboardEntry>(await _leaderboardViewModel.GetGlobalLeaderboard("CompletedQuizzes"));
                         CurrentUserRank.Text = $"Your Rank: {_leaderboardViewModel.GetCurrentUserGlobalRank(currentUserId, "CompletedQuizzes")}";
                     }
                     else

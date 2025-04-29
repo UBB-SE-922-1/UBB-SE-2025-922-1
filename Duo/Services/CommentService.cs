@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using DuolingoClassLibrary.Entities;
 using Duo.Services;
-using Duo.Repositories;
 using Duo.Services.Interfaces;
-using Duo.Repositories.Interfaces;
 using DuolingoClassLibrary.Repositories.Interfaces;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,13 +26,13 @@ namespace Duo.Services
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
 
-        public List<Comment> GetCommentsByPostId(int postId)
+        public async Task<List<Comment>> GetCommentsByPostId(int postId)
         {
             if (postId <= MINIMUM_ALLOWED_ID_NUMBER) throw new ArgumentException("Invalid post ID", nameof(postId));
 
             try
             {
-                var comments = _commentRepository.GetCommentsByPostId(postId);
+                var comments = await _commentRepository.GetCommentsByPostId(postId);
 
                 if (comments != null && comments.Count > 0)
                 {
@@ -42,9 +40,8 @@ namespace Duo.Services
                     {
                         try
                         {
-                            User user = _userService.GetUserById(comment.UserId);
+                            User user = await _userService.GetUserById(comment.UserId);
                             comment.Username = user.UserName;
-
                         }
                         catch (Exception ex)
                         {
@@ -65,10 +62,10 @@ namespace Duo.Services
             }
         }
 
-        public (List<Comment> AllComments, List<Comment> TopLevelComments, Dictionary<int, List<Comment>> RepliesByParentId) GetProcessedCommentsByPostId(int postId)
+        public async Task<(List<Comment> AllComments, List<Comment> TopLevelComments, Dictionary<int, List<Comment>> RepliesByParentId)> GetProcessedCommentsByPostId(int postId)
         {
             // Get all comments for the post
-            var allComments = GetCommentsByPostId(postId);
+            var allComments = await GetCommentsByPostId(postId);
             
             if (allComments == null || !allComments.Any())
             {
@@ -116,7 +113,7 @@ namespace Duo.Services
                 int level = 1;
                 if (parentCommentId.HasValue)
                 {
-                    var parentComment = _commentRepository.GetCommentById(parentCommentId.Value);
+                    var parentComment = await _commentRepository.GetCommentById(parentCommentId.Value);
                     if (parentComment == null) throw new Exception("Parent comment not found");
                     if (parentComment.Level >= MAXIMUM_COMMENT_LEVEL) throw new Exception("Comment nesting limit reached");
                     level = parentComment.Level + 1;
@@ -134,7 +131,7 @@ namespace Duo.Services
                     Level = level
                 };
 
-                return _commentRepository.CreateComment(comment);
+                return await _commentRepository.CreateComment(comment);
             }
             catch (Exception ex)
             {
@@ -142,7 +139,7 @@ namespace Duo.Services
             }
         }
 
-        public bool DeleteComment(int commentId, int userId)
+        public async Task<bool> DeleteComment(int commentId, int userId)
         {
             if (commentId <= MINIMUM_ALLOWED_ID_NUMBER) throw new ArgumentException("Invalid comment ID", nameof(commentId));
             if (userId <= MINIMUM_ALLOWED_ID_NUMBER) throw new ArgumentException("Invalid user ID", nameof(userId));
@@ -152,7 +149,8 @@ namespace Duo.Services
                 User user = _userService.GetCurrentUser();
                 if (user.UserId != userId) throw new Exception("User does not have permission to delete this comment");
 
-                return _commentRepository.DeleteComment(commentId);
+                await _commentRepository.DeleteComment(commentId);
+                return true;
             }
             catch (Exception ex)
             {
@@ -160,13 +158,14 @@ namespace Duo.Services
             }
         }
 
-        public bool LikeComment(int commentId)
+        public async Task<bool> LikeComment(int commentId)
         {
             if (commentId <= MINIMUM_ALLOWED_ID_NUMBER) throw new ArgumentException("Invalid comment ID", nameof(commentId));
 
             try
             {
-                return _commentRepository.IncrementLikeCount(commentId);
+                await _commentRepository.IncrementLikeCount(commentId);
+                return true;
             }
             catch (Exception ex)
             {
@@ -237,7 +236,7 @@ namespace Duo.Services
                 
                 if (post == null) throw new Exception("Post not found");
 
-                var commentCount = _commentRepository.GetCommentsCountForPost(postId);
+                var commentCount = await _commentRepository.GetCommentsCountForPost(postId);
                 if (commentCount >= MAXIMUM_COMMENT_COUNT) throw new Exception("Comment limit reached");
             }
             catch (Exception ex)

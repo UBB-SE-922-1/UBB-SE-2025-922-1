@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using DuolingoClassLibrary.Data;
 using DuolingoClassLibrary.Repositories.Repos;
+using DuolingoClassLibrary.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +17,11 @@ builder.Services.AddDbContext<DataContext>(options =>
 // Register repositories
 builder.Services.AddScoped<CategoryRepository>();
 builder.Services.AddScoped<PostRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<FriendsRepository>();
-builder.Services.AddScoped<DuolingoClassLibrary.Repositories.Interfaces.IFriendsRepository, DuolingoClassLibrary.Repositories.Proxies.FriendsRepositoryProxy>();
+builder.Services.AddScoped<IFriendsRepository, DuolingoClassLibrary.Repositories.Proxies.FriendsRepositoryProxy>();
+builder.Services.AddScoped<HashtagRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 var app = builder.Build();
 

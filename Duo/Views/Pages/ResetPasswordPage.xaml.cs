@@ -15,7 +15,7 @@ using Microsoft.UI.Xaml.Navigation;
 using Duo.ViewModels;
 using Duo;
 using Duo.Views.Pages;
-using Duo.Interfaces;
+using Duo.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Duo.Views;
 
@@ -93,12 +93,12 @@ namespace DuolingoNou.Views.Pages
         /// <summary>
         /// Handles the reset password button click
         /// </summary>
-        private void OnResetPasswordClick(object sender, RoutedEventArgs e)
+        private async void OnResetPasswordClick(object sender, RoutedEventArgs e)
         {
             resetPassViewModel.NewPassword = NewPasswordBox.Password;
             resetPassViewModel.ConfirmPassword = ConfirmPasswordBox.Password;
             
-            bool isReset = resetPassViewModel.ResetPassword(resetPassViewModel.NewPassword);
+            bool isReset = await resetPassViewModel.ResetPassword(resetPassViewModel.NewPassword);
             
             if (isReset)
             {

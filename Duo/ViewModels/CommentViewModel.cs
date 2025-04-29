@@ -7,7 +7,6 @@ using Duo.Helpers;
 using Duo.ViewModels.Base;
 using Duo.Services;
 using static Duo.App;
-using Duo.Data;
 using DuolingoClassLibrary.Entities;
 
 namespace Duo.ViewModels

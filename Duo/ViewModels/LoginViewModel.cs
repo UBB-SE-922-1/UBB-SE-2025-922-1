@@ -1,6 +1,7 @@
-using Duo.Interfaces;
+using Duo.Services.Interfaces;
 using DuolingoClassLibrary.Entities;
 using System;
+using System.Threading.Tasks;
 
 namespace Duo.ViewModels
 {
@@ -45,20 +46,30 @@ namespace Duo.ViewModels
         /// </summary>
         /// <param name="username">The username.</param>
         /// <param name="password">The password.</param>
-        public void AttemptLogin(string username, string password)
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public async Task<bool> AttemptLogin(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
                 LoginStatus = false;
-                return;
+                return false;
             }
 
             Username = username;
             Password = password;
 
-            // Try to get the user
-            LoggedInUser = loginService.GetUserByCredentials(Username, Password);
-            LoginStatus = LoggedInUser != null;
+            try
+            {
+                // Try to get the user
+                LoggedInUser = await loginService.GetUserByCredentials(Username, Password);
+                LoginStatus = LoggedInUser != null;
+                return LoginStatus;
+            }
+            catch (Exception)
+            {
+                LoginStatus = false;
+                return false;
+            }
         }
     }
 }

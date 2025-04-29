@@ -10,9 +10,9 @@ namespace Duo.Services;
 public class LeaderboardService
 {
     private readonly IUserHelperService _userHelperService;
-    private readonly FriendsService _friendsService;
+    private readonly IFriendsService _friendsService;
 
-    public LeaderboardService(IUserHelperService userHelperService, FriendsService friendsService)
+    public LeaderboardService(IUserHelperService userHelperService, IFriendsService friendsService)
     {
         _userHelperService = userHelperService ?? throw new ArgumentNullException(nameof(userHelperService));
         _friendsService = friendsService ?? throw new ArgumentNullException(nameof(friendsService));

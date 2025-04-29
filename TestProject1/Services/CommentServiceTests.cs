@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DuolingoClassLibrary.Data;
 using DuolingoClassLibrary.Entities;
+using DuolingoClassLibrary.Repositories.Interfaces;
 using DuolingoClassLibrary.Repositories.Repos;
 using Duo.Services;
 using Duo.Services.Interfaces;
@@ -14,90 +16,41 @@ namespace TestProject1.Services
 {
     public class CommentServiceTests
     {
-        /*
-        private readonly DataContext _mockContext;
-        private readonly CommentRepository _commentRepository;
-        private readonly PostRepository _postRepository;
+        private readonly DbContextOptions<DataContext> _options;
+        private readonly Mock<ICommentRepository> _mockCommentRepository;
+        private readonly Mock<IPostRepository> _mockPostRepository;
         private readonly Mock<IUserService> _mockUserService;
-        private readonly CommentService _commentService;
 
         public CommentServiceTests()
         {
-            var options = new DbContextOptionsBuilder<DataContext>()
+            _options = new DbContextOptionsBuilder<DataContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
 
-            _mockContext = new DataContext(options);
-            _commentRepository = new CommentRepository(_mockContext);
-            _postRepository = new PostRepository(_mockContext);
+            _mockCommentRepository = new Mock<ICommentRepository>();
+            _mockPostRepository = new Mock<IPostRepository>();
             _mockUserService = new Mock<IUserService>();
-            _commentService = new CommentService(_commentRepository, _postRepository, _mockUserService.Object);
-
-            // Seed test data
-            SeedTestData();
-        }
-
-        private void SeedTestData()
-        {
-            // Clear existing data
-            _mockContext.Comments.RemoveRange(_mockContext.Comments);
-            _mockContext.Posts.RemoveRange(_mockContext.Posts);
-            _mockContext.SaveChanges();
-
-            // Add test post
-            var post = new Post
-            {
-                Id = 1,
-                Title = "Test Post",
-                Description = "Test Description",
-                UserID = 1,
-                CategoryID = 1,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            };
-            _mockContext.Posts.Add(post);
-
-            // Add test comments
-            var comments = new List<Comment>
-            {
-                new Comment
-                {
-                    Id = 1,
-                    Content = "Test Comment 1",
-                    UserId = 1,
-                    PostId = 1,
-                    ParentCommentId = null,
-                    CreatedAt = DateTime.Now,
-                    LikeCount = 0,
-                    Level = 1
-                },
-                new Comment
-                {
-                    Id = 2,
-                    Content = "Test Comment 2",
-                    UserId = 2,
-                    PostId = 1,
-                    ParentCommentId = 1,
-                    CreatedAt = DateTime.Now,
-                    LikeCount = 0,
-                    Level = 2
-                }
-            };
-            _mockContext.Comments.AddRange(comments);
-            _mockContext.SaveChanges();
-        }
-
-        public void Dispose()
-        {
-            _mockContext.Dispose();
         }
 
         [Fact]
-        public void Constructor_WithNullDependencies_ThrowsArgumentNullException()
+        public void Constructor_WithNullCommentRepository_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => new CommentService(null, _postRepository, _mockUserService.Object));
-            Assert.Throws<ArgumentNullException>(() => new CommentService(_commentRepository, null, _mockUserService.Object));
-            Assert.Throws<ArgumentNullException>(() => new CommentService(_commentRepository, _postRepository, null));
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => new CommentService(null, _mockPostRepository.Object, _mockUserService.Object));
+        }
+
+        [Fact]
+        public void Constructor_WithNullPostRepository_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => new CommentService(_mockCommentRepository.Object, null, _mockUserService.Object));
+        }
+
+        [Fact]
+        public void Constructor_WithNullUserService_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, null));
         }
 
         [Fact]
@@ -105,23 +58,47 @@ namespace TestProject1.Services
         {
             // Arrange
             int postId = 1;
-            _mockUserService.Setup(s => s.GetUserById(1)).Returns(new User { UserId = 1, UserName = "User1" });
-            _mockUserService.Setup(s => s.GetUserById(2)).Returns(new User { UserId = 2, UserName = "User2" });
+            var comments = new List<Comment>
+            {
+                new Comment { Id = 1, Content = "Test Comment 1", UserId = 1, PostId = 1 },
+                new Comment { Id = 2, Content = "Test Comment 2", UserId = 2, PostId = 1 }
+            };
+
+            _mockCommentRepository.Setup(r => r.GetCommentsByPostId(postId)).ReturnsAsync(comments);
+            _mockUserService.Setup(s => s.GetUserById(1)).ReturnsAsync(new User { UserId = 1, UserName = "User1" });
+            _mockUserService.Setup(s => s.GetUserById(2)).ReturnsAsync(new User { UserId = 2, UserName = "User2" });
+
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
 
             // Act
-            var comments = await _commentService.GetCommentsByPostId(postId);
+            var result = await service.GetCommentsByPostId(postId);
 
             // Assert
-            Assert.Equal(2, comments.Count);
-            Assert.Equal("User1", comments[0].Username);
-            Assert.Equal("User2", comments[1].Username);
+            Assert.Equal(2, result.Count);
         }
 
         [Fact]
         public async Task GetCommentsByPostId_WithInvalidPostId_ThrowsArgumentException()
         {
+            // Arrange
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
+
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _commentService.GetCommentsByPostId(0));
+            await Assert.ThrowsAsync<ArgumentException>(() => service.GetCommentsByPostId(0));
+        }
+
+        [Fact]
+        public async Task GetCommentsByPostId_WhenRepositoryThrowsException_ThrowsException()
+        {
+            // Arrange
+            int postId = 1;
+            _mockCommentRepository.Setup(r => r.GetCommentsByPostId(postId)).ThrowsAsync(new Exception("Test exception"));
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => service.GetCommentsByPostId(postId));
+            Assert.Contains("Error retrieving comments", exception.Message);
         }
 
         [Fact]
@@ -129,124 +106,251 @@ namespace TestProject1.Services
         {
             // Arrange
             int postId = 1;
-            _mockUserService.Setup(s => s.GetUserById(It.IsAny<int>())).Returns(new User { UserId = 1, UserName = "TestUser" });
+            var comments = new List<Comment>
+            {
+                new Comment { Id = 1, Content = "Top level", UserId = 1, PostId = 1, ParentCommentId = null },
+                new Comment { Id = 2, Content = "Reply", UserId = 2, PostId = 1, ParentCommentId = 1 }
+            };
+
+            _mockCommentRepository.Setup(r => r.GetCommentsByPostId(postId)).ReturnsAsync(comments);
+            _mockUserService.Setup(s => s.GetUserById(It.IsAny<int>())).ReturnsAsync(new User { UserName = "TestUser" });
+
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
 
             // Act
-            var (allComments, topLevelComments, repliesByParentId) = await _commentService.GetProcessedCommentsByPostId(postId);
+            var (allComments, topLevelComments, repliesByParentId) = await service.GetProcessedCommentsByPostId(postId);
 
             // Assert
-            Assert.Equal(2, allComments.Count);
             Assert.Single(topLevelComments);
-            Assert.Single(repliesByParentId);
-            Assert.Equal(1, topLevelComments[0].Level);
-            Assert.Equal(2, repliesByParentId[1][0].Level);
         }
 
         [Fact]
-        public async Task CreateComment_WithValidData_CreatesComment()
+        public async Task GetProcessedCommentsByPostId_WithNoComments_ReturnsEmptyCollections()
         {
             // Arrange
-            string content = "New Comment";
             int postId = 1;
-            _mockUserService.Setup(s => s.GetCurrentUser()).Returns(new User { UserId = 1, UserName = "TestUser" });
+            _mockCommentRepository.Setup(r => r.GetCommentsByPostId(postId)).ReturnsAsync(new List<Comment>());
+
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
 
             // Act
-            var result = await _commentService.CreateComment(content, postId);
+            var (allComments, topLevelComments, repliesByParentId) = await service.GetProcessedCommentsByPostId(postId);
 
             // Assert
-            Assert.True(result > 0);
-            var createdComment = await _mockContext.Comments.FindAsync(result);
-            Assert.NotNull(createdComment);
-            Assert.Equal(content, createdComment.Content);
-            Assert.Equal(1, createdComment.Level);
+            Assert.Empty(topLevelComments);
         }
 
         [Fact]
-        public async Task CreateComment_WithInvalidData_ThrowsArgumentException()
-        {
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _commentService.CreateComment("", 1));
-            await Assert.ThrowsAsync<ArgumentException>(() => _commentService.CreateComment("Test", 0));
-        }
-
-        [Fact]
-        public async Task CreateComment_WithParentComment_IncrementsLevel()
+        public async Task CreateComment_WithValidData_ReturnsCommentId()
         {
             // Arrange
-            string content = "Reply Comment";
+            string content = "Test content";
+            int postId = 1;
+            int expectedCommentId = 1;
+            
+            _mockUserService.Setup(s => s.GetCurrentUser()).Returns(new User { UserId = 1 });
+            _mockPostRepository.Setup(r => r.GetPosts()).ReturnsAsync(new List<Post> { new Post { Id = 1 } });
+            _mockCommentRepository.Setup(r => r.GetCommentsCountForPost(postId)).ReturnsAsync(5);
+            _mockCommentRepository.Setup(r => r.CreateComment(It.IsAny<Comment>())).ReturnsAsync(expectedCommentId);
+
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
+
+            // Act
+            var result = await service.CreateComment(content, postId);
+
+            // Assert
+            Assert.Equal(expectedCommentId, result);
+        }
+
+        [Fact]
+        public async Task CreateComment_WithEmptyContent_ThrowsArgumentException()
+        {
+            // Arrange
+            string content = "";
+            int postId = 1;
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => service.CreateComment(content, postId));
+        }
+
+        [Fact]
+        public async Task CreateComment_WithInvalidPostId_ThrowsArgumentException()
+        {
+            // Arrange
+            string content = "Test content";
+            int postId = 0;
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => service.CreateComment(content, postId));
+        }
+
+        [Fact]
+        public async Task CreateComment_WithParentComment_SetsCorrectLevel()
+        {
+            // Arrange
+            string content = "Reply content";
             int postId = 1;
             int parentCommentId = 1;
-            _mockUserService.Setup(s => s.GetCurrentUser()).Returns(new User { UserId = 1, UserName = "TestUser" });
+            var parentComment = new Comment { Id = parentCommentId, Level = 1 };
+            
+            _mockUserService.Setup(s => s.GetCurrentUser()).Returns(new User { UserId = 1 });
+            _mockPostRepository.Setup(r => r.GetPosts()).ReturnsAsync(new List<Post> { new Post { Id = 1 } });
+            _mockCommentRepository.Setup(r => r.GetCommentsCountForPost(postId)).ReturnsAsync(5);
+            _mockCommentRepository.Setup(r => r.GetCommentById(parentCommentId)).ReturnsAsync(parentComment);
+            _mockCommentRepository.Setup(r => r.CreateComment(It.Is<Comment>(c => c.Level == 2))).ReturnsAsync(2);
+
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
 
             // Act
-            var result = await _commentService.CreateComment(content, postId, parentCommentId);
+            var result = await service.CreateComment(content, postId, parentCommentId);
 
             // Assert
-            Assert.True(result > 0);
-            var createdComment = await _mockContext.Comments.FindAsync(result);
-            Assert.NotNull(createdComment);
-            Assert.Equal(2, createdComment.Level);
+            _mockCommentRepository.Verify(r => r.CreateComment(It.Is<Comment>(c => c.Level == 2)), Times.Once);
         }
 
         [Fact]
-        public async Task DeleteComment_WithValidData_DeletesComment()
+        public async Task DeleteComment_WithValidData_ReturnsTrue()
         {
             // Arrange
             int commentId = 1;
             int userId = 1;
-            _mockUserService.Setup(s => s.GetCurrentUser()).Returns(new User { UserId = 1, UserName = "TestUser" });
+            
+            _mockUserService.Setup(s => s.GetCurrentUser()).Returns(new User { UserId = userId });
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
 
             // Act
-            var result = await _commentService.DeleteComment(commentId, userId);
+            var result = await service.DeleteComment(commentId, userId);
 
             // Assert
             Assert.True(result);
-            var deletedComment = await _mockContext.Comments.FindAsync(commentId);
-            Assert.Null(deletedComment);
         }
 
         [Fact]
-        public async Task DeleteComment_WithInvalidData_ThrowsArgumentException()
+        public async Task DeleteComment_WithInvalidCommentId_ThrowsArgumentException()
         {
+            // Arrange
+            int commentId = 0;
+            int userId = 1;
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
+
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _commentService.DeleteComment(0, 1));
-            await Assert.ThrowsAsync<ArgumentException>(() => _commentService.DeleteComment(1, 0));
+            await Assert.ThrowsAsync<ArgumentException>(() => service.DeleteComment(commentId, userId));
         }
 
         [Fact]
-        public async Task LikeComment_WithValidCommentId_IncrementsLikeCount()
+        public async Task DeleteComment_WithDifferentUserId_ThrowsException()
         {
             // Arrange
             int commentId = 1;
+            int userId = 1;
+            
+            _mockUserService.Setup(s => s.GetCurrentUser()).Returns(new User { UserId = 2 }); // Different user
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => service.DeleteComment(commentId, userId));
+            Assert.Contains("User does not have permission", exception.Message);
+        }
+
+        [Fact]
+        public async Task LikeComment_WithValidCommentId_ReturnsTrue()
+        {
+            // Arrange
+            int commentId = 1;
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
 
             // Act
-            var result = await _commentService.LikeComment(commentId);
+            var result = await service.LikeComment(commentId);
 
             // Assert
             Assert.True(result);
-            var comment = await _mockContext.Comments.FindAsync(commentId);
-            Assert.Equal(1, comment.LikeCount);
         }
 
         [Fact]
         public async Task LikeComment_WithInvalidCommentId_ThrowsArgumentException()
         {
+            // Arrange
+            int commentId = 0;
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
+
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _commentService.LikeComment(0));
+            await Assert.ThrowsAsync<ArgumentException>(() => service.LikeComment(commentId));
         }
 
         [Fact]
-        public async Task CreateReplyWithDuplicateCheck_WithValidData_CreatesReply()
+        public void FindCommentInHierarchy_WhenCommentExists_ReturnsComment()
         {
             // Arrange
-            string replyText = "New Reply";
-            int postId = 1;
-            int parentCommentId = 1;
-            var existingComments = await _commentRepository.GetCommentsByPostId(postId);
-            _mockUserService.Setup(s => s.GetCurrentUser()).Returns(new User { UserId = 1, UserName = "TestUser" });
+            var comments = new List<Comment>
+            {
+                new Comment { Id = 1, Content = "Comment 1" },
+                new Comment { Id = 2, Content = "Comment 2" }
+            };
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
 
             // Act
-            var (success, signature) = await _commentService.CreateReplyWithDuplicateCheck(
+            var result = service.FindCommentInHierarchy(
+                1, 
+                comments, 
+                c => new List<Comment>(), 
+                c => c.Id);
+
+            // Assert
+            Assert.NotNull(result);
+        }
+
+        [Fact]
+        public void FindCommentInHierarchy_WhenCommentDoesNotExist_ReturnsNull()
+        {
+            // Arrange
+            var comments = new List<Comment>
+            {
+                new Comment { Id = 1, Content = "Comment 1" },
+                new Comment { Id = 2, Content = "Comment 2" }
+            };
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
+
+            // Act
+            var result = service.FindCommentInHierarchy(
+                3, 
+                comments, 
+                c => new List<Comment>(), 
+                c => c.Id);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task CreateReplyWithDuplicateCheck_WithNewContent_ReturnsSuccess()
+        {
+            // Arrange
+            string replyText = "New reply";
+            int postId = 1;
+            int parentCommentId = 1;
+            var existingComments = new List<Comment>();
+            
+            _mockUserService.Setup(s => s.GetCurrentUser()).Returns(new User { UserId = 1 });
+            _mockPostRepository.Setup(r => r.GetPosts()).ReturnsAsync(new List<Post> { new Post { Id = 1 } });
+            _mockCommentRepository.Setup(r => r.GetCommentsCountForPost(postId)).ReturnsAsync(5);
+            _mockCommentRepository.Setup(r => r.GetCommentById(parentCommentId)).ReturnsAsync(new Comment { Id = parentCommentId, Level = 1 });
+            _mockCommentRepository.Setup(r => r.CreateComment(It.IsAny<Comment>())).ReturnsAsync(2);
+
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
+
+            // Act
+            var (success, signature) = await service.CreateReplyWithDuplicateCheck(
                 replyText,
                 postId,
                 parentCommentId,
@@ -254,21 +358,29 @@ namespace TestProject1.Services
 
             // Assert
             Assert.True(success);
-            Assert.NotNull(signature);
         }
 
         [Fact]
         public async Task CreateReplyWithDuplicateCheck_WithDuplicateContent_ReturnsFalse()
         {
             // Arrange
-            string replyText = "Test Comment 2"; // This content already exists
+            string replyText = "Duplicate reply";
             int postId = 1;
             int parentCommentId = 1;
-            var existingComments = await _commentRepository.GetCommentsByPostId(postId);
-            _mockUserService.Setup(s => s.GetCurrentUser()).Returns(new User { UserId = 1, UserName = "TestUser" });
+            var existingComments = new List<Comment>
+            {
+                new Comment 
+                { 
+                    Id = 2, 
+                    Content = "Duplicate reply", 
+                    ParentCommentId = parentCommentId 
+                }
+            };
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
 
             // Act
-            var (success, signature) = await _commentService.CreateReplyWithDuplicateCheck(
+            var (success, signature) = await service.CreateReplyWithDuplicateCheck(
                 replyText,
                 postId,
                 parentCommentId,
@@ -276,8 +388,30 @@ namespace TestProject1.Services
 
             // Assert
             Assert.False(success);
-            Assert.NotNull(signature);
         }
-        */
+
+        [Fact]
+        public async Task CreateReplyWithDuplicateCheck_WithDuplicateSignature_ReturnsFalse()
+        {
+            // Arrange
+            string replyText = "Duplicate signature";
+            int postId = 1;
+            int parentCommentId = 1;
+            var existingComments = new List<Comment>();
+            string lastProcessedReplySignature = $"{parentCommentId}_Duplicate signature";
+            
+            var service = new CommentService(_mockCommentRepository.Object, _mockPostRepository.Object, _mockUserService.Object);
+
+            // Act
+            var (success, signature) = await service.CreateReplyWithDuplicateCheck(
+                replyText,
+                postId,
+                parentCommentId,
+                existingComments,
+                lastProcessedReplySignature);
+
+            // Assert
+            Assert.False(success);
+        }
     }
 } 

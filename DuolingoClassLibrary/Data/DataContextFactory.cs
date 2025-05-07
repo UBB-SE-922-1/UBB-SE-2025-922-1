@@ -15,7 +15,7 @@ namespace DuolingoClassLibrary.Data
 
             // Build configuration
             var configuration = new ConfigurationBuilder()
-           .SetBasePath(Path.Combine(Path.Combine(projectDir, "UBB-SE-2025-Duolingo"), "DuolingoClassLibrary"))
+           .SetBasePath(Path.Combine(Path.Combine(projectDir, "UBB-SE-2025-922-1"), "DuolingoClassLibrary"))
            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
            .Build();
 

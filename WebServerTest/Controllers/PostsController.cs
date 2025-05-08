@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using DuolingoClassLibrary.Data;
 using DuolingoClassLibrary.Entities;
 
-namespace WebServer.Controllers
+namespace WebServerTest.Controllers
 {
     public class PostsController : Controller
     {

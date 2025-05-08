@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System;
-using WebServer1.Data;
+using WebServerTest.Data;
 
-namespace WebServer1.Data.Migrations
+namespace WebServerTest.Data.Migrations
 {
     [DbContext(typeof(DataContext))]
     [Migration("00000000000000_CreateIdentitySchema")]

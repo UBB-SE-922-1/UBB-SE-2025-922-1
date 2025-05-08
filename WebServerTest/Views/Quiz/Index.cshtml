@@ -1,0 +1,65 @@
+@model List<DuolingoClassLibrary.Entities.Quiz>
+@{
+    ViewData["Title"] = "My Quizzes";
+}
+
+<div class="text-center my-quizzes-header">
+    <h1 class="display-4">My Quizzes</h1>
+</div>
+
+<hr />
+
+<div class="quiz-list">
+    @foreach (var quiz in Model)
+    {
+        <div class="quiz-item">
+            <div class="quiz-details">
+                <h3 class="quiz-title">@quiz.Name</h3>
+                <p class="quiz-category">@quiz.Category</p>
+            </div>
+            <div class="accuracy-percentage">
+                @((int)(quiz.AccuracyPercentage * 100))%
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .my-quizzes-header {
+        padding: 1rem 0;
+    }
+    
+    .quiz-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .quiz-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .quiz-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #333;
+    }
+    
+    .quiz-category {
+        color: #666;
+        margin-bottom: 0;
+    }
+    
+    .accuracy-percentage {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #58cc02;
+    }
+</style> 

@@ -35,6 +35,10 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<SignUpService>();
 builder.Services.AddScoped<ICategoryService, DuolingoClassLibrary.Services.CategoryService>();
 
+// Register Course and Quiz services from DuolingoClassLibrary
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IQuizService, QuizService>();
+
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<DataContext>();
 builder.Services.AddControllersWithViews();

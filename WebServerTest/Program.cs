@@ -34,6 +34,7 @@ builder.Services.AddScoped<IUserHelperService, UserHelperService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<SignUpService>();
 builder.Services.AddScoped<ICategoryService, DuolingoClassLibrary.Services.CategoryService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 // Register Course and Quiz services from DuolingoClassLibrary
 builder.Services.AddScoped<ICourseService, CourseService>();

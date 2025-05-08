@@ -197,6 +197,61 @@ namespace WebServerTest.Controllers
         [HttpGet]
         public IActionResult ForgotPassword()
         {
+            return View(new ForgotPasswordViewModel());
+        }
+        
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            
+            // Check if email exists
+            var user = await _userHelperService.GetUserByEmail(model.Email);
+            
+            // Always show success message even if email doesn't exist (security best practice)
+            model.EmailSent = true;
+            return View(model);
+        }
+        
+        [HttpGet]
+        public IActionResult ResetPassword(string token, string email)
+        {
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction("Login");
+            }
+            
+            var model = new ResetPasswordViewModel
+            {
+                Token = token,
+                Email = email
+            };
+            
+            return View(model);
+        }
+        
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            
+            // In a real implementation, verify token and reset password
+            // For now, just redirect to confirmation page
+            
+            return RedirectToAction("ResetPasswordConfirmation");
+        }
+        
+        [HttpGet]
+        public IActionResult ResetPasswordConfirmation()
+        {
             return View();
         }
     }

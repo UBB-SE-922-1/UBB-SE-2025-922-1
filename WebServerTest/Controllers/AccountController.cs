@@ -1,6 +1,4 @@
 using System;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using DuolingoClassLibrary.Entities;
 using DuolingoClassLibrary.Services;
@@ -36,11 +34,9 @@ namespace WebServerTest.Controllers
         {
             // Check if user is already logged in
             var userId = HttpContext.Session.GetInt32("UserId");
-            _logger.LogInformation($"Login GET - User is {(userId.HasValue ? "already logged in" : "not logged in")}");
             
             if (userId.HasValue)
             {
-                _logger.LogInformation($"Login GET - Redirecting already logged in user (ID: {userId}) to Home/Index");
                 return RedirectToAction("Index", "Home");
             }
 
@@ -52,8 +48,6 @@ namespace WebServerTest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            _logger.LogInformation($"Login POST - Attempt for username: {model.Username}");
-            
             // Set a default empty ReturnUrl if it's null
             model.ReturnUrl ??= string.Empty;
             
@@ -65,62 +59,39 @@ namespace WebServerTest.Controllers
             
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("Login POST - Model state is invalid");
-                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-                {
-                    _logger.LogWarning($"Validation error: {error.ErrorMessage}");
-                }
                 return View(model);
             }
 
             try
             {
-                _logger.LogInformation($"Login POST - Attempting to authenticate user: {model.Username}");
                 var isAuthenticated = await _loginService.AuthenticateUser(model.Username, model.Password);
-                _logger.LogInformation($"Login POST - Authentication result for {model.Username}: {(isAuthenticated ? "Success" : "Failed")}");
                 
                 if (isAuthenticated)
                 {
                     // Get the user
-                    _logger.LogInformation($"Login POST - Getting user details for {model.Username}");
                     var user = await _loginService.GetUserByCredentials(model.Username, model.Password);
                     
                     if (user != null)
                     {
-                        _logger.LogInformation($"Login POST - User found. ID: {user.UserId}, Username: {user.UserName}");
-                        
                         // Store user ID in session or cookie
                         HttpContext.Session.SetInt32("UserId", user.UserId);
                         HttpContext.Session.SetString("Username", user.UserName);
-                        
-                        _logger.LogInformation($"Login POST - Session values set. UserId: {user.UserId}, Username: {user.UserName}");
-                        
-                        // Debug info
-                        Debug.WriteLine($"Login successful. Username: {user.UserName}, UserID: {user.UserId}");
 
                         // Redirect to home page or return URL
                         if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                         {
-                            _logger.LogInformation($"Login POST - Redirecting to return URL: {model.ReturnUrl}");
-                            Debug.WriteLine($"Redirecting to return URL: {model.ReturnUrl}");
                             return Redirect(model.ReturnUrl);
                         }
                         
-                        _logger.LogInformation("Login POST - Redirecting to Home/Index");
-                        Debug.WriteLine("Redirecting to Home/Index");
                         return RedirectToAction("Index", "Home");
                     }
                     else
                     {
-                        _logger.LogWarning("Login POST - User is null after authentication");
-                        Debug.WriteLine("User is null after authentication");
                         ModelState.AddModelError(string.Empty, "User account could not be retrieved.");
                     }
                 }
                 else
                 {
-                    _logger.LogWarning($"Login POST - Authentication failed for username: {model.Username}");
-                    Debug.WriteLine("Authentication failed");
                     ModelState.AddModelError(string.Empty, "Invalid username or password");
                 }
 
@@ -128,9 +99,8 @@ namespace WebServerTest.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Login POST - Exception: {ex.Message}");
-                Debug.WriteLine($"Login error: {ex.Message}");
-                ModelState.AddModelError(string.Empty, $"Error during login: {ex.Message}");
+                _logger.LogError(ex, "Error during login");
+                ModelState.AddModelError(string.Empty, "An error occurred during login. Please try again.");
                 return View(model);
             }
         }
@@ -183,7 +153,6 @@ namespace WebServerTest.Controllers
                     HttpContext.Session.SetInt32("UserId", user.UserId);
                     HttpContext.Session.SetString("Username", user.UserName);
 
-                    Debug.WriteLine($"Registration successful. Username: {user.UserName}, UserID: {user.UserId}");
                     return RedirectToAction("Index", "Home");
                 }
 
@@ -192,8 +161,8 @@ namespace WebServerTest.Controllers
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Registration error: {ex.Message}");
-                ModelState.AddModelError(string.Empty, $"Error during registration: {ex.Message}");
+                _logger.LogError(ex, "Error during registration");
+                ModelState.AddModelError(string.Empty, "An error occurred during registration. Please try again.");
                 return View(model);
             }
         }
@@ -219,8 +188,7 @@ namespace WebServerTest.Controllers
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Logout error: {ex.Message}");
-                // Log error but continue with logout
+                _logger.LogError(ex, "Error during logout");
             }
 
             return RedirectToAction("Login");

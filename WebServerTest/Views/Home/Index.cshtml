@@ -3,6 +3,21 @@
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Welcome to Duo</h1>
+    <p>You are logged in successfully!</p>
+    
+    <div class="mt-4">
+        <p>
+            Username: <strong>@Context.Session.GetString("Username")</strong>
+        </p>
+        <p>
+            User ID: <strong>@Context.Session.GetInt32("UserId")</strong>
+        </p>
+    </div>
+    
+    <div class="mt-4">
+        <form asp-controller="Account" asp-action="Logout" method="post">
+            <button type="submit" class="btn btn-danger">Logout</button>
+        </form>
+    </div>
 </div>

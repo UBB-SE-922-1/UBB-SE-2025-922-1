@@ -1,4 +1,9 @@
 using DuolingoClassLibrary.Data;
+using DuolingoClassLibrary.Repositories;
+using DuolingoClassLibrary.Repositories.Interfaces;
+using DuolingoClassLibrary.Repositories.Repos;
+using DuolingoClassLibrary.Services;
+using DuolingoClassLibrary.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WebServerTest.Data;
@@ -10,6 +15,23 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+// Configure session
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// Register repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Register services
+builder.Services.AddScoped<IUserHelperService, UserHelperService>();
+builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<SignUpService>();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<DataContext>();
@@ -33,6 +55,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Enable session before authentication
+app.UseSession();
 
 app.UseAuthorization();
 

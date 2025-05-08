@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using WebServerTest.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace WebServerTest.Controllers
 {
@@ -15,6 +16,14 @@ namespace WebServerTest.Controllers
 
         public IActionResult Index()
         {
+            // Check if user is authenticated by checking session
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (!userId.HasValue)
+            {
+                // Redirect to login if not authenticated
+                return RedirectToAction("Login", "Account");
+            }
+
             return View();
         }
 

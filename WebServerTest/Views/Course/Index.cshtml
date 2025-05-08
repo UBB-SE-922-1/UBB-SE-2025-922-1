@@ -1,0 +1,65 @@
+@model List<DuolingoClassLibrary.Entities.MyCourse>
+@{
+    ViewData["Title"] = "My Courses";
+}
+
+<div class="text-center my-courses-header">
+    <h1 class="display-4">My Courses</h1>
+</div>
+
+<hr />
+
+<div class="course-list">
+    @foreach (var course in Model)
+    {
+        <div class="course-item">
+            <div class="course-details">
+                <h3 class="course-title">@course.Name</h3>
+                <p class="course-language">@course.Language</p>
+            </div>
+            <div class="completion-percentage">
+                @((int)(course.CompletionPercentage * 100))%
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .my-courses-header {
+        padding: 1rem 0;
+    }
+    
+    .course-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .course-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .course-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #333;
+    }
+    
+    .course-language {
+        color: #666;
+        margin-bottom: 0;
+    }
+    
+    .completion-percentage {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #58cc02;
+    }
+</style> 

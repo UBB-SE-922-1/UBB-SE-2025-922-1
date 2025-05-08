@@ -1,20 +1,25 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-using WebServerTest.Models;
+using DuolingoClassLibrary.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
+using WebServerTest.Models;
 
 namespace WebServerTest.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly ICategoryService _categoryService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(
+            ILogger<HomeController> logger,
+            ICategoryService categoryService)
         {
             _logger = logger;
+            _categoryService = categoryService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             // Check if user is authenticated by checking session
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -23,6 +28,9 @@ namespace WebServerTest.Controllers
                 // Redirect to login if not authenticated
                 return RedirectToAction("Login", "Account");
             }
+
+            // Get categories for the Community dropdown
+            ViewBag.Categories = await _categoryService.GetAllCategories();
 
             return View();
         }

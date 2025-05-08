@@ -27,11 +27,13 @@ builder.Services.AddSession(options =>
 
 // Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 // Register services
 builder.Services.AddScoped<IUserHelperService, UserHelperService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<SignUpService>();
+builder.Services.AddScoped<ICategoryService, DuolingoClassLibrary.Services.CategoryService>();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<DataContext>();

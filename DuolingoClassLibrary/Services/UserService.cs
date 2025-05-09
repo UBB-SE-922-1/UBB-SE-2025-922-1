@@ -11,6 +11,7 @@ namespace Duo.Services
     {
         private readonly IUserHelperService _userHelperService;
         private User _currentUser;
+        private static readonly object _lock = new object();
 
         public UserService(IUserHelperService userHelperService)
         {
@@ -32,15 +33,23 @@ namespace Duo.Services
 
                 if (existingUser != null)
                 {
-                    _currentUser = existingUser;
-                    System.Diagnostics.Debug.WriteLine($"Current user set to: {_currentUser.UserName}");
+                    lock (_lock)
+                    {
+                        _currentUser = existingUser;
+                        System.Diagnostics.Debug.WriteLine($"Current user set to: {_currentUser.UserName}");
+                    }
+                    await Task.Delay(100); // Add a small delay to ensure the user is set
                     return;
                 }
 
                 var newUser = new User(username);
                 int userId = await _userHelperService.CreateUser(newUser);
-                _currentUser = new User(userId, username);
-                System.Diagnostics.Debug.WriteLine($"Created new user: {_currentUser.UserName}");
+                lock (_lock)
+                {
+                    _currentUser = new User(userId, username);
+                    System.Diagnostics.Debug.WriteLine($"Created new user: {_currentUser.UserName}");
+                }
+                await Task.Delay(100); // Add a small delay to ensure the user is set
             }
             catch (Exception ex)
             {
@@ -48,8 +57,12 @@ namespace Duo.Services
                 var lastAttemptUser = await _userHelperService.GetUserByUsername(username);
                 if (lastAttemptUser != null)
                 {
-                    _currentUser = lastAttemptUser;
-                    System.Diagnostics.Debug.WriteLine($"Recovered user from last attempt: {_currentUser.UserName}");
+                    lock (_lock)
+                    {
+                        _currentUser = lastAttemptUser;
+                        System.Diagnostics.Debug.WriteLine($"Recovered user from last attempt: {_currentUser.UserName}");
+                    }
+                    await Task.Delay(100); // Add a small delay to ensure the user is set
                     return;
                 }
 
@@ -59,12 +72,11 @@ namespace Duo.Services
 
         public User GetCurrentUser()
         {
-            System.Diagnostics.Debug.WriteLine($"Getting current user: {_currentUser?.UserName ?? "null"}");
-            if (_currentUser == null)
+            lock (_lock)
             {
-                //throw new InvalidOperationException("No user is currently logged in.");
+                System.Diagnostics.Debug.WriteLine($"Getting current user: {_currentUser?.UserName ?? "null"}");
+                return _currentUser;
             }
-            return _currentUser;
         }
 
         public async Task<User> GetUserById(int id)
@@ -88,6 +100,15 @@ namespace Duo.Services
             catch (Exception)
             {
                 return null;
+            }
+        }
+
+        public void ClearCurrentUser()
+        {
+            lock (_lock)
+            {
+                System.Diagnostics.Debug.WriteLine("Clearing current user");
+                _currentUser = null;
             }
         }
     }

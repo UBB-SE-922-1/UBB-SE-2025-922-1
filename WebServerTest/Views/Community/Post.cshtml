@@ -26,9 +26,13 @@
                         </small>
                         <div class="d-flex align-items-center">
                             <span class="me-2">@Model.LikeCount likes</span>
-                            <button class="btn btn-sm btn-outline-primary like-button" data-post-id="@Model.Id">
-                                <i class="bi bi-heart"></i>
-                            </button>
+                            <form asp-controller="Community" asp-action="LikePost" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

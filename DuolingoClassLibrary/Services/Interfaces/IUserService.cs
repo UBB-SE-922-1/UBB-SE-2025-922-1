@@ -35,5 +35,10 @@ namespace Duo.Services.Interfaces
         /// <param name="username">The username.</param>
         /// <returns>The user if found, null otherwise.</returns>
         Task<User> GetUserByUsername(string username);
+
+        /// <summary>
+        /// Clears the current user.
+        /// </summary>
+        void ClearCurrentUser();
     }
 } 

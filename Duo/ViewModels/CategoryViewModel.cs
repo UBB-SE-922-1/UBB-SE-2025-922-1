@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using Duo.Services.Interfaces;
 using System.Threading.Tasks;
 using System.Linq;
+using DuolingoClassLibrary.Services.Interfaces;
 
 namespace Duo.ViewModels
 {

@@ -12,6 +12,7 @@ using System.Linq;
 using Duo.Services.Interfaces;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using DuolingoClassLibrary.Services.Interfaces;
 
 namespace Duo.ViewModels
 {

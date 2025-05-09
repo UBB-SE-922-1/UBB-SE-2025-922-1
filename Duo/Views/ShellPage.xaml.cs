@@ -6,6 +6,7 @@ using Duo.Services.Interfaces;
 using Duo.Views.Pages;
 using Duo.Services;
 using Duo;
+using DuolingoClassLibrary.Services.Interfaces;
 
 namespace DuolingoNou.Views
 {

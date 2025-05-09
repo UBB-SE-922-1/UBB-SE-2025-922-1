@@ -32,10 +32,17 @@ namespace DuolingoClassLibrary.Repositories.Repos
             if (comment == null)
                 throw new ArgumentNullException(nameof(comment));
 
-            comment.Id = 0;
-            _context.Comments.Add(comment);
-            await _context.SaveChangesAsync();
-            return comment.Id;
+            try
+            {
+                comment.Id = 0; // Ensure new comment
+                _context.Comments.Add(comment);
+                await _context.SaveChangesAsync();
+                return comment.Id;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error creating comment: {ex.Message}", ex);
+            }
         }
 
         public async Task DeleteComment(int id)

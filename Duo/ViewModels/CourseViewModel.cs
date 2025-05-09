@@ -1,5 +1,6 @@
 ﻿using DuolingoClassLibrary.Entities;
-using DuolingoNou.Services;
+using DuolingoClassLibrary.Services;
+using DuolingoClassLibrary.Services.Interfaces;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -24,7 +25,7 @@ namespace DuolingoNou.ViewModels
 
         public CourseViewModel(ICourseService courseService = null)
         {
-            _courseService = courseService ?? new MockCourseService();
+            _courseService = courseService ?? new CourseService();
             EnrolledCourses = new ObservableCollection<MyCourse>();
             LoadCoursesAsync();
         }

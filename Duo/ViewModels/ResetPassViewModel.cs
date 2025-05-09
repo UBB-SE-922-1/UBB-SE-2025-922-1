@@ -6,6 +6,7 @@ using Duo.Services;
 using Duo.Services.Interfaces;
 using Duo.Validators;
 using DuolingoClassLibrary.Entities;
+using DuolingoClassLibrary.Services.Interfaces;
 
 namespace Duo.ViewModels
 {

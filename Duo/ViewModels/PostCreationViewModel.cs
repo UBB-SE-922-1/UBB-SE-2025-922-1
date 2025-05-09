@@ -14,6 +14,7 @@ using Duo.Views.Components;
 using System.Threading.Tasks;
 using Duo.Helpers;
 using Duo.Services.Interfaces;
+using DuolingoClassLibrary.Services.Interfaces;
 
 namespace Duo.ViewModels
 {

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using WebServerTest.Models;
+using Duo.Services.Interfaces;
 
 namespace WebServerTest.Controllers
 {
@@ -16,17 +17,20 @@ namespace WebServerTest.Controllers
         private readonly IUserHelperService _userHelperService;
         private readonly SignUpService _signUpService;
         private readonly ILogger<AccountController> _logger;
+        private readonly IUserService _userService;
 
         public AccountController(
             ILoginService loginService, 
             IUserHelperService userHelperService,
             SignUpService signUpService,
-            ILogger<AccountController> logger)
+            ILogger<AccountController> logger,
+            IUserService userService)
         {
             _loginService = loginService;
             _userHelperService = userHelperService;
             _signUpService = signUpService;
             _logger = logger;
+            _userService = userService;
         }
 
         [HttpGet]
@@ -77,6 +81,9 @@ namespace WebServerTest.Controllers
                         HttpContext.Session.SetInt32("UserId", user.UserId);
                         HttpContext.Session.SetString("Username", user.UserName);
 
+                        // Set the current user in UserService
+                        await _userService.SetUser(user.UserName);
+
                         // Redirect to home page or return URL
                         if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                         {
@@ -94,15 +101,14 @@ namespace WebServerTest.Controllers
                 {
                     ModelState.AddModelError(string.Empty, "Invalid username or password");
                 }
-
-                return View(model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during login");
+                _logger.LogError(ex, "Error during login attempt");
                 ModelState.AddModelError(string.Empty, "An error occurred during login. Please try again.");
-                return View(model);
             }
+
+            return View(model);
         }
 
         [HttpGet]
@@ -153,6 +159,9 @@ namespace WebServerTest.Controllers
                     HttpContext.Session.SetInt32("UserId", user.UserId);
                     HttpContext.Session.SetString("Username", user.UserName);
 
+                    // Set the current user in UserService
+                    await _userService.SetUser(user.UserName);
+
                     return RedirectToAction("Index", "Home");
                 }
 
@@ -185,13 +194,17 @@ namespace WebServerTest.Controllers
 
                 // Clear session
                 HttpContext.Session.Clear();
+
+                // Clear current user in UserService
+                _userService.ClearCurrentUser();
+
+                return RedirectToAction("Login");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during logout");
+                return RedirectToAction("Login");
             }
-
-            return RedirectToAction("Login");
         }
 
         [HttpGet]

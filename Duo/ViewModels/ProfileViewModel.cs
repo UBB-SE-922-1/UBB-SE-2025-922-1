@@ -2,6 +2,7 @@
 using Duo.Services;
 using System;
 using System.Threading.Tasks;
+using DuolingoClassLibrary.Services;
 
 namespace Duo.ViewModels
 {

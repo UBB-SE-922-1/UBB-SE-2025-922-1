@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using DuolingoClassLibrary.Services.Interfaces;
 
 namespace Duo.Views.Pages
 {

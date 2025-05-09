@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.UI.Xaml.Data;
+using System;
 
 namespace DuolingoNou.Helpers
 {

@@ -1,5 +1,6 @@
 ﻿using DuolingoClassLibrary.Entities;
-using DuolingoNou.Services;
+using DuolingoClassLibrary.Services;
+using DuolingoClassLibrary.Services.Interfaces;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -24,7 +25,7 @@ namespace DuolingoNou.ViewModels
 
         public QuizViewModel(IQuizService quizService = null)
         {
-            _quizService = quizService ?? new MockQuizService();
+            _quizService = quizService ?? new QuizService();
             CompletedQuizzes = new ObservableCollection<Quiz>();
             LoadQuizzesAsync();
         }

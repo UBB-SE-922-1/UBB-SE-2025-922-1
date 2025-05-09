@@ -18,6 +18,7 @@ using Duo.Services;
 using Duo;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
+using DuolingoClassLibrary.Services;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -52,19 +53,7 @@ namespace DuolingoNou.Views.Pages
         private async Task LoadUserAchievements()
         {
             User currentUser = App.CurrentUser;
-            _profileService.AwardAchievements(currentUser);
-
-            List<Achievement> userAchievements = await _profileService.GetUserAchievements(App.CurrentUser.UserId);
-
-            if (userAchievements != null && userAchievements.Count > 0)
-            {
-                AchievementsList.ItemsSource = userAchievements;
-                System.Diagnostics.Debug.WriteLine("User achievements loaded");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("No achievements found for user");
-            }
+            
         }
     }
 }

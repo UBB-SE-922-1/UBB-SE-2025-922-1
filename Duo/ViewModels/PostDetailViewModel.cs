@@ -16,6 +16,7 @@ using Duo.Services.Interfaces;
 using DuolingoClassLibrary.Entities;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using DuolingoClassLibrary.Services.Interfaces;
 
 namespace Duo.ViewModels
 {

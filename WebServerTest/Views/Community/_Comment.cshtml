@@ -1,0 +1,61 @@
+@model DuolingoClassLibrary.Entities.Comment
+@inject IHtmlHelper<DuolingoClassLibrary.Entities.Comment> Html
+
+@{
+    string GetIndentClass(int level)
+    {
+        switch (level)
+        {
+            case 1:
+                return "ms-0";
+            case 2:
+                return "ms-4";
+            case 3:
+                return "ms-5";
+            default:
+                return "ms-5";
+        }
+    }
+
+    var indentClass = GetIndentClass(Model.Level);
+    var comments = ViewBag.Comments as List<DuolingoClassLibrary.Entities.Comment> ?? new List<DuolingoClassLibrary.Entities.Comment>();
+    var replies = comments.Where(c => c.ParentCommentId == Model.Id).ToList();
+}
+
+<div class="comment @indentClass mb-3">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="card-subtitle mb-2 text-muted">@Model.Username</h6>
+                    <p class="card-text">@Model.Content</p>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="likes-count me-2">@Model.LikeCount</span>
+                    <button class="btn btn-sm btn-outline-primary like-comment-button me-2" data-comment-id="@Model.Id">
+                        <i class="bi bi-heart"></i>
+                    </button>
+                    @if (Model.Level < 3)
+                    {
+                        <button class="btn btn-sm btn-outline-secondary reply-button" 
+                                data-comment-id="@Model.Id" 
+                                data-level="@Model.Level">
+                            Reply
+                        </button>
+                    }
+                </div>
+            </div>
+            <small class="text-muted">@Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
+        </div>
+    </div>
+
+    @if (replies.Any())
+    {
+        <div class="replies mt-2">
+            @foreach (var reply in replies)
+            {
+                <partial name="_Comment" model="reply" view-data="ViewData" />
+            }
+        </div>
+    }
+</div> 

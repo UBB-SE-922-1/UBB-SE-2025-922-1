@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using DuolingoClassLibrary.Entities;
 using System.Threading.Tasks;
 
-namespace Duo.Services.Interfaces
+namespace DuolingoClassLibrary.Services.Interfaces
 {
     public interface IPostService
     {

@@ -1,0 +1,105 @@
+@model List<DuolingoClassLibrary.Entities.Comment>
+@inject IHtmlHelper<List<DuolingoClassLibrary.Entities.Comment>> Html
+
+@functions {
+    private string GetIndentClass(int level)
+    {
+        switch (level)
+        {
+            case 1:
+                return "ms-0";
+            case 2:
+                return "ms-4";
+            case 3:
+                return "ms-5";
+            default:
+                return "ms-5";
+        }
+    }
+}
+
+<div class="comments-section mt-4">
+    <h4>Comments</h4>
+    
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            No comments yet. Be the first to comment!
+        </div>
+    }
+    else
+    {
+        <div class="comments-list">
+            @foreach (var comment in Model.Where(c => c.ParentCommentId == null))
+            {
+                <div class="comment-thread">
+                    <partial name="_Comment" model="comment" view-data="ViewData" />
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<div class="add-comment mt-4">
+    <h5>Add a Comment</h5>
+    <form id="commentForm" class="mt-3">
+        <input type="hidden" id="postId" value="@ViewBag.PostId" />
+        <input type="hidden" id="parentCommentId" value="" />
+        <div class="mb-3">
+            <textarea class="form-control" id="commentContent" rows="3" placeholder="Write your comment..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Post Comment</button>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle comment submission
+            $('#commentForm').submit(function(e) {
+                e.preventDefault();
+                var content = $('#commentContent').val();
+                var postId = $('#postId').val();
+                var parentCommentId = $('#parentCommentId').val() || null;
+
+                $.post('/api/comment', {
+                    content: content,
+                    postId: postId,
+                    parentCommentId: parentCommentId
+                }, function(response) {
+                    if (response.success) {
+                        location.reload();
+                    }
+                });
+            });
+
+            // Handle reply button clicks
+            $('.reply-button').click(function() {
+                var commentId = $(this).data('comment-id');
+                var level = $(this).data('level');
+                
+                if (level >= 3) {
+                    alert('Maximum reply depth reached');
+                    return;
+                }
+
+                $('#parentCommentId').val(commentId);
+                $('#commentContent').focus();
+            });
+
+            // Handle like button clicks
+            $('.like-comment-button').click(function() {
+                var commentId = $(this).data('comment-id');
+                var button = $(this);
+                
+                $.post('/api/comment/like/' + commentId, function(response) {
+                    if (response.success) {
+                        var likesSpan = button.siblings('.likes-count');
+                        var currentLikes = parseInt(likesSpan.text());
+                        likesSpan.text(currentLikes + 1);
+                    }
+                });
+            });
+        });
+    </script>
+} 

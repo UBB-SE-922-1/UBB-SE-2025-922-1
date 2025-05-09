@@ -4,11 +4,12 @@ using System.Collections.ObjectModel;
 using Microsoft.Data.SqlClient;
 using DuolingoClassLibrary.Entities;
 using Duo.Services;
-using Duo.Services.Interfaces;
+using DuolingoClassLibrary.Services.Interfaces;
 using DuolingoClassLibrary.Repositories.Interfaces;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Duo.Services.Interfaces;
 
 namespace Duo.Services
 {

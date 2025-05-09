@@ -1,5 +1,8 @@
+using Duo.Services;
 using DuolingoClassLibrary.Data;
 using DuolingoClassLibrary.Repositories;
+using Duo.Services;
+using Duo.Services.Interfaces;
 using DuolingoClassLibrary.Repositories.Interfaces;
 using DuolingoClassLibrary.Repositories.Repos;
 using DuolingoClassLibrary.Services;
@@ -28,13 +31,21 @@ builder.Services.AddSession(options =>
 // Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IHashtagRepository, HashtagRepository>();
 
 // Register services
 builder.Services.AddScoped<IUserHelperService, UserHelperService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<SignUpService>();
-builder.Services.AddScoped<ICategoryService, DuolingoClassLibrary.Services.CategoryService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IHashtagService, HashtagService>();
+builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
 // Register Course and Quiz services from DuolingoClassLibrary
 builder.Services.AddScoped<ICourseService, CourseService>();

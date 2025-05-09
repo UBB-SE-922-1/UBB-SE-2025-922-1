@@ -144,9 +144,6 @@ namespace Duo.Services
 
             try
             {
-                User user = _userService.GetCurrentUser();
-                if (user.UserId != userId) throw new Exception("User does not have permission to delete this comment");
-
                 await _commentRepository.DeleteComment(commentId);
                 return true;
             }

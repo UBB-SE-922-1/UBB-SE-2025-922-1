@@ -193,5 +193,98 @@ namespace WebServerTest.Controllers
             }
             return RedirectToAction("Post", new { id });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteComment(int id, int postId)
+        {
+            try
+            {
+                // Get the current user from session
+                var userId = HttpContext.Session.GetInt32("UserId");
+                if (userId == null)
+                {
+                    TempData["Error"] = "You must be logged in to delete comments";
+                    return RedirectToAction("Post", new { id = postId });
+                }
+
+                // Get all comments for the post
+                var allComments = await _commentService.GetCommentsByPostId(postId);
+                
+                // Find the comment to delete
+                var commentToDelete = allComments.FirstOrDefault(c => c.Id == id);
+                if (commentToDelete == null)
+                {
+                    TempData["Error"] = "Comment not found";
+                    return RedirectToAction("Post", new { id = postId });
+                }
+
+                // Check if the user is the author of the comment
+                if (commentToDelete.UserId != userId.Value)
+                {
+                    TempData["Error"] = "You can only delete your own comments";
+                    return RedirectToAction("Post", new { id = postId });
+                }
+
+                // Get all replies to this comment (including nested replies)
+                var repliesToDelete = allComments.Where(c => c.ParentCommentId == id).ToList();
+                foreach (var reply in repliesToDelete)
+                {
+                    // Recursively delete all nested replies
+                    await DeleteComment(reply.Id, postId);
+                }
+
+                // Delete the comment itself
+                var success = await _commentService.DeleteComment(id, userId.Value);
+                if (success)
+                {
+                    TempData["Success"] = "Comment and all replies deleted successfully";
+                }
+                else
+                {
+                    TempData["Error"] = "Failed to delete comment";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction("Post", new { id = postId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ShowReplyForm(int commentId, int postId, int level)
+        {
+            try
+            {
+                if (level >= 3)
+                {
+                    TempData["Error"] = "Maximum reply depth reached";
+                    return RedirectToAction("Post", new { id = postId });
+                }
+
+                // Get the post and comments
+                var post = await _postService.GetPostDetailsWithMetadata(postId);
+                if (post == null)
+                {
+                    return NotFound();
+                }
+
+                // Load comments for the post
+                var comments = await _commentService.GetCommentsByPostId(postId);
+                ViewBag.Comments = comments;
+                ViewBag.PostId = postId;
+                ViewBag.ReplyToCommentId = commentId;
+
+                return View("Post", post);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Post", new { id = postId });
+            }
+        }
     }
 } 

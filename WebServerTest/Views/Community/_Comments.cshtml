@@ -47,7 +47,6 @@
     <form asp-controller="Community" asp-action="AddComment" method="post" class="mt-3">
         @Html.AntiForgeryToken()
         <input type="hidden" name="postId" value="@ViewBag.PostId" />
-        <input type="hidden" name="parentCommentId" id="parentCommentId" value="" />
         <div class="mb-3">
             <textarea class="form-control" name="content" id="commentContent" rows="3" placeholder="Write your comment..." required></textarea>
         </div>
@@ -63,16 +62,29 @@
             // Handle reply button clicks
             $(document).on('click', '.reply-button', function() {
                 console.log('Reply button clicked');
-                var commentId = $(this).data('comment-id');
-                var level = $(this).data('level');
+                var button = $(this);
+                var commentId = button.data('comment-id');
+                var level = button.data('level');
                 
                 if (level >= 3) {
                     alert('Maximum reply depth reached');
                     return;
                 }
 
-                $('#parentCommentId').val(commentId);
-                $('#commentContent').focus();
+                // Hide any other open reply forms
+                $('.reply-form').hide();
+                
+                // Show the reply form for this comment
+                var replyForm = button.closest('.comment').find('.reply-form');
+                replyForm.slideDown(200);
+                
+                // Focus the textarea
+                replyForm.find('textarea').focus();
+            });
+
+            // Handle cancel reply
+            $(document).on('click', '.cancel-reply', function() {
+                $(this).closest('.reply-form').slideUp(200);
             });
         });
     </script>

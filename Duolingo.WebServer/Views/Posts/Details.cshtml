@@ -1,60 +1,86 @@
-﻿@model DuolingoClassLibrary.Entities.Post
+﻿@model Duolingo.WebServer.Models.PostViewModel
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Post Details";
 }
 
-<h1>Details</h1>
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="card-title h3 mb-2">@Model.Title</h1>
+                            <p class="text-muted mb-0">
+                                Posted by @Model.Username in @Model.CategoryName
+                                <br />
+                                <small>@Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
+                                @if (Model.UpdatedAt > Model.CreatedAt)
+                                {
+                                    <br />
+                                    <small>Edited @Model.UpdatedAt.ToString("MMM dd, yyyy HH:mm")</small>
+                                }
+                            </p>
+                        </div>
+                        @if (User.Identity?.Name == Model.Username)
+                        {
+                            <div class="dropdown">
+                                <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@Model.Id">Edit</a></li>
+                                    <li><a class="dropdown-item" asp-action="Delete" asp-route-id="@Model.Id">Delete</a></li>
+                                </ul>
+                            </div>
+                        }
+                    </div>
 
-<div>
-    <h4>Post</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UserID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.UserID)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CategoryID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CategoryID)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UpdatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.UpdatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LikeCount)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.LikeCount)
-        </dd>
-    </dl>
+                    <div class="card-text mb-4">
+                        @Model.Description
+                    </div>
+
+                    @if (Model.Hashtags.Any())
+                    {
+                        <div class="mb-4">
+                            @foreach (var hashtag in Model.Hashtags)
+                            {
+                                <span class="badge bg-primary me-1">#@hashtag</span>
+                            }
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted">
+                                <i class="fas fa-heart"></i> @Model.LikeCount
+                            </span>
+                        </div>
+                        <div>
+                            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                            @if (User.Identity?.Name == Model.Username)
+                            {
+                                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add Font Awesome if not already included
+            if (!document.querySelector('link[href*="font-awesome"]')) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
+                document.head.appendChild(link);
+            }
+        });
+    </script>
+}

@@ -1,63 +1,142 @@
-﻿@model DuolingoClassLibrary.Entities.Post
+﻿@model Duolingo.WebServer.Models.PostViewModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Post";
 }
 
-<h1>Create</h1>
+<div class="container">
+    <h1>Create New Post</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-action="Create" id="createPostForm">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Title" class="control-label"></label>
+                    <input asp-for="Title" class="form-control" placeholder="Enter post title (max 20 characters)" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
 
-<h4>Post</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Title" class="control-label"></label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UserID" class="control-label"></label>
-                <input asp-for="UserID" class="form-control" />
-                <span asp-validation-for="UserID" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CategoryID" class="control-label"></label>
-                <input asp-for="CategoryID" class="form-control" />
-                <span asp-validation-for="CategoryID" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" />
-                <span asp-validation-for="CreatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UpdatedAt" class="control-label"></label>
-                <input asp-for="UpdatedAt" class="form-control" />
-                <span asp-validation-for="UpdatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="LikeCount" class="control-label"></label>
-                <input asp-for="LikeCount" class="form-control" />
-                <span asp-validation-for="LikeCount" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+                <div class="form-group mb-3">
+                    <label asp-for="Description" class="control-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="6" placeholder="Write your post content here (max 4000 characters)"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="CategoryID" class="control-label">Community</label>
+                    <select asp-for="CategoryID" class="form-select" asp-items="@(new SelectList(Model.AvailableCategories, "Id", "Name"))">
+                        <option value="">-- Select a community --</option>
+                    </select>
+                    <span asp-validation-for="CategoryID" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="control-label">Hashtags</label>
+                    <div class="input-group">
+                        <input type="text" id="hashtagInput" class="form-control" placeholder="Add hashtags (press Enter to add)" />
+                        <button type="button" class="btn btn-outline-secondary" id="addHashtagBtn">Add</button>
+                    </div>
+                    <div id="hashtagList" class="mt-2">
+                        @foreach (var hashtag in Model.Hashtags)
+                        {
+                            <span class="badge bg-primary me-2 mb-2 hashtag">
+                                #@hashtag
+                                <input type="hidden" name="Hashtags" value="@hashtag" />
+                                <button type="button" class="btn-close btn-close-white ms-2" aria-label="Remove hashtag"></button>
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">Create Post</button>
+                    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Handle hashtag input
+            function addHashtag(hashtag) {
+                hashtag = hashtag.trim();
+                if (hashtag && !hashtag.startsWith('#')) {
+                    hashtag = '#' + hashtag;
+                }
+                
+                // Check if hashtag already exists
+                if ($(`input[name="Hashtags"][value="${hashtag}"]`).length > 0) {
+                    return;
+                }
+
+                const hashtagHtml = `
+                    <span class="badge bg-primary me-2 mb-2 hashtag">
+                        ${hashtag}
+                        <input type="hidden" name="Hashtags" value="${hashtag}" />
+                        <button type="button" class="btn-close btn-close-white ms-2" aria-label="Remove hashtag"></button>
+                    </span>
+                `;
+                $('#hashtagList').append(hashtagHtml);
+            }
+
+            // Add hashtag on Enter key
+            $('#hashtagInput').keypress(function(e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    const hashtag = $(this).val();
+                    if (hashtag) {
+                        addHashtag(hashtag);
+                        $(this).val('');
+                    }
+                }
+            });
+
+            // Add hashtag on button click
+            $('#addHashtagBtn').click(function() {
+                const hashtag = $('#hashtagInput').val();
+                if (hashtag) {
+                    addHashtag(hashtag);
+                    $('#hashtagInput').val('');
+                }
+            });
+
+            // Remove hashtag
+            $(document).on('click', '.hashtag .btn-close', function() {
+                $(this).closest('.hashtag').remove();
+            });
+
+            // Form validation
+            $('#createPostForm').submit(function(e) {
+                const title = $('#Title').val().trim();
+                const description = $('#Description').val().trim();
+                const categoryId = $('#CategoryID').val();
+
+                if (!title) {
+                    e.preventDefault();
+                    alert('Please enter a title for your post.');
+                    return false;
+                }
+
+                if (!description) {
+                    e.preventDefault();
+                    alert('Please enter content for your post.');
+                    return false;
+                }
+
+                if (!categoryId) {
+                    e.preventDefault();
+                    alert('Please select a community for your post.');
+                    return false;
+                }
+
+                return true;
+            });
+        });
+    </script>
 }

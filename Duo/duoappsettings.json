@@ -1,4 +1,4 @@
 {
-  "LocalDataSource": "DESKTOP-DESKTOP-OFQTIQQ\\SQLEXPRESS",
+  "LocalDataSource": "localhost",
   "InitialCatalog": "Duo"
 }

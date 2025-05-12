@@ -257,33 +257,230 @@ namespace WebServerTest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ShowReplyForm(int commentId, int postId, int level)
         {
+            TempData["ReplyCommentId"] = commentId;
+            TempData["ReplyLevel"] = level;
+            return RedirectToAction("Post", new { id = postId });
+        }
+
+        // GET action for creating a new post
+        public async Task<IActionResult> CreatePost()
+        {
+            var viewModel = new CreateEditPostViewModel
+            {
+                Categories = await _categoryService.GetAllCategories(),
+                Hashtags = new List<string>()
+            };
+            
+            return View(viewModel);
+        }
+
+        // POST action for creating a new post
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreatePost(CreateEditPostViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                // Reload categories if validation fails
+                model.Categories = await _categoryService.GetAllCategories();
+                return View(model);
+            }
+
             try
             {
-                if (level >= 3)
+                // Get current user ID from session
+                var userId = HttpContext.Session.GetInt32("UserId");
+                var username = HttpContext.Session.GetString("Username");
+
+                if (userId == null || string.IsNullOrEmpty(username))
                 {
-                    TempData["Error"] = "Maximum reply depth reached";
-                    return RedirectToAction("Post", new { id = postId });
+                    TempData["Error"] = "You must be logged in to create a post";
+                    return RedirectToAction("Index");
                 }
 
-                // Get the post and comments
-                var post = await _postService.GetPostDetailsWithMetadata(postId);
+                // Create post entity
+                var post = new Post
+                {
+                    Title = model.Title,
+                    Description = model.Content,
+                    CategoryID = model.CategoryId,
+                    UserID = userId.Value,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    Username = username
+                };
+
+                // Process hashtags - convert comma-separated string to list
+                var hashtags = new List<string>();
+                if (!string.IsNullOrEmpty(model.HashtagsString))
+                {
+                    hashtags = model.HashtagsString
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(h => h.Trim().StartsWith("#") ? h.Trim().Substring(1) : h.Trim())
+                        .Distinct()
+                        .ToList();
+                }
+
+                // Create post with hashtags
+                var postId = await _postService.CreatePostWithHashtags(post, hashtags, userId.Value);
+
+                if (postId > 0)
+                {
+                    TempData["Success"] = "Post created successfully!";
+                    return RedirectToAction("Post", new { id = postId });
+                }
+                else
+                {
+                    TempData["Error"] = "Failed to create post.";
+                    model.Categories = await _categoryService.GetAllCategories();
+                    return View(model);
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error creating post: {ex.Message}";
+                model.Categories = await _categoryService.GetAllCategories();
+                return View(model);
+            }
+        }
+
+        // GET action for editing a post
+        public async Task<IActionResult> EditPost(int id)
+        {
+            // Get the post to edit
+            var post = await _postService.GetPostById(id);
+            if (post == null)
+            {
+                return NotFound();
+            }
+
+            // Check if the current user is the author of the post
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null || post.UserID != userId)
+            {
+                TempData["Error"] = "You can only edit your own posts";
+                return RedirectToAction("Post", new { id });
+            }
+
+            // Get hashtags for the post
+            var hashtags = await _hashtagService.GetHashtagsByPostId(id);
+            var hashtagsString = string.Join(',', hashtags.Select(h => h.Tag));
+
+            // Create view model
+            var viewModel = new CreateEditPostViewModel
+            {
+                PostId = post.Id,
+                Title = post.Title,
+                Content = post.Description,
+                CategoryId = post.CategoryID,
+                Categories = await _categoryService.GetAllCategories(),
+                HashtagsString = hashtagsString,
+                Hashtags = hashtags.Select(h => h.Tag).ToList(),
+                IsEditing = true
+            };
+
+            return View(viewModel);
+        }
+
+        // POST action for editing a post
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditPost(CreateEditPostViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                // Reload categories if validation fails
+                model.Categories = await _categoryService.GetAllCategories();
+                model.IsEditing = true;
+                return View(model);
+            }
+
+            try
+            {
+                // Get current user ID from session
+                var userId = HttpContext.Session.GetInt32("UserId");
+                if (userId == null)
+                {
+                    TempData["Error"] = "You must be logged in to edit a post";
+                    return RedirectToAction("Index");
+                }
+
+                // Get existing post
+                var post = await _postService.GetPostById(model.PostId);
                 if (post == null)
                 {
                     return NotFound();
                 }
 
-                // Load comments for the post
-                var comments = await _commentService.GetCommentsByPostId(postId);
-                ViewBag.Comments = comments;
-                ViewBag.PostId = postId;
-                ViewBag.ReplyToCommentId = commentId;
+                // Verify post ownership
+                var isOwner = await _postService.ValidatePostOwnership(userId.Value, post.Id);
+                if (!isOwner)
+                {
+                    TempData["Error"] = "You can only edit your own posts";
+                    return RedirectToAction("Post", new { id = model.PostId });
+                }
 
-                return View("Post", post);
+                // Don't allow changing the category
+                if (post.CategoryID != model.CategoryId)
+                {
+                    TempData["Error"] = "Changing the post's community/category is not allowed";
+                    model.CategoryId = post.CategoryID;
+                    model.Categories = await _categoryService.GetAllCategories();
+                    model.IsEditing = true;
+                    return View(model);
+                }
+
+                // Update post properties
+                post.Title = model.Title;
+                post.Description = model.Content;
+                post.UpdatedAt = DateTime.Now;
+
+                // Process hashtags - convert comma-separated string to list
+                var newHashtags = new List<string>();
+                if (!string.IsNullOrEmpty(model.HashtagsString))
+                {
+                    newHashtags = model.HashtagsString
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(h => h.Trim().StartsWith("#") ? h.Trim().Substring(1) : h.Trim())
+                        .Distinct()
+                        .ToList();
+                }
+
+                // Get current hashtags
+                var currentHashtags = await _hashtagService.GetHashtagsByPostId(post.Id);
+                var currentHashtagStrings = currentHashtags.Select(h => h.Tag).ToList();
+
+                // Update post
+                await _postService.UpdatePost(post);
+
+                // Handle hashtags: remove ones not in the new list, add new ones
+                foreach (var hashtag in currentHashtagStrings)
+                {
+                    if (!newHashtags.Contains(hashtag))
+                    {
+                        // Find hashtag ID
+                        var hashtagToRemove = currentHashtags.First(h => h.Tag == hashtag);
+                        await _postService.RemoveHashtagFromPost(post.Id, hashtagToRemove.Id, userId.Value);
+                    }
+                }
+
+                foreach (var hashtag in newHashtags)
+                {
+                    if (!currentHashtagStrings.Contains(hashtag))
+                    {
+                        await _postService.AddHashtagToPost(post.Id, hashtag, userId.Value);
+                    }
+                }
+
+                TempData["Success"] = "Post updated successfully!";
+                return RedirectToAction("Post", new { id = model.PostId });
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction("Post", new { id = postId });
+                TempData["Error"] = $"Error updating post: {ex.Message}";
+                model.Categories = await _categoryService.GetAllCategories();
+                model.IsEditing = true;
+                return View(model);
             }
         }
     }

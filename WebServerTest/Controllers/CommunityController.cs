@@ -37,12 +37,13 @@ namespace WebServerTest.Controllers
             _commentRepository = commentRepository;
         }
 
-        public async Task<IActionResult> Index(int? categoryId = null, string[] hashtags = null, int page = 1)
+        public async Task<IActionResult> Index(int? categoryId = null, string[] hashtags = null, int page = 1, string searchTerm = null)
         {
             var viewModel = new CommunityViewModel
             {
                 CurrentPage = page,
-                ItemsPerPage = ItemsPerPage
+                ItemsPerPage = ItemsPerPage,
+                SearchTerm = searchTerm
             };
 
             // Get all hashtags for the filter
@@ -60,7 +61,7 @@ namespace WebServerTest.Controllers
             var (posts, totalCount) = await _postService.GetFilteredAndFormattedPosts(
                 categoryId,
                 selectedHashtags,
-                null, // No text filter
+                searchTerm, // Add search term for filtering
                 page,
                 ItemsPerPage
             );

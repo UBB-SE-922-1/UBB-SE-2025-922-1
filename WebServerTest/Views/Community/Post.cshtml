@@ -7,6 +7,18 @@
 <div class="container mt-4">
     <div class="row">
         <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Community
+                </a>
+                @if (Context.Session.GetInt32("UserId") != null && Context.Session.GetInt32("UserId") == Model.UserID)
+                {
+                    <a href="@Url.Action("EditPost", new { id = Model.Id })" class="btn btn-primary btn-sm">
+                        <i class="bi bi-pencil"></i> Edit Post
+                    </a>
+                }
+            </div>
+            
             <div class="card">
                 <div class="card-body">
                     <h2 class="card-title">@Model.Title</h2>

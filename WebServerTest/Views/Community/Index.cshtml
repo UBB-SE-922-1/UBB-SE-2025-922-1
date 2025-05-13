@@ -4,12 +4,59 @@
 }
 
 <div class="container mt-4">
-    <h2 class="mb-4">Community</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Community</h2>
+        <a href="@Url.Action("CreatePost")" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Create Post
+        </a>
+    </div>
+
+    <!-- Search and Filters Row -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <form method="get" action="@Url.Action("Index")" class="d-flex">
+                <input type="text" name="searchTerm" class="form-control me-2" placeholder="Search posts..." value="@Model.SearchTerm">
+                <!-- Preserve current filters when searching -->
+                @if (Model.SelectedCategoryId.HasValue)
+                {
+                    <input type="hidden" name="categoryId" value="@Model.SelectedCategoryId" />
+                }
+                @foreach (var hashtag in Model.SelectedHashtags)
+                {
+                    <input type="hidden" name="hashtags" value="@hashtag" />
+                }
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i>
+                </button>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex justify-content-md-end">
+                <select class="form-select" style="max-width: 200px;" 
+                        onchange="window.location = '@Url.Action("Index")?categoryId=' + this.value + 
+                                 '@(Model.SelectedHashtags.Any() ? "&hashtags=" + string.Join("&hashtags=", Model.SelectedHashtags) : "")' + 
+                                 '@(!string.IsNullOrEmpty(Model.SearchTerm) ? "&searchTerm=" + Model.SearchTerm : "")'">
+                    <option value="">All Communities</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        if (Model.SelectedCategoryId == category.Id)
+                        {
+                            <option value="@category.Id" selected>@category.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
 
     <!-- Hashtag Filter -->
     <div class="mb-4">
         <div class="d-flex flex-wrap gap-2">
-            <a href="@Url.Action("Index", new { hashtags = (string[])null, categoryId = Model.SelectedCategoryId })" 
+            <a href="@Url.Action("Index", new { hashtags = (string[])null, categoryId = Model.SelectedCategoryId, searchTerm = Model.SearchTerm })" 
                class="btn @(Model.SelectedHashtags.Count == 0 ? "btn-primary" : "btn-outline-primary")">
                 All Posts
             </a>
@@ -28,7 +75,8 @@
                 
                 <a href="@Url.Action("Index", new { 
                     hashtags = newHashtags.ToArray(), 
-                    categoryId = Model.SelectedCategoryId 
+                    categoryId = Model.SelectedCategoryId,
+                    searchTerm = Model.SearchTerm
                 })" 
                    class="btn @(isSelected ? "btn-primary" : "btn-outline-primary")">
                     #@hashtag.Tag
@@ -40,10 +88,25 @@
     <!-- Posts -->
     <div class="row">
         <div class="col-12">
+            @if (!string.IsNullOrEmpty(Model.SearchTerm))
+            {
+                <div class="alert alert-info mb-3">
+                    Showing search results for: <strong>@Model.SearchTerm</strong>
+                    <a href="@Url.Action("Index", new { categoryId = Model.SelectedCategoryId, hashtags = Model.SelectedHashtags.ToArray() })" class="float-end">Clear search</a>
+                </div>
+            }
+
             @if (!Model.Posts.Any())
             {
                 <div class="alert alert-info">
-                    No posts found.
+                    @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                    {
+                        <span>No posts found matching your search criteria.</span>
+                    }
+                    else
+                    {
+                        <span>No posts found.</span>
+                    }
                 </div>
             }
             else
@@ -52,11 +115,19 @@
                 {
                     <div class="card mb-3">
                         <div class="card-body">
-                            <h5 class="card-title">
-                                <a href="@Url.Action("Post", new { id = post.Id })" class="text-decoration-none">
-                                    @post.Title
-                                </a>
-                            </h5>
+                            <div class="d-flex justify-content-between">
+                                <h5 class="card-title">
+                                    <a href="@Url.Action("Post", new { id = post.Id })" class="text-decoration-none">
+                                        @post.Title
+                                    </a>
+                                </h5>
+                                @if (Context.Session.GetInt32("UserId") != null && Context.Session.GetInt32("UserId") == post.UserID)
+                                {
+                                    <a href="@Url.Action("EditPost", new { id = post.Id })" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                }
+                            </div>
                             <p class="card-text">@post.Description</p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex gap-2">
@@ -105,7 +176,8 @@
                                        href="@Url.Action("Index", new { 
                                            page = i, 
                                            categoryId = Model.SelectedCategoryId,
-                                           hashtags = Model.SelectedHashtags.ToArray()
+                                           hashtags = Model.SelectedHashtags.ToArray(),
+                                           searchTerm = Model.SearchTerm
                                        })">
                                         @i
                                     </a>

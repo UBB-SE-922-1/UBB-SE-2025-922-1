@@ -14,5 +14,6 @@ namespace WebServerTest.Models
         public int TotalPosts { get; set; }
         public int ItemsPerPage { get; set; }
         public List<Hashtag> AllHashtags { get; set; } = new List<Hashtag>();
+        public string SearchTerm { get; set; }
     }
 } 

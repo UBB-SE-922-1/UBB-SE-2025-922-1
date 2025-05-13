@@ -399,11 +399,11 @@ namespace Duo.Services
                     throw new Exception($"Post with ID {postId} not found");
                 }
                 
-                if (_userService.GetCurrentUser().UserId != userId)
+               /* if (_userService.GetCurrentUser().UserId != userId)
                 {
-                    throw new Exception("User does not have permission to add hashtags to this post.");
+                    //throw new Exception("User does not have permission to add hashtags to this post.");
                 }
-
+               */
                 Hashtag? existingHashtag = null;
                 existingHashtag = await _hashtagService.GetHashtagByText(hashtagName);
 

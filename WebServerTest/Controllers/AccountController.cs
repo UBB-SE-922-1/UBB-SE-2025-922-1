@@ -69,6 +69,7 @@ namespace WebServerTest.Controllers
             try
             {
                 var isAuthenticated = await _loginService.AuthenticateUser(model.Username, model.Password);
+
                 
                 if (isAuthenticated)
                 {
